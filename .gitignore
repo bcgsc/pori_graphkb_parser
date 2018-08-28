@@ -1,0 +1,5 @@
+.nyc_output/
+coverage/
+mocha.json
+node_modules/
+xunit.xml
