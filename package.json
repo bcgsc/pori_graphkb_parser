@@ -1,8 +1,8 @@
 {
   "name": "knowledgebase-parser",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "A package for parsing and recreating variant notation",
-  "main": "app/index.js",
+  "main": "./app/index.js",
   "directories": {
     "test": "test"
   },
