@@ -28,7 +28,9 @@ const EVENT_SUBTYPE = {
 };
 
 
-const NOTATION_TO_SUBTYPE = new Map([
+const NOTATION_TO_SUBTYPE = {};
+const SUBTYPE_TO_NOTATION = {};
+for (const [notation, subtype] of [
     ['fs', EVENT_SUBTYPE.FS],
     ['>', EVENT_SUBTYPE.SUB],
     ['delins', EVENT_SUBTYPE.INDEL],
@@ -44,7 +46,114 @@ const NOTATION_TO_SUBTYPE = new Map([
     ['spl', EVENT_SUBTYPE.SPL],
     ['fusion', EVENT_SUBTYPE.FUSION],
     ['mut', EVENT_SUBTYPE.MUT]
-]);
+]) {
+    NOTATION_TO_SUBTYPE[notation] = subtype;
+    SUBTYPE_TO_NOTATION[subtype] = notation;
+}
+
+
+class VariantNotation {
+    /**
+     * @param {Object} opt options
+     */
+    constructor(opt) {
+        if (opt.untemplatedSeq !== undefined) {
+            this.untemplatedSeq = opt.untemplatedSeq;
+        }
+        if (opt.untemplatedSeqSize !== undefined) {
+            this.untemplatedSeqSize = opt.untemplatedSeqSize;
+        } else if (this.untemplatedSeq !== undefined && this.untemplatedSeq !== null) {
+            this.untemplatedSeqSize = this.untemplatedSeq.length;
+        }
+        this.type = opt.type;
+        this.break1Start = opt.break1Start;
+        this.reference1 = opt.reference1;
+        this.multiFeature = opt.multiFeature || opt.reference2 || false;
+        for (let optAttr of [
+            'break1End',
+            'break2Start',
+            'break2End',
+            'reference2',
+            'truncation',
+            'refSeq',
+            'prefix'
+        ]) {
+            if (opt[optAttr] !== undefined) {
+                this[optAttr] = opt[optAttr];
+            }
+        }
+        this.break1Repr = breakRepr(this.prefix, this.break1Start, this.break1End, this.multiFeature);
+        if (this.break2Start) {
+            this.break2Repr = breakRepr(this.prefix, this.break2Start, this.break2End, this.multiFeature);
+        }
+    }
+    toJSON() {
+        const json = {}
+        for (let [attr, value] of Object.entries(this)) {
+            if (value !== undefined && attr !== 'prefix') {
+                json[attr] = value;
+            }
+        }
+        return json;
+    }
+    toString() {
+        if (this.multiFeature) {
+            // multi-feature notation
+            let result = `(${this.reference1},${this.reference2}):${
+                SUBTYPE_TO_NOTATION[this.type]
+            }(${this.break1Repr},${this.break2Repr})`;
+            if (this.untemplatedSeq !== undefined) {
+                result = `${result}${this.untemplatedSeq}`;
+            } else if (this.untemplatedSeqSize !== undefined) {
+                result = `${result}${this.untemplatedSeqSize}`;
+            }
+            return result;
+        } else {
+            // continuous notation
+            let result = [`${this.reference1}:${this.prefix}.`];
+            let pos = this.break1Repr.slice(2);
+            if (this.break2Repr) {
+                pos = `${pos}_${this.break2Repr.slice(2)}`;
+            }
+            result.push(pos)
+            if (this.type === EVENT_SUBTYPE.EXT
+                || this.type === EVENT_SUBTYPE.FS
+                || this.type === EVENT_SUBTYPE.SUB && this.prefix === 'p'
+            ) {
+                if (this.untemplatedSeq !== undefined) {
+                    result.push(this.untemplatedSeq);
+                }
+            }
+            if (this.type !== EVENT_SUBTYPE.SUB) {
+                if (this.type === EVENT_SUBTYPE.INDEL && this.refSeq !== undefined) {
+                    result.push(`del${this.refSeq}ins`);
+                } else {
+                    result.push(SUBTYPE_TO_NOTATION[this.type]);
+                }
+                if (this.truncation && this.truncation !== 1) {
+                    result.push(`*${this.truncation}`);
+                }
+
+                if (this.refSeq
+                    && [EVENT_SUBTYPE.DUP, EVENT_SUBTYPE.DEL, EVENT_SUBTYPE.INV].includes(this.type)
+                ) {
+                    result.push(this.refSeq);
+                }
+                if ((this.untemplatedSeq || this.untemplatedSeqSize)
+                    && [EVENT_SUBTYPE.INS, EVENT_SUBTYPE.INDEL].includes(this.type)
+                ) {
+                    result.push(this.untemplatedSeq || this.untemplatedSeqSize);
+                }
+            } else if (this.prefix !== 'p') {
+                result.push(`${this.refSeq}${SUBTYPE_TO_NOTATION[this.type]}${this.untemplatedSeq}`);
+            }
+            return result.join('');
+        }
+    }
+}
+
+
+
 
 /**
  * Given a string, check that it contains a valid prefix
@@ -94,7 +203,7 @@ const parse = (string) => {
     if (split.length > 2) {
         throw new ParsingError({message: 'Variant notation must contain a single colon', input: string});
     } else if (split.length === 1) {
-        split = [null, split[0]];
+        throw new ParsingError({message: 'Feature name not specified. Feature name is required'})
     }
     let result = {};
     const [featureString, variantString] = split;
@@ -134,12 +243,8 @@ const parse = (string) => {
             const variant = parseMultiFeature(variantString);
             result = Object.assign(result, variant);
         } catch (err) {
-            throw new ParsingError({
-                message: 'Error in parsing the variant',
-                parsed: Object.assign({variantString}, result),
-                input: string,
-                subParserError: err
-            });
+            err.content.parsed = Object.assign({variantString}, result);
+            throw err;
         }
     } else {
         // continuous notation
@@ -150,16 +255,11 @@ const parse = (string) => {
             const variant = parseContinuous(variantString);
             Object.assign(result, variant);
         } catch (err) {
-            throw new ParsingError({
-                message: `Error in parsing the continuous variant: ${variantString}`,
-                parsed: Object.assign({variantString}, result),
-                input: string,
-                subParserError: err
-            });
+            err.content.parsed = Object.assign({variantString}, result);
+            throw err;
         }
     }
-    delete result.prefix; // only kept until now to make debugging easier when an error is thrown
-    return result;
+    return new VariantNotation(result);
 };
 
 /**
@@ -178,7 +278,7 @@ const parseMultiFeature = (string) => {
     if (string.length < 6) {
         throw new ParsingError(`Too short. Multi-feature notation must be a minimum of six characters: ${string}`);
     }
-    const parsed = {};
+    const parsed = {multiFeature: true};
 
     if (string.indexOf('(') < 0) {
         throw new ParsingError({message: 'Missing opening parentheses', input: string});
@@ -191,7 +291,7 @@ const parseMultiFeature = (string) => {
             input: string
         });
     }
-    if (!NOTATION_TO_SUBTYPE.has(parsed.type)) {
+    if (!NOTATION_TO_SUBTYPE[parsed.type]) {
         throw new ParsingError({message: 'Variant type not recognized', parsed, input: string});
     }
     if (!['fusion', 'trans', 'itrans'].includes(parsed.type)) {
@@ -201,7 +301,7 @@ const parseMultiFeature = (string) => {
             input: string
         });
     }
-    parsed.type = NOTATION_TO_SUBTYPE.get(parsed.type);
+    parsed.type = NOTATION_TO_SUBTYPE[parsed.type];
     if (string.indexOf(')') < 0) {
         throw new ParsingError({message: 'Missing closing parentheses', parsed, input: string});
     }
@@ -231,7 +331,6 @@ const parseMultiFeature = (string) => {
         } else {
             parsed.break1Start = parsePosition(prefix, positions[0]);
         }
-        parsed.break1Repr = breakRepr(prefix, parsed.break1Start, parsed.break1End);
     } catch (err) {
         throw new ParsingError({
             message: 'Error in parsing the first breakpoint position/range',
@@ -250,7 +349,6 @@ const parseMultiFeature = (string) => {
         } else {
             parsed.break2Start = parsePosition(prefix, positions[1]);
         }
-        parsed.break2Repr = breakRepr(prefix, parsed.break2Start, parsed.break2End);
     } catch (err) {
         throw new ParsingError({
             message: 'Error in parsing the second breakpoint position/range',
@@ -346,10 +444,6 @@ const parseContinuous = (inputString) => {
     }
 
     const tail = string;
-    result.break1Repr = breakRepr(prefix, result.break1Start, result.break1End);
-    if (result.break2Start) {
-        result.break2Repr = breakRepr(prefix, result.break2Start, result.break2End);
-    }
     let match;
     if (match = /^del([A-Z?*]+)?ins([A-Z?*]+|\d+)?$/i.exec(tail)) { // indel
         result.type = 'delins';
@@ -423,10 +517,10 @@ const parseContinuous = (inputString) => {
     } else {
         result.type = tail;
     }
-    if (!NOTATION_TO_SUBTYPE.has(result.type)) {
+    if (!NOTATION_TO_SUBTYPE[result.type]) {
         throw new ParsingError(`unsupported event type: '${result.type}'`);
     }
-    result.type = NOTATION_TO_SUBTYPE.get(result.type);
+    result.type = NOTATION_TO_SUBTYPE[result.type];
     if (result.untemplatedSeq && result.untemplatedSeqSize === undefined && result.untemplatedSeq !== '') {
         const altSeqs = result.untemplatedSeq.split('^');
         result.untemplatedSeqSize = altSeqs[0].length;
@@ -463,5 +557,5 @@ const parseContinuous = (inputString) => {
 
 
 module.exports = {
-    parse, NOTATION_TO_SUBTYPE, EVENT_SUBTYPE, parseContinuous, parseMultiFeature
+    parse, NOTATION_TO_SUBTYPE, EVENT_SUBTYPE, VariantNotation
 };

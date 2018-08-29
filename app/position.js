@@ -23,6 +23,11 @@ const PREFIX_CLASS = {
     c: 'CdsPosition'
 };
 
+const CLASS_PREFIX = {};
+for (const [prefix, clsName] of Object.entries(PREFIX_CLASS)) {
+    CLASS_PREFIX[clsName] = prefix;
+}
+
 
 const CDS_PATT = /(\d+)?([-+]\d+)?/;
 const PROTEIN_PATT = /([A-Za-z?*])?(\d+|\?)/;
@@ -74,6 +79,7 @@ const positionString = (inputBreakpoint) => {
  * @param {string} prefix the prefix denoting the coordinate system being used
  * @param {string} start the start of the breakpoint range
  * @param {string} [end=null] the end of the breakpoint range (if the breakpoint is a range)
+ * @param {boolean} [multiFeature=false] flag to indicate this is for multi-feature notation and should not contain brackets
  *
  * @example
  * > break1Repr('g', {pos: 1}, {pos: 10});
@@ -85,8 +91,13 @@ const positionString = (inputBreakpoint) => {
  *
  * @returns {string} the string representation of a breakpoint or breakpoint range including the prefix
  */
-const breakRepr = (prefix, start, end = null) => {
-    if (end) { // range
+const breakRepr = (prefix, start, end = null, multiFeature = false) => {
+    if (! prefix) {
+        prefix = CLASS_PREFIX[start['@class']];
+    }
+    if (end && multiFeature) { // range
+        return `${prefix}.${positionString(start)}_${positionString(end)}`;
+    } if (end) {
         return `${prefix}.(${positionString(start)}_${positionString(end)})`;
     }
     return `${prefix}.${positionString(start)}`;
