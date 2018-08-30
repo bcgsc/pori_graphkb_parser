@@ -3,119 +3,130 @@
 const {expect} = require('chai');
 const {ParsingError} = require('./../app/error');
 const {
-    parseContinuous,
-    parseMultiFeature,
     parse,
-    EVENT_SUBTYPE
+    EVENT_SUBTYPE,
+    VariantNotation
 } = require('./../app/variant');
 
 
-describe('parseMultiFeature', () => {
+describe(' multi-feature notation', () => {
     describe('throws an error on', () => {
         it('short string', () => {
             expect(() => {
-                parseMultiFeature('');
+                parse('');
             }).to.throw('Too short.');
         });
         it('missing opening bracket', () => {
             expect(() => {
-                parseMultiFeature('transe.1,e.2)');
+                parse('(FEATURE1,FEATURE2):transe.1,e.2)');
             }).to.throw('Missing opening');
         });
         it('missing closing bracket', () => {
             expect(() => {
-                parseMultiFeature('trans(e.1,e.2');
+                parse('(FEATURE1,FEATURE2):trans(e.1,e.2');
             }).to.throw('Missing closing');
         });
         it('missing variant type', () => {
             expect(() => {
-                parseMultiFeature('(e.1,e.2)');
+                parse('(FEATURE1,FEATURE2):(e.1,e.2)');
             }).to.throw('Variant type was not specified');
         });
         it('invalid variant type', () => {
             expect(() => {
-                parseMultiFeature('blargh(e.1,e.2)');
+                parse('(FEATURE1,FEATURE2):blargh(e.1,e.2)');
             }).to.throw('Variant type not recognized');
         });
         it('missing prefix', () => {
             expect(() => {
-                parseMultiFeature('trans(1,2)');
+                parse('(FEATURE1,FEATURE2):trans(1,2)');
             }).to.throw('Error in parsing the first breakpoint');
         });
         it('invalid prefix', () => {
             expect(() => {
-                parseMultiFeature('trans(k.1,e.2)');
+                parse('(FEATURE1,FEATURE2):trans(k.1,e.2)');
             }).to.throw('Error in parsing the first breakpoint');
         });
         it('multiple commas', () => {
             expect(() => {
-                parseMultiFeature('trans(e.1,e.2,e.3)');
+                parse('(FEATURE1,FEATURE2):trans(e.1,e.2,e.3)');
             }).to.throw('Single comma expected');
         });
         it('missing comma', () => {
             expect(() => {
-                parseMultiFeature('trans(e.123)');
+                parse('(FEATURE1,FEATURE2):trans(e.123)');
             }).to.throw('Missing comma');
         });
         it('bad first breakpoint', () => {
             expect(() => {
-                const result = parseMultiFeature('trans(e.123k,e.1234)');
+                const notation = '(FEATURE1,FEATURE2):trans(e.123k,e.1234)';
+                const result = parse(notation);
                 console.log(result);
             }).to.throw('Error in parsing the first breakpoint');
         });
         it('bad second breakpoint', () => {
             expect(() => {
-                parseMultiFeature('fusion(e.123,e.123k)');
+                parse('(FEATURE1,FEATURE2):fusion(e.123,e.123k)');
             }).to.throw('Error in parsing the second breakpoint');
         });
         it('insertion types', () => {
             expect(() => {
-                parseMultiFeature('ins(e.123,e.124)');
+                parse('(FEATURE1,FEATURE2):ins(e.123,e.124)');
             }).to.throw('Continuous notation is preferred');
         });
         it('indel types', () => {
             expect(() => {
-                parseMultiFeature('delins(e.123,e.123)');
+                parse('(FEATURE1,FEATURE2):delins(e.123,e.123)');
             }).to.throw('Continuous notation is preferred');
         });
         it('inversion types', () => {
             expect(() => {
-                parseMultiFeature('inv(e.123,e.123)');
+                parse('(FEATURE1,FEATURE2):inv(e.123,e.123)');
             }).to.throw('Continuous notation is preferred');
         });
         it('deletion types', () => {
             expect(() => {
-                parseMultiFeature('del(e.123,e.123)');
+                parse('(FEATURE1,FEATURE2):del(e.123,e.123)');
             }).to.throw('Continuous notation is preferred');
         });
         it('duplication types', () => {
             expect(() => {
-                parseMultiFeature('dup(e.123,e.123)');
+                parse('(FEATURE1,FEATURE2):dup(e.123,e.123)');
             }).to.throw('Continuous notation is preferred');
         });
     });
     it('parses exon gene fusion', () => {
-        const parsed = parseMultiFeature('fusion(e.1,e.2)');
+        const notation = '(FEATURE1,FEATURE2):fusion(e.1,e.2)';
+        const parsed = parse(notation);
         expect(parsed).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
             break1Start: {'@class': 'ExonicPosition', pos: 1},
             break2Start: {'@class': 'ExonicPosition', pos: 2},
-            type: EVENT_SUBTYPE.FUSION
+            type: EVENT_SUBTYPE.FUSION,
+            reference1: 'FEATURE1',
+            reference2: 'FEATURE2',
+            multiFeature: true
         });
+        expect(parsed.toString()).to.equal(notation);
     });
     it('parses genomic translocation', () => {
-        const parsed = parseMultiFeature('trans(g.1,g.2)');
+        const notation = '(FEATURE1,FEATURE2):trans(g.1,g.2)';
+        const parsed = parse(notation);
         expect(parsed).to.eql({
             break1Repr: 'g.1',
             break2Repr: 'g.2',
             break1Start: {'@class': 'GenomicPosition', pos: 1},
             break2Start: {'@class': 'GenomicPosition', pos: 2},
-            type: EVENT_SUBTYPE.TRANS
+            type: EVENT_SUBTYPE.TRANS,
+            reference1: 'FEATURE1',
+            reference2: 'FEATURE2',
+            multiFeature: true
         });
+        expect(parsed.toString()).to.equal(notation);
     });
     it('parses untemplated sequence', () => {
-        const parsed = parseMultiFeature('fusion(e.1,e.2)ATGC');
+        const notation = '(FEATURE1,FEATURE2):fusion(e.1,e.2)ATGC';
+        const parsed = parse(notation);
         expect(parsed).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
@@ -123,39 +134,54 @@ describe('parseMultiFeature', () => {
             break2Start: {'@class': 'ExonicPosition', pos: 2},
             type: EVENT_SUBTYPE.FUSION,
             untemplatedSeq: 'ATGC',
-            untemplatedSeqSize: 4
+            untemplatedSeqSize: 4,
+            reference1: 'FEATURE1',
+            reference2: 'FEATURE2',
+            multiFeature: true
         });
+        expect(parsed.toString()).to.equal(notation);
     });
     it('parses non-specific untemplated sequence', () => {
-        const parsed = parseMultiFeature('fusion(e.1,e.2)5');
+        const notation = '(FEATURE1,FEATURE2):fusion(e.1,e.2)5';
+        const parsed = parse(notation);
         expect(parsed).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
             break1Start: {'@class': 'ExonicPosition', pos: 1},
             break2Start: {'@class': 'ExonicPosition', pos: 2},
             type: EVENT_SUBTYPE.FUSION,
-            untemplatedSeqSize: 5
+            untemplatedSeqSize: 5,
+            reference1: 'FEATURE1',
+            reference2: 'FEATURE2',
+            multiFeature: true
         });
+        expect(parsed.toString()).to.equal(notation);
     });
     it('parses breakpoint ranges', () => {
-        const parsed = parseMultiFeature('fusion(e.1_17,e.20_28)');
+        const notation = '(FEATURE1,FEATURE2):fusion(e.1_17,e.20_28)';
+        const parsed = parse(notation);
         expect(parsed).to.eql({
-            break1Repr: 'e.(1_17)',
-            break2Repr: 'e.(20_28)',
+            break1Repr: 'e.1_17',
+            break2Repr: 'e.20_28',
             break1Start: {'@class': 'ExonicPosition', pos: 1},
             break1End: {'@class': 'ExonicPosition', pos: 17},
             break2Start: {'@class': 'ExonicPosition', pos: 20},
             break2End: {'@class': 'ExonicPosition', pos: 28},
-            type: EVENT_SUBTYPE.FUSION
+            type: EVENT_SUBTYPE.FUSION,
+            reference1: 'FEATURE1',
+            reference2: 'FEATURE2',
+            multiFeature: true
         });
+        expect(parsed.toString()).to.equal(notation);
     });
 });
 
 
-describe('parseContinuous', () => {
+describe('continuous notation', () => {
     describe('DNA variant:', () => {
         it('deletion single bp', () => {
-            const result = parseContinuous('g.3del');
+            const notation = 'FEATURE:g.3del';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {
@@ -163,24 +189,32 @@ describe('parseContinuous', () => {
                     pos: 3
                 },
                 break1Repr: 'g.3',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('deletion spans a range', () => {
-            const result = parseContinuous('g.3_5del');
+            const notation = 'FEATURE:g.3_5del';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {'@class': 'GenomicPosition', pos: 3},
                 break2Start: {'@class': 'GenomicPosition', pos: 5},
                 break1Repr: 'g.3',
                 break2Repr: 'g.5',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('deletion has a reference sequence', () => {
-            const result = parseContinuous('g.3_5delTAA');
+            const notation = 'FEATURE:g.3_5delTAA';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {'@class': 'GenomicPosition', pos: 3},
@@ -188,12 +222,16 @@ describe('parseContinuous', () => {
                 break1Repr: 'g.3',
                 break2Repr: 'g.5',
                 refSeq: 'TAA',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication spans a range uncertain start', () => {
-            const result = parseContinuous('g.(3_4)_5dup');
+            const notation = 'FEATURE:g.(3_4)_5dup';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'GenomicPosition', pos: 3},
@@ -201,12 +239,16 @@ describe('parseContinuous', () => {
                 break2Start: {'@class': 'GenomicPosition', pos: 5},
                 break1Repr: 'g.(3_4)',
                 break2Repr: 'g.5',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication spans a range uncertain end', () => {
-            const result = parseContinuous('g.3_(5_7)dup');
+            const notation = 'FEATURE:g.3_(5_7)dup';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'GenomicPosition', pos: 3},
@@ -214,12 +256,16 @@ describe('parseContinuous', () => {
                 break2End: {'@class': 'GenomicPosition', pos: 7},
                 break1Repr: 'g.3',
                 break2Repr: 'g.(5_7)',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication spans a range uncertain start and end', () => {
-            const result = parseContinuous('g.(1_3)_(5_7)dup');
+            const notation = 'FEATURE:g.(1_3)_(5_7)dup';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'GenomicPosition', pos: 1},
@@ -228,12 +274,16 @@ describe('parseContinuous', () => {
                 break2End: {'@class': 'GenomicPosition', pos: 7},
                 break1Repr: 'g.(1_3)',
                 break2Repr: 'g.(5_7)',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication has a reference sequence', () => {
-            const result = parseContinuous('g.3_5dupTAA');
+            const notation = 'FEATURE:g.3_5dupTAA';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'GenomicPosition', pos: 3},
@@ -243,12 +293,16 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'TAA',
                 refSeq: 'TAA',
                 untemplatedSeqSize: 3,
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('basic substitution', () => {
-            const result = parseContinuous('g.4A>T');
+            const notation = 'FEATURE:g.4A>T';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'GenomicPosition', pos: 4},
@@ -256,12 +310,16 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'T',
                 refSeq: 'A',
                 untemplatedSeqSize: 1,
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('substitution with alt seq options', () => {
-            const result = parseContinuous('g.4A>T^C');
+            const notation = 'FEATURE:g.4A>T^C';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'GenomicPosition', pos: 4},
@@ -269,12 +327,16 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'T^C',
                 refSeq: 'A',
                 untemplatedSeqSize: 1,
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('substitution with uncertainty', () => {
-            const result = parseContinuous('g.(4_7)A>T');
+            const notation = 'FEATURE:g.(4_7)A>T';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'GenomicPosition', pos: 4},
@@ -283,12 +345,16 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'T',
                 refSeq: 'A',
                 untemplatedSeqSize: 1,
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('indel spans a range uncertain start and end ref and alt specified', () => {
-            const result = parseContinuous('g.(1_3)_(5_7)delTAAinsACG');
+            const notation = 'FEATURE:g.(1_3)_(5_7)delTAAinsACG';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
                 break1Start: {'@class': 'GenomicPosition', pos: 1},
@@ -300,62 +366,82 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'ACG',
                 refSeq: 'TAA',
                 untemplatedSeqSize: 3,
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('indel ref specified', () => {
-            const result = parseContinuous('g.10delTins');
+            const notation = 'FEATURE:g.10delTins';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
                 break1Start: {'@class': 'GenomicPosition', pos: 10},
                 break1Repr: 'g.10',
                 refSeq: 'T',
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('indel alt specified', () => {
-            const result = parseContinuous('g.10delinsACC');
+            const notation = 'FEATURE:g.10delinsACC';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
                 break1Start: {'@class': 'GenomicPosition', pos: 10},
                 break1Repr: 'g.10',
                 untemplatedSeq: 'ACC',
                 untemplatedSeqSize: 3,
-                prefix: 'g'
+                prefix: 'g',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('errors on protein style missense', () => {
-            expect(() => { parseContinuous('g.15T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:g.15T'); }).to.throw(ParsingError);
         });
     });
     describe('cds variant:', () => {
         it('deletion single bp', () => {
-            const result = parseContinuous('c.3+1del');
+            const notation = 'FEATURE:c.3+1del';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
                 break1Repr: 'c.3+1',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('deletion spans a range', () => {
-            const result = parseContinuous('c.3+1_5-2del');
+            const notation = 'FEATURE:c.3+1_5-2del';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
                 break2Start: {'@class': 'CdsPosition', pos: 5, offset: -2},
                 break1Repr: 'c.3+1',
                 break2Repr: 'c.5-2',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('deletion has a reference sequence', () => {
-            const result = parseContinuous('c.3_5delTAA');
+            const notation = 'FEATURE:c.3_5delTAA';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
@@ -363,12 +449,16 @@ describe('parseContinuous', () => {
                 break1Repr: 'c.3',
                 break2Repr: 'c.5',
                 refSeq: 'TAA',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication spans a range uncertain start', () => {
-            const result = parseContinuous('c.(3+1_4-1)_10dup');
+            const notation = 'FEATURE:c.(3+1_4-1)_10dup';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
@@ -376,12 +466,16 @@ describe('parseContinuous', () => {
                 break2Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
                 break1Repr: 'c.(3+1_4-1)',
                 break2Repr: 'c.10',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication spans a range uncertain end', () => {
-            const result = parseContinuous('c.3_(5+1_55-1)dup');
+            const notation = 'FEATURE:c.3_(5+1_55-1)dup';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
@@ -389,12 +483,16 @@ describe('parseContinuous', () => {
                 break2End: {'@class': 'CdsPosition', pos: 55, offset: -1},
                 break1Repr: 'c.3',
                 break2Repr: 'c.(5+1_55-1)',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication spans a range uncertain start and end', () => {
-            const result = parseContinuous('c.(1_3)_(5_7)dup');
+            const notation = 'FEATURE:c.(1_3)_(5_7)dup';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CdsPosition', pos: 1, offset: 0},
@@ -403,12 +501,16 @@ describe('parseContinuous', () => {
                 break2End: {'@class': 'CdsPosition', pos: 7, offset: 0},
                 break1Repr: 'c.(1_3)',
                 break2Repr: 'c.(5_7)',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('duplication has a reference sequence', () => {
-            const result = parseContinuous('c.3_5dupTAA');
+            const notation = 'FEATURE:c.3_5dupTAA';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
@@ -418,12 +520,16 @@ describe('parseContinuous', () => {
                 refSeq: 'TAA',
                 untemplatedSeq: 'TAA',
                 untemplatedSeqSize: 3,
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('basic substitution', () => {
-            const result = parseContinuous('c.4A>T');
+            const notation = 'FEATURE:c.4A>T';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'CdsPosition', pos: 4, offset: 0},
@@ -431,12 +537,16 @@ describe('parseContinuous', () => {
                 refSeq: 'A',
                 untemplatedSeq: 'T',
                 untemplatedSeqSize: 1,
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('substitution with uncertainty', () => {
-            const result = parseContinuous('c.(4_7)A>T');
+            const notation = 'FEATURE:c.(4_7)A>T';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'CdsPosition', pos: 4, offset: 0},
@@ -445,12 +555,16 @@ describe('parseContinuous', () => {
                 refSeq: 'A',
                 untemplatedSeq: 'T',
                 untemplatedSeqSize: 1,
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('indel spans a range uncertain start and end ref and alt specified', () => {
-            const result = parseContinuous('c.(1_3)_(5_7)delTAAinsACG');
+            const notation = 'FEATURE:c.(1_3)_(5_7)delTAAinsACG';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
                 break1Start: {'@class': 'CdsPosition', pos: 1, offset: 0},
@@ -462,35 +576,47 @@ describe('parseContinuous', () => {
                 refSeq: 'TAA',
                 untemplatedSeq: 'ACG',
                 untemplatedSeqSize: 3,
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('indel ref specified', () => {
-            const result = parseContinuous('c.10delTins');
+            const notation = 'FEATURE:c.10delTins';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
                 break1Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
                 break1Repr: 'c.10',
                 refSeq: 'T',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('indel alt specified', () => {
-            const result = parseContinuous('c.10delinsACC');
+            const notation = 'FEATURE:c.10delinsACC';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
                 break1Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
                 break1Repr: 'c.10',
                 untemplatedSeq: 'ACC',
                 untemplatedSeqSize: 3,
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).eql(exp);
+            expect(result.toString()).to.equal(notation);
         });
         it('substitution before the coding sequence', () => {
-            const result = parseContinuous('c.-124C>T');
+            const notation = 'FEATURE:c.-124C>T';
+            const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'CdsPosition', pos: 1, offset: -124},
@@ -498,48 +624,65 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'T',
                 untemplatedSeqSize: 1,
                 refSeq: 'C',
-                prefix: 'c'
+                prefix: 'c',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
+            expect(result.toString()).to.equal('FEATURE:c.1-124C>T');
         });
     });
     describe('exon variants', () => {
         it('errors because exon cannot have substitution type', () => {
-            expect(() => { parseContinuous('e.1C>T'); }).to.throw(ParsingError);
-            expect(() => { parseContinuous('e.C1T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:e.1C>T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:e.C1T'); }).to.throw(ParsingError);
         });
         it('duplication single exon', () => {
-            const result = parseContinuous('e.1dup');
+            const notation = 'FEATURE:e.1dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'ExonicPosition', pos: 1},
                 break1Repr: 'e.1',
-                prefix: 'e'
+                prefix: 'e',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('duplication single exon with uncertainty', () => {
-            const result = parseContinuous('e.(1_2)dup');
+            const notation = 'FEATURE:e.(1_2)dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'ExonicPosition', pos: 1},
                 break1End: {'@class': 'ExonicPosition', pos: 2},
                 break1Repr: 'e.(1_2)',
-                prefix: 'e'
+                prefix: 'e',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('duplication of multiple exons', () => {
-            const result = parseContinuous('e.1_3dup');
+            const notation = 'FEATURE:e.1_3dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'ExonicPosition', pos: 1},
                 break2Start: {'@class': 'ExonicPosition', pos: 3},
                 break1Repr: 'e.1',
                 break2Repr: 'e.3',
-                prefix: 'e'
+                prefix: 'e',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('duplication of multiple exons with uncertainty', () => {
-            const result = parseContinuous('e.(1_2)_(3_4)dup');
+            const notation = 'FEATURE:e.(1_2)_(3_4)dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'ExonicPosition', pos: 1},
@@ -548,11 +691,15 @@ describe('parseContinuous', () => {
                 break2Start: {'@class': 'ExonicPosition', pos: 3},
                 break2End: {'@class': 'ExonicPosition', pos: 4},
                 break2Repr: 'e.(3_4)',
-                prefix: 'e'
+                prefix: 'e',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('duplication of multiple exons with uncertainty', () => {
-            const result = parseContinuous('e.(1_2)_4dup');
+            const notation = 'FEATURE:e.(1_2)_4dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'ExonicPosition', pos: 1},
@@ -560,11 +707,15 @@ describe('parseContinuous', () => {
                 break1Repr: 'e.(1_2)',
                 break2Start: {'@class': 'ExonicPosition', pos: 4},
                 break2Repr: 'e.4',
-                prefix: 'e'
+                prefix: 'e',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('duplication of multiple exons with uncertainty', () => {
-            const result = parseContinuous('e.2_(3_4)dup');
+            const notation = 'FEATURE:e.2_(3_4)dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'ExonicPosition', pos: 2},
@@ -572,33 +723,45 @@ describe('parseContinuous', () => {
                 break2Start: {'@class': 'ExonicPosition', pos: 3},
                 break2End: {'@class': 'ExonicPosition', pos: 4},
                 break2Repr: 'e.(3_4)',
-                prefix: 'e'
+                prefix: 'e',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
     });
     describe('protein variants', () => {
         it('splice site variant', () => {
-            const result = parse('p.W288spl');
+            const notation = 'FEATURE:p.W288spl';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result.type).to.equal('splice-site');
         });
         it('case insensitive frameshift', () => {
             // civic example
-            const result = parse('p.W288FS');
+            const notation = 'FEATURE:p.W288FS';
+            const result = parse(notation);
+            expect(result.toString()).to.equal('FEATURE:p.W288fs');
             expect(result.type).to.equal('frameshift');
         });
         it('lowercase substitution', () => {
-            const result = parse('p.d816n');
+            const notation = 'FEATURE:p.d816n';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result.untemplatedSeq).to.equal('n');
             expect(result.type).to.equal('substitution');
             expect(result.refSeq).to.equal('d');
         });
         it('substitution no alt', () => {
-            const result = parse('p.d816');
+            const notation = 'FEATURE:p.d816';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result.refSeq).to.equal('d');
             expect(result.type).to.equal('substitution');
         });
         it('frameshift alt specified', () => {
-            const result = parseContinuous('p.R10Kfs');
+            const notation = 'FEATURE:p.R10Kfs';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
@@ -606,12 +769,16 @@ describe('parseContinuous', () => {
                 break1Repr: 'p.R10',
                 refSeq: 'R',
                 untemplatedSeqSize: 1,
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('frameshift alt specified and truncation point', () => {
-            const result = parseContinuous('p.R10Kfs*10');
+            const notation = 'FEATURE:p.R10Kfs*10';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
@@ -620,16 +787,20 @@ describe('parseContinuous', () => {
                 truncation: 10,
                 refSeq: 'R',
                 break1Repr: 'p.R10',
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('frameshift truncation conflict error', () => {
             expect(() => {
-                parseContinuous('p.R10*fs*10');
+                parse('FEATURE:p.R10*fs*10');
             }).to.throw('conflict');
         });
         it('frameshift set null on truncation point without position', () => {
-            const result = parseContinuous('p.R10Kfs*');
+            const notation = 'FEATURE:p.R10Kfs*';
+            const result = parse(notation);
+            expect(result.toString()).to.equal('FEATURE:p.R10Kfs');
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
@@ -638,11 +809,15 @@ describe('parseContinuous', () => {
                 truncation: null,
                 refSeq: 'R',
                 break1Repr: 'p.R10',
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('frameshift immeadiate truncation', () => {
-            const result = parseContinuous('p.R10*fs');
+            const notation = 'FEATURE:p.R10*fs';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
@@ -651,49 +826,65 @@ describe('parseContinuous', () => {
                 truncation: 1,
                 refSeq: 'R',
                 break1Repr: 'p.R10',
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             });
         });
         it('frameshift errors on range', () => {
-            expect(() => { const result = parseContinuous('p.R10_M11Kfs*'); console.log(result); }).to.throw(ParsingError);
+            expect(() => { const result = parse('FEATURE:p.R10_M11Kfs*'); console.log(result); }).to.throw(ParsingError);
         });
         it('frameshift allows uncertain range', () => {
-            const result = parseContinuous('p.(R10_M11)fs*10');
+            const notation = 'FEATURE:p.(R10_M11)fs*10';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
                 break1End: {'@class': 'ProteinPosition', pos: 11, refAA: 'M'},
                 break1Repr: 'p.(R10_M11)',
                 truncation: 10,
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('frameshift no alt but truncation point specified', () => {
-            const result = parseContinuous('p.R10fs*10');
+            const notation = 'FEATURE:p.R10fs*10';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
                 break1Repr: 'p.R10',
                 truncation: 10,
                 refSeq: 'R',
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('frameshift no alt or truncation point', () => {
-            const result = parseContinuous('p.R10fs');
+            const notation = 'FEATURE:p.R10fs';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
                 break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
                 break1Repr: 'p.R10',
                 refSeq: 'R',
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('missense mutation', () => {
-            const result = parseContinuous('p.F12G');
+            const notation = 'FEATURE:p.F12G';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
                 break1Start: {'@class': 'ProteinPosition', pos: 12, refAA: 'F'},
@@ -701,65 +892,81 @@ describe('parseContinuous', () => {
                 untemplatedSeq: 'G',
                 untemplatedSeqSize: 1,
                 refSeq: 'F',
-                prefix: 'p'
+                prefix: 'p',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('errors on genomic style missense', () => {
-            expect(() => { parseContinuous('p.G12G>T'); }).to.throw(ParsingError);
+            expect(() => { parse('p.G12G>T'); }).to.throw(ParsingError);
         });
     });
     describe('cytoband variants', () => {
         it('errors because cytoband variant cannot have ins type', () => {
-            expect(() => { parseContinuous('y.p12.1ins'); }).to.throw(ParsingError);
-            expect(() => { parseContinuous('y.p12.1_p13ins'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.p12.1ins'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.p12.1_p13ins'); }).to.throw(ParsingError);
         });
         it('errors because cytoband variant cannot have delins type', () => {
-            expect(() => { parseContinuous('y.p12.1delins'); }).to.throw(ParsingError);
-            expect(() => { parseContinuous('y.p12.1_p13delins'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.p12.1delins'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.p12.1_p13delins'); }).to.throw(ParsingError);
         });
         it('errors because cytoband variant cannot have > type', () => {
-            expect(() => { parseContinuous('y.p12.1G>T'); }).to.throw(ParsingError);
-            expect(() => { parseContinuous('y.Gp12.1T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.p12.1G>T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.Gp12.1T'); }).to.throw(ParsingError);
         });
         it('errors because cytoband variant cannot have fs type', () => {
-            expect(() => { parseContinuous('y.p12.1fs'); }).to.throw(ParsingError);
-            expect(() => { parseContinuous('y.(p12.1_p13)fs'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.p12.1fs'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:y.(p12.1_p13)fs'); }).to.throw(ParsingError);
         });
         it('duplication of whole p arm', () => {
-            const result = parseContinuous('y.pdup');
+            const notation = 'FEATURE:y.pdup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CytobandPosition', arm: 'p'},
                 break1Repr: 'y.p',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication of range on p major band', () => {
-            const result = parseContinuous('y.p11dup');
+            const notation = 'FEATURE:y.p11dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CytobandPosition', arm: 'p', majorBand: 11},
                 break1Repr: 'y.p11',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication of range on p minor band', () => {
-            const result = parseContinuous('y.p11.1dup');
+            const notation = 'FEATURE:y.p11.1dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {
                     '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
                 },
                 break1Repr: 'y.p11.1',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication of range on p arm', () => {
-            const result = parseContinuous('y.p11.1_p13.3dup');
+            const notation = 'FEATURE:y.p11.1_p13.3dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {
@@ -770,12 +977,16 @@ describe('parseContinuous', () => {
                     '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
                 },
                 break2Repr: 'y.p13.3',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication on p arm uncertain positions', () => {
-            const result = parseContinuous('y.(p11.1_p11.2)_(p13.4_p14)dup');
+            const notation = 'FEATURE:y.(p11.1_p11.2)_(p13.4_p14)dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {
@@ -790,12 +1001,16 @@ describe('parseContinuous', () => {
                 },
                 break2End: {'@class': 'CytobandPosition', arm: 'p', majorBand: 14},
                 break2Repr: 'y.(p13.4_p14)',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication on p arm uncertain start', () => {
-            const result = parseContinuous('y.(p11.1_p11.2)_p13.3dup');
+            const notation = 'FEATURE:y.(p11.1_p11.2)_p13.3dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {
@@ -809,12 +1024,16 @@ describe('parseContinuous', () => {
                     '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
                 },
                 break2Repr: 'y.p13.3',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication on p arm uncertain end', () => {
-            const result = parseContinuous('y.p13.3_(p15.1_p15.2)dup');
+            const notation = 'FEATURE:y.p13.3_(p15.1_p15.2)dup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {
@@ -828,32 +1047,44 @@ describe('parseContinuous', () => {
                     '@class': 'CytobandPosition', arm: 'p', majorBand: 15, minorBand: 2
                 },
                 break2Repr: 'y.(p15.1_p15.2)',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('duplication of whole q arm', () => {
-            const result = parseContinuous('y.qdup');
+            const notation = 'FEATURE:y.qdup';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
                 break1Start: {'@class': 'CytobandPosition', arm: 'q'},
                 break1Repr: 'y.q',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('deletion of whole p arm', () => {
-            const result = parseContinuous('y.pdel');
+            const notation = 'FEATURE:y.pdel';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
                 break1Start: {'@class': 'CytobandPosition', arm: 'p'},
                 break1Repr: 'y.p',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
         it('inversion of a range on the p arm', () => {
-            const result = parseContinuous('y.p11.1_p13.3inv');
+            const notation = 'FEATURE:y.p11.1_p13.3inv';
+            const result = parse(notation);
+            expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INV,
                 break1Start: {
@@ -864,18 +1095,20 @@ describe('parseContinuous', () => {
                 },
                 break1Repr: 'y.p11.1',
                 break2Repr: 'y.p13.3',
-                prefix: 'y'
+                prefix: 'y',
+                reference1: 'FEATURE',
+                multiFeature: false
             };
             expect(result).to.eql(exp);
         });
     });
     it('error on short string', () => {
-        expect(() => { parseContinuous(''); }).to.throw(ParsingError);
+        expect(() => { parse(''); }).to.throw(ParsingError);
     });
     it('errors on bad prefix', () => {
-        expect(() => { parseContinuous('f.G12D'); }).to.throw(ParsingError);
+        expect(() => { parse('FEATURE:f.G12D'); }).to.throw(ParsingError);
     });
     it('errors on missing . delimiter after prefix', () => {
-        expect(() => { parseContinuous('pG12D'); }).to.throw(ParsingError);
+        expect(() => { parse('FEATURE:pG12D'); }).to.throw(ParsingError);
     });
 });
