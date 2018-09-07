@@ -193,5 +193,5 @@ const parsePosition = (prefix, string) => {
 };
 
 module.exports = {
-    parsePosition, breakRepr, CYTOBAND_PATT, CDS_PATT, PROTEIN_PATT, PREFIX_CLASS
+    parsePosition, breakRepr, CYTOBAND_PATT, CDS_PATT, PROTEIN_PATT, CLASS_PREFIX
 };
