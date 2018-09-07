@@ -1,17 +1,18 @@
 {
   "name": "knowledgebase-parser",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A package for parsing and recreating variant notation",
   "main": "./app/index.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "nyc --reporter=html --reporter=text --reporter=clover mocha -R mocha-multi-reporters --reporter-options configFile=config/coverage.json --recursive test"
+    "test": "nyc --reporter=html --reporter=text --reporter=clover mocha -R mocha-multi-reporters --reporter-options configFile=config/coverage.json --recursive test",
+    "jsdoc": "jsdoc -r app -R README.md -d jsdoc --package package.json -c config/jsdoc.config.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://creisle@svn.bcgsc.ca/bitbucket/scm/vdb/knowledgebase_parser.git"
+    "url": "ssh://git@svn.bcgsc.ca:7999/vdb/knowledgebase_parser.git"
   },
   "author": "",
   "license": "ISC",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "chai": "^4.1.2",
+    "docdash": "^1.0.0",
     "jsdoc": "^3.5.5",
     "mocha": "^5.2.0",
     "mocha-bamboo-reporter": "^1.1.1",
