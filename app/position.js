@@ -187,7 +187,7 @@ const parsePosition = (prefix, string) => {
             return result;
         }
         default: {
-            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string});
+            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix'});
         }
     }
 };

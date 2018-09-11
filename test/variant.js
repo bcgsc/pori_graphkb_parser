@@ -634,8 +634,14 @@ describe('continuous notation', () => {
     });
     describe('exon variants', () => {
         it('errors because exon cannot have substitution type', () => {
-            expect(() => { parse('FEATURE:e.1C>T'); }).to.throw(ParsingError);
-            expect(() => { parse('FEATURE:e.C1T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:e.1C>T'); }).to.throw(ParsingError)
+                .that.has.property('content')
+                .that.has.property('violatedAttr', 'type');
+        });
+        it('errors because exon cannot have protein-style substitution type', () => {
+            expect(() => { parse('FEATURE:e.C1T'); }).to.throw(ParsingError)
+                .that.has.property('content')
+                .that.has.property('violatedAttr', 'break1');
         });
         it('duplication single exon', () => {
             const notation = 'FEATURE:e.1dup';
@@ -795,7 +801,9 @@ describe('continuous notation', () => {
         it('frameshift truncation conflict error', () => {
             expect(() => {
                 parse('FEATURE:p.R10*fs*10');
-            }).to.throw('conflict');
+            }).to.throw('conflict')
+                .that.has.property('content')
+                .that.has.property('violatedAttr', 'truncation');
         });
         it('frameshift set null on truncation point without position', () => {
             const notation = 'FEATURE:p.R10Kfs*';

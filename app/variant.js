@@ -173,13 +173,15 @@ const getPrefix = (string) => {
         throw new ParsingError({
             message: `'${prefix}' is not an accepted prefix`,
             expected: expectedPrefix,
-            input: string
+            input: string,
+            violatedAttr: 'prefix'
         });
     }
     if (string.length < 2 || string[1] !== '.') {
         throw new ParsingError({
             message: 'Missing \'.\' separator after prefix',
-            input: string
+            input: string,
+            violatedAttr: 'punctuation'
         });
     }
     return prefix;
@@ -201,9 +203,9 @@ const parse = (string) => {
     }
     let split = string.split(':');
     if (split.length > 2) {
-        throw new ParsingError({message: 'Variant notation must contain a single colon', input: string});
+        throw new ParsingError({message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation'});
     } else if (split.length === 1) {
-        throw new ParsingError({message: 'Feature name not specified. Feature name is required'})
+        throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'})
     }
     let result = {};
     const [featureString, variantString] = split;
@@ -214,19 +216,22 @@ const parse = (string) => {
                 throw new ParsingError({
                     message: 'Multi-feature notation must contain two reference features separated by a comma',
                     parsed: {featureString, variantString},
-                    input: string
+                    input: string,
+                    violatedAttr: 'reference2'
                 });
             } else if (!featureString.startsWith('(')) {
                 throw new ParsingError({
                     message: 'Missing opening parentheses surrounding the reference features',
                     parsed: {featureString, variantString},
-                    input: string
+                    input: string,
+                    violatedAttr: 'punctuation'
                 });
             } else if (!featureString.endsWith(')')) {
                 throw new ParsingError({
                     message: 'Missing closing parentheses surrounding the reference features',
                     parsed: {featureString, variantString},
-                    input: string
+                    input: string,
+                    violatedAttr: 'punctuation'
                 });
             }
             const features = featureString.slice(1, featureString.length - 1).split(',');
@@ -281,18 +286,19 @@ const parseMultiFeature = (string) => {
     const parsed = {multiFeature: true};
 
     if (string.indexOf('(') < 0) {
-        throw new ParsingError({message: 'Missing opening parentheses', input: string});
+        throw new ParsingError({message: 'Missing opening parentheses', input: string, violatedAttr: 'punctuation'});
     }
     parsed.type = string.slice(0, string.indexOf('('));
     if (parsed.type.length === 0) {
         throw new ParsingError({
             message: 'Variant type was not specified. It is expected to immediately follow the coordinate prefix',
             parsed,
-            input: string
+            input: string,
+            violatedAttr: 'type'
         });
     }
     if (!NOTATION_TO_SUBTYPE[parsed.type]) {
-        throw new ParsingError({message: 'Variant type not recognized', parsed, input: string});
+        throw new ParsingError({message: 'Variant type not recognized', parsed, input: string, violatedAttr: 'type'});
     }
     if (!['fusion', 'trans', 'itrans'].includes(parsed.type)) {
         throw new ParsingError({
@@ -303,7 +309,7 @@ const parseMultiFeature = (string) => {
     }
     parsed.type = NOTATION_TO_SUBTYPE[parsed.type];
     if (string.indexOf(')') < 0) {
-        throw new ParsingError({message: 'Missing closing parentheses', parsed, input: string});
+        throw new ParsingError({message: 'Missing closing parentheses', parsed, input: string, violatedAttr: 'punctuation'});
     }
     const untemplatedSeq = string.slice(string.indexOf(')') + 1);
     if (untemplatedSeq.length > 0) {
@@ -316,9 +322,19 @@ const parseMultiFeature = (string) => {
     }
     const positions = string.slice(string.indexOf('(') + 1, string.indexOf(')')).split(',');
     if (positions.length > 2) {
-        throw new ParsingError({message: 'Single comma expected to split breakpoints/ranges', parsed, input: string});
+        throw new ParsingError({
+            message: 'Single comma expected to split breakpoints/ranges',
+            parsed,
+            input: string,
+            violatedAttr: 'punctuation'
+        });
     } else if (positions.length < 2) {
-        throw new ParsingError({message: 'Missing comma separator between breakpoints/ranges', parsed, input: string});
+        throw new ParsingError({
+            message: 'Missing comma separator between breakpoints/ranges',
+            parsed,
+            input: string,
+            violatedAttr: 'punctuation'
+        });
     }
     let prefix;
     try {
@@ -336,7 +352,8 @@ const parseMultiFeature = (string) => {
             message: 'Error in parsing the first breakpoint position/range',
             input: string,
             parsed,
-            subParserError: err
+            subParserError: err,
+            violatedAttr: 'break1'
         });
     }
     try {
@@ -354,7 +371,8 @@ const parseMultiFeature = (string) => {
             message: 'Error in parsing the second breakpoint position/range',
             input: string,
             parsed,
-            subParserError: err
+            subParserError: err,
+            violatedAttr: 'break2'
         });
     }
     return parsed;
@@ -424,7 +442,13 @@ const parseContinuous = (inputString) => {
     const result = {prefix};
     string = string.slice(prefix.length + 1);
     // get the first position
-    const break1 = extractPositions(prefix, string);
+    let break1;
+    try {
+        break1 = extractPositions(prefix, string);
+    } catch (err) {
+        err.content.violatedAttr = 'break1';
+        throw err;
+    }
     string = string.slice(break1.input.length);
     result.break1Start = break1.start;
     if (break1.end) {
@@ -435,7 +459,12 @@ const parseContinuous = (inputString) => {
     if (string.startsWith('_')) {
         // expect a range. Extract more positions
         string = string.slice(1);
-        break2 = extractPositions(prefix, string);
+        try {
+            break2 = extractPositions(prefix, string);
+        } catch (err) {
+            err.content.violatedAttr = 'break2';
+            throw err;
+        }
         result.break2Start = break2.start;
         if (break2.end) {
             result.break2End = break2.end;
@@ -473,7 +502,10 @@ const parseContinuous = (inputString) => {
         }
     } else if (match = /^[A-Z?*](\^[A-Z?*])*$/i.exec(tail) || tail.length === 0) {
         if (prefix !== 'p') {
-            throw new ParsingError('only protein notation does not use ">" for a substitution');
+            throw new ParsingError({
+                message: 'only protein notation does not use ">" for a substitution',
+                violatedAttr: 'break1'
+            });
         }
         result.type = '>';
         if (tail.length > 0 && tail !== '?') {
@@ -481,15 +513,24 @@ const parseContinuous = (inputString) => {
         }
     } else if (match = /^([A-Z?])>([A-Z?](\^[A-Z?])*)$/i.exec(tail)) {
         if (prefix === 'p') {
-            throw new ParsingError('protein notation does not use ">" for a substitution');
+            throw new ParsingError({
+                message: 'protein notation does not use ">" for a substitution',
+                violatedAttr: 'type'
+            });
         } else if (prefix === 'e') {
-            throw new ParsingError('Cannot defined substitutions at the exon coordinate level');
+            throw new ParsingError({
+                message: 'Cannot defined substitutions at the exon coordinate level',
+                violatedAttr: 'type'
+            });
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
     } else if (match = /^([A-Z?*])?fs((\*)(\d+)?)?$/i.exec(tail)) {
         if (prefix !== 'p') {
-            throw new ParsingError('only protein notation can notate frameshift variants');
+            throw new ParsingError({
+                message: 'only protein notation can notate frameshift variants',
+                violatedAttr: 'type'
+            });
         }
         result.type = 'fs';
         if (match[1] !== undefined && match[1] !== '?') {
@@ -503,14 +544,20 @@ const parseContinuous = (inputString) => {
             } else {
                 result.truncation = parseInt(match[4], 10);
                 if (match[1] === '*' && result.truncation !== 1) {
-                    throw new ParsingError('invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence');
+                    throw new ParsingError({
+                        message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
+                        violatedAttr: 'truncation'
+                    });
                 }
             }
         } else if (match[1] === '*') {
             result.truncation = 1;
         }
         if (result.break2Start !== undefined) {
-            throw new ParsingError('frameshifts cannot span a range');
+            throw new ParsingError({
+                message: 'frameshifts cannot span a range',
+                violatedAttr: 'break2'
+            });
         }
     } else if (tail.toLowerCase() === 'spl') {
         result.type = 'spl';
@@ -518,7 +565,10 @@ const parseContinuous = (inputString) => {
         result.type = tail;
     }
     if (!NOTATION_TO_SUBTYPE[result.type]) {
-        throw new ParsingError(`unsupported event type: '${result.type}'`);
+        throw new ParsingError({
+            message: `unsupported event type: '${result.type}'`,
+            violatedAttr: 'type'
+        });
     }
     result.type = NOTATION_TO_SUBTYPE[result.type];
     if (result.untemplatedSeq && result.untemplatedSeqSize === undefined && result.untemplatedSeq !== '') {
@@ -533,8 +583,16 @@ const parseContinuous = (inputString) => {
     }
     // check for innapropriate types
     if (prefix === 'y') {
-        if (result.refSeq || result.untemplatedSeq) {
-            throw new ParsingError('cannot define sequence elements at the cytoband level');
+        if (result.refSeq) {
+            throw new ParsingError({
+                message: 'cannot define sequence elements at the cytoband level',
+                violatedAttr: 'refSeq'
+            });
+        } else if (result.untemplatedSeq) {
+            throw new ParsingError({
+                message: 'cannot define sequence elements at the cytoband level',
+                violatedAttr: 'untemplatedSeq'
+            });
         } else if (![
             EVENT_SUBTYPE.DUP,
             EVENT_SUBTYPE.DEL,
@@ -544,7 +602,8 @@ const parseContinuous = (inputString) => {
         ].includes(result.type)) {
             throw new ParsingError({
                 message: 'Invalid type for cytoband level event notation',
-                parsed: result
+                parsed: result,
+                violatedAttr: 'type'
             });
         }
     }
