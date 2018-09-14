@@ -92,7 +92,7 @@ const positionString = (inputBreakpoint) => {
  * @returns {string} the string representation of a breakpoint or breakpoint range including the prefix
  */
 const breakRepr = (prefix, start, end = null, multiFeature = false) => {
-    if (! prefix) {
+    if (!prefix) {
         prefix = CLASS_PREFIX[start['@class']];
     }
     if (end && multiFeature) { // range
@@ -187,11 +187,11 @@ const parsePosition = (prefix, string) => {
             return result;
         }
         default: {
-            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string});
+            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix'});
         }
     }
 };
 
 module.exports = {
-    parsePosition, breakRepr, CYTOBAND_PATT, CDS_PATT, PROTEIN_PATT, CLASS_PREFIX
+    parsePosition, breakRepr, CYTOBAND_PATT, CDS_PATT, PROTEIN_PATT, CLASS_PREFIX, PREFIX_CLASS
 };

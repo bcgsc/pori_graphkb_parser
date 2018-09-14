@@ -9,7 +9,60 @@ const {
 } = require('./../app/variant');
 
 
-describe(' multi-feature notation', () => {
+describe('VariantNotation', () => {
+    it('throws error on subsitituion with range', () => {
+        expect(() => {
+            new VariantNotation({
+                break1Start: {
+                    '@class': 'GenomicPosition',
+                    pos: 1
+                },
+                break2Start: {
+                    '@class': 'GenomicPosition',
+                    pos: 18
+                },
+                germline: false,
+                prefix: 'g',
+                reference1: 'a1bgas',
+                type: 'substitution'
+            });
+        }).to.throw('cannot be a range');
+    });
+    it('throws error on invalid type', () => {
+        expect(() => {
+            new VariantNotation({
+                break1Start: {
+                    '@class': 'GenomicPosition',
+                    pos: 1
+                },
+                germline: false,
+                prefix: 'g',
+                reference1: 'a1bgas',
+                type: 'bad_type'
+            });
+        }).to.throw('invalid type');
+    });
+    it('use ? for undefined elements', () => {
+        const variant = new VariantNotation({
+            break1Start: {
+                '@class': 'GenomicPosition',
+                pos: 1
+            },
+            break1End: {
+                '@class': 'GenomicPosition',
+                pos: 18
+            },
+            germline: false,
+            prefix: 'g',
+            reference1: 'a1bgas',
+            type: 'substitution'
+        });
+        expect(variant.toString()).to.equal('a1bgas:g.(1_18)?>?');
+    });
+});
+
+
+describe('multi-feature notation', () => {
     describe('throws an error on', () => {
         it('short string', () => {
             expect(() => {
@@ -634,8 +687,14 @@ describe('continuous notation', () => {
     });
     describe('exon variants', () => {
         it('errors because exon cannot have substitution type', () => {
-            expect(() => { parse('FEATURE:e.1C>T'); }).to.throw(ParsingError);
-            expect(() => { parse('FEATURE:e.C1T'); }).to.throw(ParsingError);
+            expect(() => { parse('FEATURE:e.1C>T'); }).to.throw(ParsingError)
+                .that.has.property('content')
+                .that.has.property('violatedAttr', 'type');
+        });
+        it('errors because exon cannot have protein-style substitution type', () => {
+            expect(() => { parse('FEATURE:e.C1T'); }).to.throw(ParsingError)
+                .that.has.property('content')
+                .that.has.property('violatedAttr', 'break1');
         });
         it('duplication single exon', () => {
             const notation = 'FEATURE:e.1dup';
@@ -795,7 +854,9 @@ describe('continuous notation', () => {
         it('frameshift truncation conflict error', () => {
             expect(() => {
                 parse('FEATURE:p.R10*fs*10');
-            }).to.throw('conflict');
+            }).to.throw('conflict')
+                .that.has.property('content')
+                .that.has.property('violatedAttr', 'truncation');
         });
         it('frameshift set null on truncation point without position', () => {
             const notation = 'FEATURE:p.R10Kfs*';
