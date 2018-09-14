@@ -34,6 +34,172 @@ const PROTEIN_PATT = /([A-Za-z?*])?(\d+|\?)/;
 const CYTOBAND_PATT = /[pq]((\d+|\?)(\.(\d+|\?))?)?/;
 
 
+class Position {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     */
+    constructor(opt) {
+        if (opt.prefix && opt['@class']) {
+            if (CLASS_PREFIX[opt['@class']] !== PREFIX_CLASS[opt.prefix]) {
+                throw new Error(
+                    `prefix (${opt.prefix}) does not match class ${opt['@class']}`
+                );
+            }
+            this.prefix = opt.prefix;
+            this['@class'] = opt['@class'];
+        } else if (opt.prefix) {
+            this.prefix;
+            if (PREFIX_CLASS[opt.prefix] === undefined) {
+                throw new Error(`unrecognized prefix: ${opt.prefix}`);
+            }
+        } else if (opt['@class']) {
+            this['@class'] = opt['@class'];
+            if (CLASS_PREFIX[opt['@class']] === undefined) {
+                throw new Error(`unrecognized @class: ${opt['@class']}`);
+            }
+        } else {
+            throw new Error('position requires prefix or @class');
+        }
+    }
+
+    toJSON() {
+        const json = {};
+        for (const [attr, val] in Object.entries(this)) {
+            if (val !== undefined) {
+                json[attr] = val;
+            }
+        }
+        return json;
+    }
+}
+
+
+class CytobandPosition extends Position {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {string} opt.arm the chromosome arm
+     * @param {?Number} opt.majorBand the major band number
+     * @param {?Number} opt.minorBand the minor band number
+     */
+    constructor(opt) {
+        super(opt);
+        this.arm = opt.arm;
+        if (this.arm !== 'p' && this.arm !== 'q') {
+            throw new Error({
+                message: `cytoband arm must be p or q (${this.arm})`,
+                violatedAttr: 'arm'
+            });
+        }
+        if (opt.majorBand) {
+            this.majorBand = Number(opt.majorBand);
+            if (isNaN(this.majorBand) || this.majorBand <= 0) {
+                throw new Error({
+                    message: `majorBand must be a positive integer (${opt.majorBand})`,
+                    violatedAttr: 'majorBand'
+                });
+            }
+        }
+        if (opt.minorBand) {
+            this.minorBand = Number(opt.minorBand);
+            if (isNaN(this.minorBand) || this.minorBand <= 0) {
+                throw new Error({
+                    message: `minorBand must be a positive integer (${opt.minorBand})`,
+                    violatedAttr: 'minorBand'
+                });
+            }
+        }
+    }
+}
+
+
+class BasicPosition extends Position {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {Number} opt.pos
+     */
+    constructor(opt) {
+        super(opt);
+        if (isNaN(this.pos) || this.pos <= 0) {
+            throw new Error({
+                message: `pos (${opt.pos}) must be a positive integer`,
+                violatedAttr: 'pos'
+            });
+        }
+        if (opt.pos) {
+            this.pos = Number(opt.pos);
+        }
+    }
+
+    toString() {
+        return `${this.pos || '?'}`;
+    }
+}
+
+
+class GenomicPosition extends BasicPosition {}
+
+
+class ExonPosition extends Position {}
+
+
+class CdsPosition extends BasicPosition {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {Number} opt.offset the offset from the nearest cds position
+     */
+    constructor(opt) {
+        super(opt);
+        if (this.offset !== undefined) {
+            this.offset = Number(opt.offset);
+            if (isNaN(this.offset)) {
+                throw new Error({
+                    message: `offset (${opt.offset}) must be an integer`,
+                    violatedAttr: 'offset'
+                });
+            }
+        }
+    }
+
+    toString() {
+        let offset = '';
+        if (this.offset) {
+            if (this.offset > 0) {
+                offset = '+';
+            }
+            offset = `${offset}${this.offset}`;
+        }
+        return `${super.toString(this)}${offset}`;
+    }
+}
+
+
+class ProteinPosition extends BasicPosition {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {Number} opt.pos
+     * @param {string} opt.refAA the reference amino acid
+     */
+    constructor(opt) {
+        super(opt);
+        this.refAA = opt.refAA;
+    }
+
+    toString() {
+        return `${this.refAA || '?'}${super.toString(this)}`;
+    }
+}
+
+
 /**
  * Given some input breakpoint, returns a string representation
  *
