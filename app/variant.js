@@ -84,7 +84,7 @@ class VariantNotation {
         if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
             throw new InputValidationError({
                 message: `invalid type ${this.type}`,
-                violatedAttr: this.type
+                violatedAttr: 'type'
             });
         }
 
@@ -112,6 +112,12 @@ class VariantNotation {
             }
         }
         this.break1Start = opt.break1Start;
+        if (!this.break1Start instanceof _position.Position) {
+            throw new InputValidationError({
+                message: 'break1Start is a required attribute',
+                violatedAttr: 'break1Start'
+            });
+        }
         this.reference1 = opt.reference1;
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
         for (const optAttr of [
