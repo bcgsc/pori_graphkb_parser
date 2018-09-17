@@ -1,10 +1,8 @@
 
 
 /** @module app/variant */
-const {ParsingError} = require('./error');
-const {
-    parsePosition, breakRepr, CDS_PATT, PROTEIN_PATT, CYTOBAND_PATT, PREFIX_CLASS, CLASS_PREFIX
-} = require('./position');
+const {ParsingError, InputValidationError} = require('./error');
+const _position = require('./position');
 
 const EVENT_SUBTYPE = {
     INS: 'insertion',
@@ -55,6 +53,17 @@ for (const [notation, subtype] of [
 class VariantNotation {
     /**
      * @param {Object} opt options
+     * @param {Position} opt.break1Start the start of the first breakpoint range
+     * @param {?Position} opt.break1End the end of the first breakpoint range
+     * @param {?Position} opt.break2Start the start of the second breakpoint range
+     * @param {?Position} opt.break2End the end of the second breakpoint range
+     * @param {?string} opt.untemplatedSeq untemplated sequence
+     * @param {?Number} opt.untemplatedSeqSize the length of the untemplatedSeq
+     * @param {string} opt.reference1 the first reference feature name
+     * @param {?string} opt.reference2 the second reference feature name
+     * @param {boolean} [opt.multiFeature=false] flag to indicate this should be a multiple feature variant
+     * @param {?Number} opt.truncation the new position of the next closest terminating AA
+     * @param {string} opt.type the event type
      */
     constructor(opt) {
         if (opt.untemplatedSeq !== undefined) {
@@ -63,7 +72,7 @@ class VariantNotation {
         if (opt.untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = opt.untemplatedSeqSize;
             if (isNaN(Number(this.untemplatedSeqSize))) {
-                throw new ParsingError({
+                throw new InputValidationError({
                     message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
                     violatedAttr: 'untemplatedSeqSize'
                 });
@@ -73,10 +82,34 @@ class VariantNotation {
         }
         this.type = opt.type;
         if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
-            throw new ParsingError({
+            throw new InputValidationError({
                 message: `invalid type ${this.type}`,
                 violatedAttr: this.type
             });
+        }
+
+        // cast positions
+        let defaultPosClass;
+        if (opt.prefix) {
+            this.prefix = opt.prefix;
+            if (this.prefix && _position.PREFIX_CLASS[this.prefix] === undefined) {
+                throw new InputValidationError({
+                    message: `unrecognized prefix: ${this.prefix}`,
+                    violatedAttr: 'prefix'
+                });
+            }
+            defaultPosClass = _position[_position.PREFIX_CLASS[this.prefix]];
+        }
+        for (const breakAttr of ['break1Start', 'break1End', 'break2Start', 'break2End']) {
+            if (opt[breakAttr] && !(opt[breakAttr] instanceof _position.Position)) {
+                let posCls = defaultPosClass;
+                if (opt[breakAttr]['@class']) {
+                    posCls = _position[opt[breakAttr]['@class']];
+                } else if (opt[breakAttr].prefix) {
+                    posCls = _position[_position.PREFIX_CLASS[opt[breakAttr].prefix]];
+                }
+                opt[breakAttr] = new posCls(opt[breakAttr]);
+            }
         }
         this.break1Start = opt.break1Start;
         this.reference1 = opt.reference1;
@@ -86,8 +119,7 @@ class VariantNotation {
             'break2Start',
             'break2End',
             'reference2',
-            'refSeq',
-            'prefix'
+            'refSeq'
         ]) {
             if (opt[optAttr] !== undefined) {
                 this[optAttr] = opt[optAttr];
@@ -96,7 +128,7 @@ class VariantNotation {
         if (opt.truncation === null) {
             this.truncation = null;
             if (![EVENT_SUBTYPE.FS, EVENT_SUBTYPE.EXT, EVENT_SUBTYPE.SPL].includes(this.type)) {
-                throw new ParsingError({
+                throw new InputValidationError({
                     message: `truncation cannot be specified with this event type (${this.type})`,
                     violatedAttr: 'type'
                 });
@@ -104,25 +136,20 @@ class VariantNotation {
         } else if (opt.truncation !== undefined) {
             this.truncation = Number(opt.truncation);
             if (![EVENT_SUBTYPE.FS, EVENT_SUBTYPE.EXT, EVENT_SUBTYPE.SPL].includes(this.type)) {
-                throw new ParsingError({
+                throw new InputValidationError({
                     message: `truncation cannot be specified with this event type (${this.type})`,
                     violatedAttr: 'type'
                 });
             }
             if (isNaN(this.truncation)) {
-                throw new ParsingError({
+                throw new InputValidationError({
                     message: 'truncation must be a number',
                     violatedAttr: 'truncation'
                 });
             }
         }
-        if (this.prefix && PREFIX_CLASS[this.prefix] === undefined) {
-            throw new ParsingError({
-                message: `unrecognized prefix: ${this.prefix}`,
-                violatedAttr: 'prefix'
-            });
-        }
-        this.break1Repr = breakRepr(this.prefix, this.break1Start, this.break1End, this.multiFeature);
+
+        this.break1Repr = _position.breakRepr(this.prefix, this.break1Start, this.break1End, this.multiFeature);
         if (this.break2Start) {
             if ([
                 EVENT_SUBTYPE.SUB,
@@ -135,7 +162,7 @@ class VariantNotation {
                     violatedAttr: 'break2'
                 });
             }
-            this.break2Repr = breakRepr(this.prefix, this.break2Start, this.break2End, this.multiFeature);
+            this.break2Repr = _position.breakRepr(this.prefix, this.break2Start, this.break2End, this.multiFeature);
         }
     }
 
@@ -217,7 +244,7 @@ class VariantNotation {
  */
 const getPrefix = (string) => {
     const [prefix] = string;
-    const expectedPrefix = ['g', 'c', 'e', 'y', 'p', 'i'];
+    const expectedPrefix = Object.keys(_position.PREFIX_CLASS);
     if (!expectedPrefix.includes(prefix)) {
         throw new ParsingError({
             message: `'${prefix}' is not an accepted prefix`,
@@ -395,10 +422,10 @@ const parseMultiFeature = (string) => {
         positions[0] = positions[0].slice(2);
         if (positions[0].includes('_')) {
             const splitPos = positions[0].indexOf('_');
-            parsed.break1Start = parsePosition(prefix, positions[0].slice(0, splitPos));
-            parsed.break1End = parsePosition(prefix, positions[0].slice(splitPos + 1));
+            parsed.break1Start = _position.parsePosition(prefix, positions[0].slice(0, splitPos));
+            parsed.break1End = _position.parsePosition(prefix, positions[0].slice(splitPos + 1));
         } else {
-            parsed.break1Start = parsePosition(prefix, positions[0]);
+            parsed.break1Start = _position.parsePosition(prefix, positions[0]);
         }
     } catch (err) {
         throw new ParsingError({
@@ -414,10 +441,10 @@ const parseMultiFeature = (string) => {
         positions[1] = positions[1].slice(2);
         if (positions[1].includes('_')) {
             const splitPos = positions[1].indexOf('_');
-            parsed.break2Start = parsePosition(prefix, positions[1].slice(0, splitPos));
-            parsed.break2End = parsePosition(prefix, positions[1].slice(splitPos + 1));
+            parsed.break2Start = _position.parsePosition(prefix, positions[1].slice(0, splitPos));
+            parsed.break2End = _position.parsePosition(prefix, positions[1].slice(splitPos + 1));
         } else {
-            parsed.break2Start = parsePosition(prefix, positions[1]);
+            parsed.break2Start = _position.parsePosition(prefix, positions[1]);
         }
     } catch (err) {
         throw new ParsingError({
@@ -454,9 +481,9 @@ const extractPositions = (prefix, string) => {
     } else {
         let pattern;
         switch (prefix) {
-            case 'y': { pattern = CYTOBAND_PATT; break; }
-            case 'c': { pattern = CDS_PATT; break; }
-            case 'p': { pattern = PROTEIN_PATT; break; }
+            case 'y': { pattern = _position.CYTOBAND_PATT; break; }
+            case 'c': { pattern = _position.CDS_PATT; break; }
+            case 'p': { pattern = _position.PROTEIN_PATT; break; }
             default: { pattern = /\d+/; }
         }
         const match = new RegExp(`^(${pattern.source})`).exec(string);
@@ -466,9 +493,9 @@ const extractPositions = (prefix, string) => {
         [result.input] = match;
         result.start = result.input.slice(0);
     }
-    result.start = parsePosition(prefix, result.start);
+    result.start = _position.parsePosition(prefix, result.start);
     if (result.end) {
-        result.end = parsePosition(prefix, result.end);
+        result.end = _position.parsePosition(prefix, result.end);
     }
     return result;
 };

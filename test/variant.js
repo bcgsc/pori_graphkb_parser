@@ -7,6 +7,14 @@ const {
     EVENT_SUBTYPE,
     VariantNotation
 } = require('./../app/variant');
+const {
+    GenomicPosition,
+    ProteinPosition,
+    CdsPosition,
+    CytobandPosition,
+    ExonicPosition,
+    IntronicPosition
+} = require('./../app/position');
 
 
 describe('VariantNotation', () => {
@@ -153,8 +161,8 @@ describe('multi-feature notation', () => {
         expect(parsed).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
-            break1Start: {'@class': 'ExonicPosition', pos: 1},
-            break2Start: {'@class': 'ExonicPosition', pos: 2},
+            break1Start: new ExonicPosition({pos: 1}),
+            break2Start: new ExonicPosition({pos: 2}),
             type: EVENT_SUBTYPE.FUSION,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
@@ -168,8 +176,8 @@ describe('multi-feature notation', () => {
         expect(parsed).to.eql({
             break1Repr: 'g.1',
             break2Repr: 'g.2',
-            break1Start: {'@class': 'GenomicPosition', pos: 1},
-            break2Start: {'@class': 'GenomicPosition', pos: 2},
+            break1Start: new GenomicPosition({pos: 1}),
+            break2Start: new GenomicPosition({pos: 2}),
             type: EVENT_SUBTYPE.TRANS,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
@@ -183,8 +191,8 @@ describe('multi-feature notation', () => {
         expect(parsed).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
-            break1Start: {'@class': 'ExonicPosition', pos: 1},
-            break2Start: {'@class': 'ExonicPosition', pos: 2},
+            break1Start: new ExonicPosition({pos: 1}),
+            break2Start: new ExonicPosition({pos: 2}),
             type: EVENT_SUBTYPE.FUSION,
             untemplatedSeq: 'ATGC',
             untemplatedSeqSize: 4,
@@ -200,8 +208,8 @@ describe('multi-feature notation', () => {
         expect(parsed).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
-            break1Start: {'@class': 'ExonicPosition', pos: 1},
-            break2Start: {'@class': 'ExonicPosition', pos: 2},
+            break1Start: new ExonicPosition({pos: 1}),
+            break2Start: new ExonicPosition({pos: 2}),
             type: EVENT_SUBTYPE.FUSION,
             untemplatedSeqSize: 5,
             reference1: 'FEATURE1',
@@ -216,10 +224,10 @@ describe('multi-feature notation', () => {
         expect(parsed).to.eql({
             break1Repr: 'e.1_17',
             break2Repr: 'e.20_28',
-            break1Start: {'@class': 'ExonicPosition', pos: 1},
-            break1End: {'@class': 'ExonicPosition', pos: 17},
-            break2Start: {'@class': 'ExonicPosition', pos: 20},
-            break2End: {'@class': 'ExonicPosition', pos: 28},
+            break1Start: new ExonicPosition({pos: 1}),
+            break1End: new ExonicPosition({pos: 17}),
+            break2Start: new ExonicPosition({pos: 20}),
+            break2End: new ExonicPosition({pos: 28}),
             type: EVENT_SUBTYPE.FUSION,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
@@ -237,10 +245,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {
-                    '@class': 'GenomicPosition',
-                    pos: 3
-                },
+                break1Start: new GenomicPosition({pos: 3}),
                 break1Repr: 'g.3',
                 prefix: 'g',
                 reference1: 'FEATURE',
@@ -254,8 +259,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {'@class': 'GenomicPosition', pos: 3},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
+                break1Start: new GenomicPosition({pos: 3}),
+                break2Start: new GenomicPosition({pos: 5}),
                 break1Repr: 'g.3',
                 break2Repr: 'g.5',
                 prefix: 'g',
@@ -270,8 +275,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {'@class': 'GenomicPosition', pos: 3},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
+                break1Start: new GenomicPosition({pos: 3}),
+                break2Start: new GenomicPosition({pos: 5}),
                 break1Repr: 'g.3',
                 break2Repr: 'g.5',
                 refSeq: 'TAA',
@@ -287,9 +292,9 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'GenomicPosition', pos: 3},
-                break1End: {'@class': 'GenomicPosition', pos: 4},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
+                break1Start: new GenomicPosition({pos: 3}),
+                break1End: new GenomicPosition({pos: 4}),
+                break2Start: new GenomicPosition({pos: 5}),
                 break1Repr: 'g.(3_4)',
                 break2Repr: 'g.5',
                 prefix: 'g',
@@ -304,9 +309,9 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'GenomicPosition', pos: 3},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
-                break2End: {'@class': 'GenomicPosition', pos: 7},
+                break1Start: new GenomicPosition({pos: 3}),
+                break2Start: new GenomicPosition({pos: 5}),
+                break2End: new GenomicPosition({pos: 7}),
                 break1Repr: 'g.3',
                 break2Repr: 'g.(5_7)',
                 prefix: 'g',
@@ -321,10 +326,10 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'GenomicPosition', pos: 1},
-                break1End: {'@class': 'GenomicPosition', pos: 3},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
-                break2End: {'@class': 'GenomicPosition', pos: 7},
+                break1Start: new GenomicPosition({pos: 1}),
+                break1End: new GenomicPosition({pos: 3}),
+                break2Start: new GenomicPosition({pos: 5}),
+                break2End: new GenomicPosition({pos: 7}),
                 break1Repr: 'g.(1_3)',
                 break2Repr: 'g.(5_7)',
                 prefix: 'g',
@@ -339,8 +344,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'GenomicPosition', pos: 3},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
+                break1Start: new GenomicPosition({pos: 3}),
+                break2Start: new GenomicPosition({pos: 5}),
                 break1Repr: 'g.3',
                 break2Repr: 'g.5',
                 untemplatedSeq: 'TAA',
@@ -358,7 +363,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'GenomicPosition', pos: 4},
+                break1Start: new GenomicPosition({pos: 4}),
                 break1Repr: 'g.4',
                 untemplatedSeq: 'T',
                 refSeq: 'A',
@@ -375,7 +380,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'GenomicPosition', pos: 4},
+                break1Start: new GenomicPosition({pos: 4}),
                 break1Repr: 'g.4',
                 untemplatedSeq: 'T^C',
                 refSeq: 'A',
@@ -392,8 +397,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'GenomicPosition', pos: 4},
-                break1End: {'@class': 'GenomicPosition', pos: 7},
+                break1Start: new GenomicPosition({pos: 4}),
+                break1End: new GenomicPosition({pos: 7}),
                 break1Repr: 'g.(4_7)',
                 untemplatedSeq: 'T',
                 refSeq: 'A',
@@ -410,10 +415,10 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
-                break1Start: {'@class': 'GenomicPosition', pos: 1},
-                break1End: {'@class': 'GenomicPosition', pos: 3},
-                break2Start: {'@class': 'GenomicPosition', pos: 5},
-                break2End: {'@class': 'GenomicPosition', pos: 7},
+                break1Start: new GenomicPosition({pos: 1}),
+                break1End: new GenomicPosition({pos: 3}),
+                break2Start: new GenomicPosition({pos: 5}),
+                break2End: new GenomicPosition({pos: 7}),
                 break1Repr: 'g.(1_3)',
                 break2Repr: 'g.(5_7)',
                 untemplatedSeq: 'ACG',
@@ -431,7 +436,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
-                break1Start: {'@class': 'GenomicPosition', pos: 10},
+                break1Start: new GenomicPosition({pos: 10}),
                 break1Repr: 'g.10',
                 refSeq: 'T',
                 prefix: 'g',
@@ -446,7 +451,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
-                break1Start: {'@class': 'GenomicPosition', pos: 10},
+                break1Start: new GenomicPosition({pos: 10}),
                 break1Repr: 'g.10',
                 untemplatedSeq: 'ACC',
                 untemplatedSeqSize: 3,
@@ -467,7 +472,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
+                break1Start: new CdsPosition({pos: 3, offset: 1}),
                 break1Repr: 'c.3+1',
                 prefix: 'c',
                 reference1: 'FEATURE',
@@ -481,8 +486,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
-                break2Start: {'@class': 'CdsPosition', pos: 5, offset: -2},
+                break1Start: new CdsPosition({pos: 3, offset: 1}),
+                break2Start: new CdsPosition({pos: 5, offset: -2}),
                 break1Repr: 'c.3+1',
                 break2Repr: 'c.5-2',
                 prefix: 'c',
@@ -497,8 +502,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
-                break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
+                break1Start: new CdsPosition({pos: 3, offset: 0}),
+                break2Start: new CdsPosition({pos: 5, offset: 0}),
                 break1Repr: 'c.3',
                 break2Repr: 'c.5',
                 refSeq: 'TAA',
@@ -514,9 +519,9 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
-                break1End: {'@class': 'CdsPosition', pos: 4, offset: -1},
-                break2Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
+                break1Start: new CdsPosition({pos: 3, offset: 1}),
+                break1End: new CdsPosition({pos: 4, offset: -1}),
+                break2Start: new CdsPosition({pos: 10, offset: 0}),
                 break1Repr: 'c.(3+1_4-1)',
                 break2Repr: 'c.10',
                 prefix: 'c',
@@ -531,9 +536,9 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
-                break2Start: {'@class': 'CdsPosition', pos: 5, offset: 1},
-                break2End: {'@class': 'CdsPosition', pos: 55, offset: -1},
+                break1Start: new CdsPosition({pos: 3, offset: 0}),
+                break2Start: new CdsPosition({pos: 5, offset: 1}),
+                break2End: new CdsPosition({pos: 55, offset: -1}),
                 break1Repr: 'c.3',
                 break2Repr: 'c.(5+1_55-1)',
                 prefix: 'c',
@@ -548,10 +553,10 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CdsPosition', pos: 1, offset: 0},
-                break1End: {'@class': 'CdsPosition', pos: 3, offset: 0},
-                break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
-                break2End: {'@class': 'CdsPosition', pos: 7, offset: 0},
+                break1Start: new CdsPosition({pos: 1, offset: 0}),
+                break1End: new CdsPosition({pos: 3, offset: 0}),
+                break2Start: new CdsPosition({pos: 5, offset: 0}),
+                break2End: new CdsPosition({pos: 7, offset: 0}),
                 break1Repr: 'c.(1_3)',
                 break2Repr: 'c.(5_7)',
                 prefix: 'c',
@@ -566,8 +571,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
-                break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
+                break1Start: new CdsPosition({pos: 3, offset: 0}),
+                break2Start: new CdsPosition({pos: 5, offset: 0}),
                 break1Repr: 'c.3',
                 break2Repr: 'c.5',
                 refSeq: 'TAA',
@@ -585,7 +590,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'CdsPosition', pos: 4, offset: 0},
+                break1Start: new CdsPosition({pos: 4, offset: 0}),
                 break1Repr: 'c.4',
                 refSeq: 'A',
                 untemplatedSeq: 'T',
@@ -602,8 +607,8 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'CdsPosition', pos: 4, offset: 0},
-                break1End: {'@class': 'CdsPosition', pos: 7, offset: 0},
+                break1Start: new CdsPosition({pos: 4, offset: 0}),
+                break1End: new CdsPosition({pos: 7, offset: 0}),
                 break1Repr: 'c.(4_7)',
                 refSeq: 'A',
                 untemplatedSeq: 'T',
@@ -620,10 +625,10 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
-                break1Start: {'@class': 'CdsPosition', pos: 1, offset: 0},
-                break1End: {'@class': 'CdsPosition', pos: 3, offset: 0},
-                break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
-                break2End: {'@class': 'CdsPosition', pos: 7, offset: 0},
+                break1Start: new CdsPosition({pos: 1, offset: 0}),
+                break1End: new CdsPosition({pos: 3, offset: 0}),
+                break2Start: new CdsPosition({pos: 5, offset: 0}),
+                break2End: new CdsPosition({pos: 7, offset: 0}),
                 break1Repr: 'c.(1_3)',
                 break2Repr: 'c.(5_7)',
                 refSeq: 'TAA',
@@ -641,7 +646,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
-                break1Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
+                break1Start: new CdsPosition({pos: 10, offset: 0}),
                 break1Repr: 'c.10',
                 refSeq: 'T',
                 prefix: 'c',
@@ -656,7 +661,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INDEL,
-                break1Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
+                break1Start: new CdsPosition({pos: 10, offset: 0}),
                 break1Repr: 'c.10',
                 untemplatedSeq: 'ACC',
                 untemplatedSeqSize: 3,
@@ -672,7 +677,7 @@ describe('continuous notation', () => {
             const result = parse(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'CdsPosition', pos: 1, offset: -124},
+                break1Start: new CdsPosition({pos: 1, offset: -124}),
                 break1Repr: 'c.1-124',
                 untemplatedSeq: 'T',
                 untemplatedSeqSize: 1,
@@ -702,7 +707,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'ExonicPosition', pos: 1},
+                break1Start: new ExonicPosition({pos: 1}),
                 break1Repr: 'e.1',
                 prefix: 'e',
                 reference1: 'FEATURE',
@@ -715,8 +720,8 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'ExonicPosition', pos: 1},
-                break1End: {'@class': 'ExonicPosition', pos: 2},
+                break1Start: new ExonicPosition({pos: 1}),
+                break1End: new ExonicPosition({pos: 2}),
                 break1Repr: 'e.(1_2)',
                 prefix: 'e',
                 reference1: 'FEATURE',
@@ -729,8 +734,8 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'ExonicPosition', pos: 1},
-                break2Start: {'@class': 'ExonicPosition', pos: 3},
+                break1Start: new ExonicPosition({pos: 1}),
+                break2Start: new ExonicPosition({pos: 3}),
                 break1Repr: 'e.1',
                 break2Repr: 'e.3',
                 prefix: 'e',
@@ -744,11 +749,11 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'ExonicPosition', pos: 1},
-                break1End: {'@class': 'ExonicPosition', pos: 2},
+                break1Start: new ExonicPosition({pos: 1}),
+                break1End: new ExonicPosition({pos: 2}),
                 break1Repr: 'e.(1_2)',
-                break2Start: {'@class': 'ExonicPosition', pos: 3},
-                break2End: {'@class': 'ExonicPosition', pos: 4},
+                break2Start: new ExonicPosition({pos: 3}),
+                break2End: new ExonicPosition({pos: 4}),
                 break2Repr: 'e.(3_4)',
                 prefix: 'e',
                 reference1: 'FEATURE',
@@ -761,10 +766,10 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'ExonicPosition', pos: 1},
-                break1End: {'@class': 'ExonicPosition', pos: 2},
+                break1Start: new ExonicPosition({pos: 1}),
+                break1End: new ExonicPosition({pos: 2}),
                 break1Repr: 'e.(1_2)',
-                break2Start: {'@class': 'ExonicPosition', pos: 4},
+                break2Start: new ExonicPosition({pos: 4}),
                 break2Repr: 'e.4',
                 prefix: 'e',
                 reference1: 'FEATURE',
@@ -777,10 +782,10 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'ExonicPosition', pos: 2},
+                break1Start: new ExonicPosition({pos: 2}),
                 break1Repr: 'e.2',
-                break2Start: {'@class': 'ExonicPosition', pos: 3},
-                break2End: {'@class': 'ExonicPosition', pos: 4},
+                break2Start: new ExonicPosition({pos: 3}),
+                break2End: new ExonicPosition({pos: 4}),
                 break2Repr: 'e.(3_4)',
                 prefix: 'e',
                 reference1: 'FEATURE',
@@ -823,7 +828,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
                 untemplatedSeq: 'K',
                 break1Repr: 'p.R10',
                 refSeq: 'R',
@@ -840,7 +845,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
                 untemplatedSeq: 'K',
                 untemplatedSeqSize: 1,
                 truncation: 10,
@@ -864,7 +869,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal('FEATURE:p.R10Kfs');
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
                 untemplatedSeq: 'K',
                 untemplatedSeqSize: 1,
                 truncation: null,
@@ -881,7 +886,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             expect(result).to.eql({
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
                 untemplatedSeq: '*',
                 untemplatedSeqSize: 1,
                 truncation: 1,
@@ -901,8 +906,8 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
-                break1End: {'@class': 'ProteinPosition', pos: 11, refAA: 'M'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+                break1End: new ProteinPosition({pos: 11, refAA: 'M'}),
                 break1Repr: 'p.(R10_M11)',
                 truncation: 10,
                 prefix: 'p',
@@ -917,7 +922,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
                 break1Repr: 'p.R10',
                 truncation: 10,
                 refSeq: 'R',
@@ -933,7 +938,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.FS,
-                break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+                break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
                 break1Repr: 'p.R10',
                 refSeq: 'R',
                 prefix: 'p',
@@ -948,7 +953,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.SUB,
-                break1Start: {'@class': 'ProteinPosition', pos: 12, refAA: 'F'},
+                break1Start: new ProteinPosition({pos: 12, refAA: 'F'}),
                 break1Repr: 'p.F12',
                 untemplatedSeq: 'G',
                 untemplatedSeqSize: 1,
@@ -986,7 +991,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CytobandPosition', arm: 'p'},
+                break1Start: new CytobandPosition({arm: 'p'}),
                 break1Repr: 'y.p',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1000,7 +1005,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CytobandPosition', arm: 'p', majorBand: 11},
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 11}),
                 break1Repr: 'y.p11',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1014,9 +1019,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
-                },
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
                 break1Repr: 'y.p11.1',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1030,13 +1033,9 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
-                },
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
                 break1Repr: 'y.p11.1',
-                break2Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
-                },
+                break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
                 break2Repr: 'y.p13.3',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1050,17 +1049,11 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
-                },
-                break1End: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 2
-                },
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
+                break1End: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 2}),
                 break1Repr: 'y.(p11.1_p11.2)',
-                break2Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 4
-                },
-                break2End: {'@class': 'CytobandPosition', arm: 'p', majorBand: 14},
+                break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 4}),
+                break2End: new CytobandPosition({arm: 'p', majorBand: 14}),
                 break2Repr: 'y.(p13.4_p14)',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1074,16 +1067,10 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
-                },
-                break1End: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 2
-                },
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
+                break1End: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 2}),
                 break1Repr: 'y.(p11.1_p11.2)',
-                break2Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
-                },
+                break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
                 break2Repr: 'y.p13.3',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1097,16 +1084,10 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
-                },
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
                 break1Repr: 'y.p13.3',
-                break2Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 15, minorBand: 1
-                },
-                break2End: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 15, minorBand: 2
-                },
+                break2Start: new CytobandPosition({arm: 'p', majorBand: 15, minorBand: 1}),
+                break2End: new CytobandPosition({arm: 'p', majorBand: 15, minorBand: 2}),
                 break2Repr: 'y.(p15.1_p15.2)',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1120,7 +1101,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DUP,
-                break1Start: {'@class': 'CytobandPosition', arm: 'q'},
+                break1Start: new CytobandPosition({arm: 'q'}),
                 break1Repr: 'y.q',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1134,7 +1115,7 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.DEL,
-                break1Start: {'@class': 'CytobandPosition', arm: 'p'},
+                break1Start: new CytobandPosition({arm: 'p'}),
                 break1Repr: 'y.p',
                 prefix: 'y',
                 reference1: 'FEATURE',
@@ -1148,12 +1129,8 @@ describe('continuous notation', () => {
             expect(result.toString()).to.equal(notation);
             const exp = {
                 type: EVENT_SUBTYPE.INV,
-                break1Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
-                },
-                break2Start: {
-                    '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
-                },
+                break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
+                break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
                 break1Repr: 'y.p11.1',
                 break2Repr: 'y.p13.3',
                 prefix: 'y',
