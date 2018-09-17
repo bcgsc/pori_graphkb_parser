@@ -281,7 +281,11 @@ const parse = (string) => {
     if (split.length > 2) {
         throw new ParsingError({message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation'});
     } else if (split.length === 1) {
+<<<<<<< HEAD
         throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'});
+=======
+        throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'})
+>>>>>>> develop
     }
     let result = {};
     const [featureString, variantString] = split;
@@ -374,9 +378,13 @@ const parseMultiFeature = (string) => {
         });
     }
     if (!NOTATION_TO_SUBTYPE[parsed.type]) {
+<<<<<<< HEAD
         throw new ParsingError({
             message: 'Variant type not recognized', parsed, input: string, violatedAttr: 'type'
         });
+=======
+        throw new ParsingError({message: 'Variant type not recognized', parsed, input: string, violatedAttr: 'type'});
+>>>>>>> develop
     }
     if (!['fusion', 'trans', 'itrans'].includes(parsed.type)) {
         throw new ParsingError({
@@ -387,9 +395,13 @@ const parseMultiFeature = (string) => {
     }
     parsed.type = NOTATION_TO_SUBTYPE[parsed.type];
     if (string.indexOf(')') < 0) {
+<<<<<<< HEAD
         throw new ParsingError({
             message: 'Missing closing parentheses', parsed, input: string, violatedAttr: 'punctuation'
         });
+=======
+        throw new ParsingError({message: 'Missing closing parentheses', parsed, input: string, violatedAttr: 'punctuation'});
+>>>>>>> develop
     }
     const untemplatedSeq = string.slice(string.indexOf(')') + 1);
     if (untemplatedSeq.length > 0) {
