@@ -40,9 +40,9 @@ class Position {
         const json = {
             '@class': this.name
         };
-        for (const [attr, val] in Object.entries(this)) {
-            if (val !== undefined) {
-                json[attr] = val;
+        for (const attr in this) {
+            if (this[attr] !== undefined) {
+                json[attr] = this[attr];
             }
         }
         return json;
