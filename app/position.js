@@ -1,7 +1,7 @@
 
 
 /** @module app/position */
-const {ParsingError, InputValidationError} = require('./error');
+const { ParsingError, InputValidationError } = require('./error');
 
 /**
  * the mapping of positional variant notation prefixes to their corresponging position classes
@@ -40,7 +40,7 @@ class Position {
         const json = {
             '@class': this.name
         };
-        for (const [attr, val] in Object.entries(this)) {
+        for (const [attr, val] of Object.entries(this)) {
             if (val !== undefined) {
                 json[attr] = val;
             }
@@ -136,13 +136,13 @@ class BasicPosition extends Position {
 }
 
 
-class GenomicPosition extends BasicPosition {}
+class GenomicPosition extends BasicPosition { }
 
 
-class ExonicPosition extends BasicPosition {}
+class ExonicPosition extends BasicPosition { }
 
 
-class IntronicPosition extends BasicPosition {}
+class IntronicPosition extends BasicPosition { }
 
 
 class CdsPosition extends BasicPosition {
@@ -248,15 +248,15 @@ const parsePosition = (prefix, string) => {
     switch (prefix) {
         case 'i':
             cls = IntronicPosition;
-            result = {pos: string};
+            result = { pos: string };
             break;
         case 'e':
             cls = ExonicPosition;
-            result = {pos: string};
+            result = { pos: string };
             break;
         case 'g':
             cls = GenomicPosition;
-            result = {pos: string};
+            result = { pos: string };
             break;
         case 'c': {
             const m = new RegExp(`^${CDS_PATT.source}$`).exec(string);
@@ -305,7 +305,7 @@ const parsePosition = (prefix, string) => {
             break;
         }
         default: {
-            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix'});
+            throw new ParsingError({ message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix' });
         }
     }
     try {
