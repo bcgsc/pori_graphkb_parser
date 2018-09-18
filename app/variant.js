@@ -112,7 +112,7 @@ class VariantNotation {
             }
         }
         this.break1Start = opt.break1Start;
-        if (!this.break1Start instanceof _position.Position) {
+        if (!(this.break1Start instanceof _position.Position)) {
             throw new InputValidationError({
                 message: 'break1Start is a required attribute',
                 violatedAttr: 'break1Start'
