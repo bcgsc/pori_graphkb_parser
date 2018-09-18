@@ -1,7 +1,7 @@
 
 
 /** @module app/position */
-const {ParsingError} = require('./error');
+const {ParsingError, InputValidationError} = require('./error');
 
 /**
  * the mapping of positional variant notation prefixes to their corresponging position classes
@@ -34,44 +34,168 @@ const PROTEIN_PATT = /([A-Za-z?*])?(\d+|\?)/;
 const CYTOBAND_PATT = /[pq]((\d+|\?)(\.(\d+|\?))?)?/;
 
 
-/**
- * Given some input breakpoint, returns a string representation
- *
- * @param {Object} inputBreakpoint the input breakpoint
- * @param {string} inputBreakpoint.@class the class name of the position type
- *
- * @returns {string} the string representation of the breakpoint position
- */
-const positionString = (inputBreakpoint) => {
-    const breakpoint = Object.assign({}, inputBreakpoint);
-    if (breakpoint.pos === undefined || breakpoint.pos === null) {
-        breakpoint.pos = '?';
-    }
-    switch (breakpoint['@class']) {
-        case PREFIX_CLASS.c: {
-            if (breakpoint.offset) {
-                return `${breakpoint.pos}${breakpoint.offset > 0
-                    ? '+'
-                    : ''}${breakpoint.offset}`;
+class Position {
+
+    toJSON() {
+        const json = {
+            '@class': this.name
+        };
+        for (const [attr, val] in Object.entries(this)) {
+            if (val !== undefined) {
+                json[attr] = val;
             }
-            return `${breakpoint.pos}`;
         }
-        case PREFIX_CLASS.y: {
-            if (breakpoint.minorBand) {
-                return `${breakpoint.arm}${breakpoint.majorBand || '?'}.${breakpoint.minorBand}`;
-            } if (breakpoint.majorBand) {
-                return `${breakpoint.arm}${breakpoint.majorBand || '?'}`;
+        return json;
+    }
+
+    get name() {
+        return this.constructor.name;
+    }
+
+    get prefix() {
+        return CLASS_PREFIX[this.name];
+    }
+}
+
+
+class CytobandPosition extends Position {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {string} opt.arm the chromosome arm
+     * @param {?Number} opt.majorBand the major band number
+     * @param {?Number} opt.minorBand the minor band number
+     */
+
+    constructor(opt) {
+        super();
+        this.arm = opt.arm;
+        if (this.arm !== 'p' && this.arm !== 'q') {
+            throw new InputValidationError({
+                message: `cytoband arm must be p or q (${this.arm})`,
+                violatedAttr: 'arm'
+            });
+        }
+        if (opt.majorBand !== undefined) {
+            this.majorBand = Number(opt.majorBand);
+            if (isNaN(this.majorBand) || this.majorBand <= 0) {
+                throw new InputValidationError({
+                    message: `majorBand must be a positive integer (${opt.majorBand})`,
+                    violatedAttr: 'majorBand'
+                });
             }
-            return breakpoint.arm;
         }
-        case PREFIX_CLASS.p: {
-            return `${breakpoint.refAA || '?'}${breakpoint.pos || '?'}`;
-        }
-        default: {
-            return `${breakpoint.pos}`;
+        if (opt.minorBand !== undefined) {
+            this.minorBand = Number(opt.minorBand);
+            if (isNaN(this.minorBand) || this.minorBand <= 0) {
+                throw new InputValidationError({
+                    message: `minorBand must be a positive integer (${opt.minorBand})`,
+                    violatedAttr: 'minorBand'
+                });
+            }
         }
     }
-};
+    toString() {
+        let result = `${this.arm}`;
+        if (this.majorBand) {
+            result = `${result}${this.majorBand}`;
+            if (this.minorBand) {
+                result = `${result}.${this.minorBand}`;
+            }
+        }
+        return result;
+    }
+}
+
+
+class BasicPosition extends Position {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {Number} opt.pos
+     */
+    constructor(opt) {
+        super();
+        if (opt.pos === '?') {
+            this.pos = null;
+        } else if (isNaN(opt.pos) || opt.pos <= 0) {
+            throw new InputValidationError({
+                message: `pos (${opt.pos}) must be a positive integer`,
+                violatedAttr: 'pos'
+            });
+        } else if (opt.pos) {
+            this.pos = Number(opt.pos);
+        }
+    }
+
+    toString() {
+        return `${this.pos || '?'}`;
+    }
+}
+
+
+class GenomicPosition extends BasicPosition {}
+
+
+class ExonicPosition extends BasicPosition {}
+
+
+class IntronicPosition extends BasicPosition {}
+
+
+class CdsPosition extends BasicPosition {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {Number} opt.offset the offset from the nearest cds position
+     */
+    constructor(opt) {
+        super(opt);
+        if (opt.offset !== undefined) {
+            this.offset = Number(opt.offset);
+            if (isNaN(this.offset)) {
+                throw new InputValidationError({
+                    message: `offset (${opt.offset}) must be an integer`,
+                    violatedAttr: 'offset'
+                });
+            }
+        }
+    }
+
+    toString() {
+        let offset = '';
+        if (this.offset) {
+            if (this.offset > 0) {
+                offset = '+';
+            }
+            offset = `${offset}${this.offset}`;
+        }
+        return `${super.toString(this)}${offset}`;
+    }
+}
+
+
+class ProteinPosition extends BasicPosition {
+    /**
+     * @param {Object} opt options
+     * @param {string} opt.prefix the position prefix
+     * @param {string} opt.@class the class name
+     * @param {Number} opt.pos
+     * @param {string} opt.refAA the reference amino acid
+     */
+    constructor(opt) {
+        super(opt);
+        this.refAA = opt.refAA;
+    }
+
+    toString() {
+        return `${this.refAA || '?'}${super.toString(this)}`;
+    }
+}
+
 
 /**
  * Convert parsed breakpoints into a string representing the breakpoint range
@@ -92,15 +216,17 @@ const positionString = (inputBreakpoint) => {
  * @returns {string} the string representation of a breakpoint or breakpoint range including the prefix
  */
 const breakRepr = (prefix, start, end = null, multiFeature = false) => {
-    if (! prefix) {
-        prefix = CLASS_PREFIX[start['@class']];
+    if (end) {
+        if (start.prefix !== end.prefix) {
+            throw new ParsingError('Mismatch prefix in range');
+        }
     }
     if (end && multiFeature) { // range
-        return `${prefix}.${positionString(start)}_${positionString(end)}`;
+        return `${start.prefix}.${start.toString()}_${end.toString()}`;
     } if (end) {
-        return `${prefix}.(${positionString(start)}_${positionString(end)})`;
+        return `${start.prefix}.(${start.toString()}_${end.toString()})`;
     }
-    return `${prefix}.${positionString(start)}`;
+    return `${start.prefix}.${start.toString()}`;
 };
 
 
@@ -117,33 +243,21 @@ const breakRepr = (prefix, start, end = null, multiFeature = false) => {
  * @returns {object} the parsed position
  */
 const parsePosition = (prefix, string) => {
-    const result = {'@class': PREFIX_CLASS[prefix]};
+    let result = {},
+        cls;
     switch (prefix) {
         case 'i':
-        case 'e': {
-            result['@class'] = PREFIX_CLASS[prefix];
-            if (string !== '?') {
-                if (/^\d+$/.exec(string.toString().trim())) {
-                    result.pos = parseInt(string, 10);
-                } else {
-                    throw new ParsingError(`expected integer but found: ${string}`);
-                }
-            } else {
-                result.pos = null;
-            }
-            return result;
-        }
-        case 'g': {
-            if (string !== '?') {
-                if (!/^\d+$/.exec(string.toString().trim())) {
-                    throw new ParsingError(`expected integer but found: ${string}`);
-                }
-                result.pos = parseInt(string, 10);
-            } else {
-                result.pos = null;
-            }
-            return result;
-        }
+            cls = IntronicPosition;
+            result = {pos: string};
+            break;
+        case 'e':
+            cls = ExonicPosition;
+            result = {pos: string};
+            break;
+        case 'g':
+            cls = GenomicPosition;
+            result = {pos: string};
+            break;
         case 'c': {
             const m = new RegExp(`^${CDS_PATT.source}$`).exec(string);
             if (m === null || (!m[1] && !m[2])) {
@@ -155,7 +269,9 @@ const parsePosition = (prefix, string) => {
             result.offset = m[2] === undefined
                 ? 0
                 : parseInt(m[2], 10);
-            return result;
+            cls = CdsPosition;
+
+            break;
         }
         case 'p': {
             const m = new RegExp(`^${PROTEIN_PATT.source}$`).exec(string);
@@ -165,12 +281,13 @@ const parsePosition = (prefix, string) => {
             if (m[2] !== '?') {
                 result.pos = parseInt(m[2], 10);
             } else {
-                result.pos = null;
+                result.pos = m[2];
             }
             if (m[1] !== undefined && m[1] !== '?') {
                 [, result.refAA] = m;
             }
-            return result;
+            cls = ProteinPosition;
+            break;
         }
         case 'y': {
             const m = new RegExp(`^${CYTOBAND_PATT.source}$`).exec(string);
@@ -184,14 +301,36 @@ const parsePosition = (prefix, string) => {
             if (m[4] !== undefined && m[4] !== '?') {
                 result.minorBand = parseInt(m[4], 10);
             }
-            return result;
+            cls = CytobandPosition;
+            break;
         }
         default: {
             throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix'});
         }
     }
+    try {
+        return new cls(result);
+    } catch (err) {
+        const content = err.content || {};
+        content.message = err.message;
+        throw new ParsingError(content);
+    }
 };
 
+
 module.exports = {
-    parsePosition, breakRepr, CYTOBAND_PATT, CDS_PATT, PROTEIN_PATT, CLASS_PREFIX
+    breakRepr,
+    CDS_PATT,
+    CLASS_PREFIX,
+    CYTOBAND_PATT,
+    CdsPosition,
+    CytobandPosition,
+    ExonicPosition,
+    GenomicPosition,
+    IntronicPosition,
+    parsePosition,
+    Position,
+    PREFIX_CLASS,
+    PROTEIN_PATT,
+    ProteinPosition
 };
