@@ -1,10 +1,8 @@
 
 
 /** @module app/variant */
-const {ParsingError} = require('./error');
-const {
-    parsePosition, breakRepr, CDS_PATT, PROTEIN_PATT, CYTOBAND_PATT
-} = require('./position');
+const {ParsingError, InputValidationError} = require('./error');
+const _position = require('./position');
 
 const EVENT_SUBTYPE = {
     INS: 'insertion',
@@ -55,6 +53,17 @@ for (const [notation, subtype] of [
 class VariantNotation {
     /**
      * @param {Object} opt options
+     * @param {Position} opt.break1Start the start of the first breakpoint range
+     * @param {?Position} opt.break1End the end of the first breakpoint range
+     * @param {?Position} opt.break2Start the start of the second breakpoint range
+     * @param {?Position} opt.break2End the end of the second breakpoint range
+     * @param {?string} opt.untemplatedSeq untemplated sequence
+     * @param {?Number} opt.untemplatedSeqSize the length of the untemplatedSeq
+     * @param {string} opt.reference1 the first reference feature name
+     * @param {?string} opt.reference2 the second reference feature name
+     * @param {boolean} [opt.multiFeature=false] flag to indicate this should be a multiple feature variant
+     * @param {?Number} opt.truncation the new position of the next closest terminating AA
+     * @param {string} opt.type the event type
      */
     constructor(opt) {
         if (opt.untemplatedSeq !== undefined) {
@@ -62,40 +71,125 @@ class VariantNotation {
         }
         if (opt.untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = opt.untemplatedSeqSize;
+            if (isNaN(Number(this.untemplatedSeqSize))) {
+                throw new InputValidationError({
+                    message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
+                    violatedAttr: 'untemplatedSeqSize'
+                });
+            }
         } else if (this.untemplatedSeq !== undefined && this.untemplatedSeq !== null) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
         this.type = opt.type;
+        if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
+            throw new InputValidationError({
+                message: `invalid type ${this.type}`,
+                violatedAttr: 'type'
+            });
+        }
+        if (this.type === EVENT_SUBTYPE.INS) {
+            if (!this.break2Start) {
+                throw new InputValidationError({
+                    message: 'Insertion events must be specified with a range',
+                    violatedAttr: 'type'
+                });
+            }
+        }
+
+        // cast positions
+        let defaultPosClass;
+        if (opt.prefix) {
+            this.prefix = opt.prefix;
+            if (this.prefix && _position.PREFIX_CLASS[this.prefix] === undefined) {
+                throw new InputValidationError({
+                    message: `unrecognized prefix: ${this.prefix}`,
+                    violatedAttr: 'prefix'
+                });
+            }
+            defaultPosClass = _position[_position.PREFIX_CLASS[this.prefix]];
+        }
+        for (const breakAttr of ['break1Start', 'break1End', 'break2Start', 'break2End']) {
+            if (opt[breakAttr] && !(opt[breakAttr] instanceof _position.Position)) {
+                let posCls = defaultPosClass;
+                if (opt[breakAttr]['@class']) {
+                    posCls = _position[opt[breakAttr]['@class']];
+                } else if (opt[breakAttr].prefix) {
+                    posCls = _position[_position.PREFIX_CLASS[opt[breakAttr].prefix]];
+                }
+                opt[breakAttr] = new posCls(opt[breakAttr]);
+            }
+        }
         this.break1Start = opt.break1Start;
+        if (!(this.break1Start instanceof _position.Position)) {
+            throw new InputValidationError({
+                message: 'break1Start is a required attribute',
+                violatedAttr: 'break1Start'
+            });
+        }
         this.reference1 = opt.reference1;
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
-        for (let optAttr of [
+        for (const optAttr of [
             'break1End',
             'break2Start',
             'break2End',
             'reference2',
-            'truncation',
-            'refSeq',
-            'prefix'
+            'refSeq'
         ]) {
             if (opt[optAttr] !== undefined) {
                 this[optAttr] = opt[optAttr];
             }
         }
-        this.break1Repr = breakRepr(this.prefix, this.break1Start, this.break1End, this.multiFeature);
+        if (opt.truncation === null) {
+            this.truncation = null;
+            if (![EVENT_SUBTYPE.FS, EVENT_SUBTYPE.EXT, EVENT_SUBTYPE.SPL].includes(this.type)) {
+                throw new InputValidationError({
+                    message: `truncation cannot be specified with this event type (${this.type})`,
+                    violatedAttr: 'type'
+                });
+            }
+        } else if (opt.truncation !== undefined) {
+            this.truncation = Number(opt.truncation);
+            if (![EVENT_SUBTYPE.FS, EVENT_SUBTYPE.EXT, EVENT_SUBTYPE.SPL].includes(this.type)) {
+                throw new InputValidationError({
+                    message: `truncation cannot be specified with this event type (${this.type})`,
+                    violatedAttr: 'type'
+                });
+            }
+            if (isNaN(this.truncation)) {
+                throw new InputValidationError({
+                    message: 'truncation must be a number',
+                    violatedAttr: 'truncation'
+                });
+            }
+        }
+
+        this.break1Repr = _position.breakRepr(this.prefix, this.break1Start, this.break1End, this.multiFeature);
         if (this.break2Start) {
-            this.break2Repr = breakRepr(this.prefix, this.break2Start, this.break2End, this.multiFeature);
+            if ([
+                EVENT_SUBTYPE.SUB,
+                EVENT_SUBTYPE.EXT,
+                EVENT_SUBTYPE.FS,
+                EVENT_SUBTYPE.SPL
+            ].includes(this.type)) {
+                throw new ParsingError({
+                    message: `${this.type} variants cannot be a range`,
+                    violatedAttr: 'break2'
+                });
+            }
+            this.break2Repr = _position.breakRepr(this.prefix, this.break2Start, this.break2End, this.multiFeature);
         }
     }
+
     toJSON() {
-        const json = {}
-        for (let [attr, value] of Object.entries(this)) {
+        const json = {};
+        for (const [attr, value] of Object.entries(this)) {
             if (value !== undefined && attr !== 'prefix') {
                 json[attr] = value;
             }
         }
         return json;
     }
+
     toString() {
         if (this.multiFeature) {
             // multi-feature notation
@@ -108,51 +202,47 @@ class VariantNotation {
                 result = `${result}${this.untemplatedSeqSize}`;
             }
             return result;
-        } else {
-            // continuous notation
-            let result = [`${this.reference1}:${this.prefix}.`];
-            let pos = this.break1Repr.slice(2);
-            if (this.break2Repr) {
-                pos = `${pos}_${this.break2Repr.slice(2)}`;
-            }
-            result.push(pos)
-            if (this.type === EVENT_SUBTYPE.EXT
-                || this.type === EVENT_SUBTYPE.FS
-                || this.type === EVENT_SUBTYPE.SUB && this.prefix === 'p'
-            ) {
-                if (this.untemplatedSeq !== undefined) {
-                    result.push(this.untemplatedSeq);
-                }
-            }
-            if (this.type !== EVENT_SUBTYPE.SUB) {
-                if (this.type === EVENT_SUBTYPE.INDEL && this.refSeq !== undefined) {
-                    result.push(`del${this.refSeq}ins`);
-                } else {
-                    result.push(SUBTYPE_TO_NOTATION[this.type]);
-                }
-                if (this.truncation && this.truncation !== 1) {
-                    result.push(`*${this.truncation}`);
-                }
-
-                if (this.refSeq
-                    && [EVENT_SUBTYPE.DUP, EVENT_SUBTYPE.DEL, EVENT_SUBTYPE.INV].includes(this.type)
-                ) {
-                    result.push(this.refSeq);
-                }
-                if ((this.untemplatedSeq || this.untemplatedSeqSize)
-                    && [EVENT_SUBTYPE.INS, EVENT_SUBTYPE.INDEL].includes(this.type)
-                ) {
-                    result.push(this.untemplatedSeq || this.untemplatedSeqSize);
-                }
-            } else if (this.prefix !== 'p') {
-                result.push(`${this.refSeq}${SUBTYPE_TO_NOTATION[this.type]}${this.untemplatedSeq}`);
-            }
-            return result.join('');
         }
+        // continuous notation
+        const result = [`${this.reference1}:${this.prefix}.`];
+        result.push(this.break1Repr.slice(2));
+        if (this.break2Repr) {
+            result.push(`_${this.break2Repr.slice(2)}`);
+        }
+        if (this.type === EVENT_SUBTYPE.EXT
+                || this.type === EVENT_SUBTYPE.FS
+                || (this.type === EVENT_SUBTYPE.SUB && this.prefix === 'p')
+        ) {
+            if (this.untemplatedSeq !== undefined) {
+                result.push(this.untemplatedSeq);
+            }
+        }
+        if (this.type !== EVENT_SUBTYPE.SUB) {
+            if (this.type === EVENT_SUBTYPE.INDEL && this.refSeq !== undefined) {
+                result.push(`del${this.refSeq || '?'}ins`);
+            } else {
+                result.push(SUBTYPE_TO_NOTATION[this.type]);
+            }
+            if (this.truncation && this.truncation !== 1) {
+                result.push(`*${this.truncation}`);
+            }
+
+            if (this.refSeq
+                    && [EVENT_SUBTYPE.DUP, EVENT_SUBTYPE.DEL, EVENT_SUBTYPE.INV].includes(this.type)
+            ) {
+                result.push(this.refSeq);
+            }
+            if ((this.untemplatedSeq || this.untemplatedSeqSize)
+                    && [EVENT_SUBTYPE.INS, EVENT_SUBTYPE.INDEL].includes(this.type)
+            ) {
+                result.push(this.untemplatedSeq || this.untemplatedSeqSize);
+            }
+        } else if (this.prefix !== 'p') {
+            result.push(`${this.refSeq || '?'}${SUBTYPE_TO_NOTATION[this.type]}${this.untemplatedSeq || '?'}`);
+        }
+        return result.join('');
     }
 }
-
-
 
 
 /**
@@ -168,18 +258,20 @@ class VariantNotation {
  */
 const getPrefix = (string) => {
     const [prefix] = string;
-    const expectedPrefix = ['g', 'c', 'e', 'y', 'p', 'i'];
+    const expectedPrefix = Object.keys(_position.PREFIX_CLASS);
     if (!expectedPrefix.includes(prefix)) {
         throw new ParsingError({
             message: `'${prefix}' is not an accepted prefix`,
             expected: expectedPrefix,
-            input: string
+            input: string,
+            violatedAttr: 'prefix'
         });
     }
     if (string.length < 2 || string[1] !== '.') {
         throw new ParsingError({
             message: 'Missing \'.\' separator after prefix',
-            input: string
+            input: string,
+            violatedAttr: 'punctuation'
         });
     }
     return prefix;
@@ -199,11 +291,11 @@ const parse = (string) => {
             input: string
         });
     }
-    let split = string.split(':');
+    const split = string.split(':');
     if (split.length > 2) {
-        throw new ParsingError({message: 'Variant notation must contain a single colon', input: string});
+        throw new ParsingError({message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation'});
     } else if (split.length === 1) {
-        throw new ParsingError({message: 'Feature name not specified. Feature name is required'})
+        throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'});
     }
     let result = {};
     const [featureString, variantString] = split;
@@ -214,19 +306,22 @@ const parse = (string) => {
                 throw new ParsingError({
                     message: 'Multi-feature notation must contain two reference features separated by a comma',
                     parsed: {featureString, variantString},
-                    input: string
+                    input: string,
+                    violatedAttr: 'reference2'
                 });
             } else if (!featureString.startsWith('(')) {
                 throw new ParsingError({
                     message: 'Missing opening parentheses surrounding the reference features',
                     parsed: {featureString, variantString},
-                    input: string
+                    input: string,
+                    violatedAttr: 'punctuation'
                 });
             } else if (!featureString.endsWith(')')) {
                 throw new ParsingError({
                     message: 'Missing closing parentheses surrounding the reference features',
                     parsed: {featureString, variantString},
-                    input: string
+                    input: string,
+                    violatedAttr: 'punctuation'
                 });
             }
             const features = featureString.slice(1, featureString.length - 1).split(',');
@@ -281,18 +376,21 @@ const parseMultiFeature = (string) => {
     const parsed = {multiFeature: true};
 
     if (string.indexOf('(') < 0) {
-        throw new ParsingError({message: 'Missing opening parentheses', input: string});
+        throw new ParsingError({message: 'Missing opening parentheses', input: string, violatedAttr: 'punctuation'});
     }
     parsed.type = string.slice(0, string.indexOf('('));
     if (parsed.type.length === 0) {
         throw new ParsingError({
             message: 'Variant type was not specified. It is expected to immediately follow the coordinate prefix',
             parsed,
-            input: string
+            input: string,
+            violatedAttr: 'type'
         });
     }
     if (!NOTATION_TO_SUBTYPE[parsed.type]) {
-        throw new ParsingError({message: 'Variant type not recognized', parsed, input: string});
+        throw new ParsingError({
+            message: 'Variant type not recognized', parsed, input: string, violatedAttr: 'type'
+        });
     }
     if (!['fusion', 'trans', 'itrans'].includes(parsed.type)) {
         throw new ParsingError({
@@ -303,7 +401,9 @@ const parseMultiFeature = (string) => {
     }
     parsed.type = NOTATION_TO_SUBTYPE[parsed.type];
     if (string.indexOf(')') < 0) {
-        throw new ParsingError({message: 'Missing closing parentheses', parsed, input: string});
+        throw new ParsingError({
+            message: 'Missing closing parentheses', parsed, input: string, violatedAttr: 'punctuation'
+        });
     }
     const untemplatedSeq = string.slice(string.indexOf(')') + 1);
     if (untemplatedSeq.length > 0) {
@@ -316,9 +416,19 @@ const parseMultiFeature = (string) => {
     }
     const positions = string.slice(string.indexOf('(') + 1, string.indexOf(')')).split(',');
     if (positions.length > 2) {
-        throw new ParsingError({message: 'Single comma expected to split breakpoints/ranges', parsed, input: string});
+        throw new ParsingError({
+            message: 'Single comma expected to split breakpoints/ranges',
+            parsed,
+            input: string,
+            violatedAttr: 'punctuation'
+        });
     } else if (positions.length < 2) {
-        throw new ParsingError({message: 'Missing comma separator between breakpoints/ranges', parsed, input: string});
+        throw new ParsingError({
+            message: 'Missing comma separator between breakpoints/ranges',
+            parsed,
+            input: string,
+            violatedAttr: 'punctuation'
+        });
     }
     let prefix;
     try {
@@ -326,17 +436,18 @@ const parseMultiFeature = (string) => {
         positions[0] = positions[0].slice(2);
         if (positions[0].includes('_')) {
             const splitPos = positions[0].indexOf('_');
-            parsed.break1Start = parsePosition(prefix, positions[0].slice(0, splitPos));
-            parsed.break1End = parsePosition(prefix, positions[0].slice(splitPos + 1));
+            parsed.break1Start = _position.parsePosition(prefix, positions[0].slice(0, splitPos));
+            parsed.break1End = _position.parsePosition(prefix, positions[0].slice(splitPos + 1));
         } else {
-            parsed.break1Start = parsePosition(prefix, positions[0]);
+            parsed.break1Start = _position.parsePosition(prefix, positions[0]);
         }
     } catch (err) {
         throw new ParsingError({
             message: 'Error in parsing the first breakpoint position/range',
             input: string,
             parsed,
-            subParserError: err
+            subParserError: err,
+            violatedAttr: 'break1'
         });
     }
     try {
@@ -344,17 +455,18 @@ const parseMultiFeature = (string) => {
         positions[1] = positions[1].slice(2);
         if (positions[1].includes('_')) {
             const splitPos = positions[1].indexOf('_');
-            parsed.break2Start = parsePosition(prefix, positions[1].slice(0, splitPos));
-            parsed.break2End = parsePosition(prefix, positions[1].slice(splitPos + 1));
+            parsed.break2Start = _position.parsePosition(prefix, positions[1].slice(0, splitPos));
+            parsed.break2End = _position.parsePosition(prefix, positions[1].slice(splitPos + 1));
         } else {
-            parsed.break2Start = parsePosition(prefix, positions[1]);
+            parsed.break2Start = _position.parsePosition(prefix, positions[1]);
         }
     } catch (err) {
         throw new ParsingError({
             message: 'Error in parsing the second breakpoint position/range',
             input: string,
             parsed,
-            subParserError: err
+            subParserError: err,
+            violatedAttr: 'break2'
         });
     }
     return parsed;
@@ -383,9 +495,9 @@ const extractPositions = (prefix, string) => {
     } else {
         let pattern;
         switch (prefix) {
-            case 'y': { pattern = CYTOBAND_PATT; break; }
-            case 'c': { pattern = CDS_PATT; break; }
-            case 'p': { pattern = PROTEIN_PATT; break; }
+            case 'y': { pattern = _position.CYTOBAND_PATT; break; }
+            case 'c': { pattern = _position.CDS_PATT; break; }
+            case 'p': { pattern = _position.PROTEIN_PATT; break; }
             default: { pattern = /\d+/; }
         }
         const match = new RegExp(`^(${pattern.source})`).exec(string);
@@ -395,9 +507,9 @@ const extractPositions = (prefix, string) => {
         [result.input] = match;
         result.start = result.input.slice(0);
     }
-    result.start = parsePosition(prefix, result.start);
+    result.start = _position.parsePosition(prefix, result.start);
     if (result.end) {
-        result.end = parsePosition(prefix, result.end);
+        result.end = _position.parsePosition(prefix, result.end);
     }
     return result;
 };
@@ -424,7 +536,13 @@ const parseContinuous = (inputString) => {
     const result = {prefix};
     string = string.slice(prefix.length + 1);
     // get the first position
-    const break1 = extractPositions(prefix, string);
+    let break1;
+    try {
+        break1 = extractPositions(prefix, string);
+    } catch (err) {
+        err.content.violatedAttr = 'break1';
+        throw err;
+    }
     string = string.slice(break1.input.length);
     result.break1Start = break1.start;
     if (break1.end) {
@@ -435,7 +553,12 @@ const parseContinuous = (inputString) => {
     if (string.startsWith('_')) {
         // expect a range. Extract more positions
         string = string.slice(1);
-        break2 = extractPositions(prefix, string);
+        try {
+            break2 = extractPositions(prefix, string);
+        } catch (err) {
+            err.content.violatedAttr = 'break2';
+            throw err;
+        }
         result.break2Start = break2.start;
         if (break2.end) {
             result.break2End = break2.end;
@@ -473,7 +596,10 @@ const parseContinuous = (inputString) => {
         }
     } else if (match = /^[A-Z?*](\^[A-Z?*])*$/i.exec(tail) || tail.length === 0) {
         if (prefix !== 'p') {
-            throw new ParsingError('only protein notation does not use ">" for a substitution');
+            throw new ParsingError({
+                message: 'only protein notation does not use ">" for a substitution',
+                violatedAttr: 'break1'
+            });
         }
         result.type = '>';
         if (tail.length > 0 && tail !== '?') {
@@ -481,15 +607,24 @@ const parseContinuous = (inputString) => {
         }
     } else if (match = /^([A-Z?])>([A-Z?](\^[A-Z?])*)$/i.exec(tail)) {
         if (prefix === 'p') {
-            throw new ParsingError('protein notation does not use ">" for a substitution');
+            throw new ParsingError({
+                message: 'protein notation does not use ">" for a substitution',
+                violatedAttr: 'type'
+            });
         } else if (prefix === 'e') {
-            throw new ParsingError('Cannot defined substitutions at the exon coordinate level');
+            throw new ParsingError({
+                message: 'Cannot defined substitutions at the exon coordinate level',
+                violatedAttr: 'type'
+            });
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
     } else if (match = /^([A-Z?*])?fs((\*)(\d+)?)?$/i.exec(tail)) {
         if (prefix !== 'p') {
-            throw new ParsingError('only protein notation can notate frameshift variants');
+            throw new ParsingError({
+                message: 'only protein notation can notate frameshift variants',
+                violatedAttr: 'type'
+            });
         }
         result.type = 'fs';
         if (match[1] !== undefined && match[1] !== '?') {
@@ -503,14 +638,20 @@ const parseContinuous = (inputString) => {
             } else {
                 result.truncation = parseInt(match[4], 10);
                 if (match[1] === '*' && result.truncation !== 1) {
-                    throw new ParsingError('invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence');
+                    throw new ParsingError({
+                        message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
+                        violatedAttr: 'truncation'
+                    });
                 }
             }
         } else if (match[1] === '*') {
             result.truncation = 1;
         }
         if (result.break2Start !== undefined) {
-            throw new ParsingError('frameshifts cannot span a range');
+            throw new ParsingError({
+                message: 'frameshifts cannot span a range',
+                violatedAttr: 'break2'
+            });
         }
     } else if (tail.toLowerCase() === 'spl') {
         result.type = 'spl';
@@ -518,7 +659,10 @@ const parseContinuous = (inputString) => {
         result.type = tail;
     }
     if (!NOTATION_TO_SUBTYPE[result.type]) {
-        throw new ParsingError(`unsupported event type: '${result.type}'`);
+        throw new ParsingError({
+            message: `unsupported event type: '${result.type}'`,
+            violatedAttr: 'type'
+        });
     }
     result.type = NOTATION_TO_SUBTYPE[result.type];
     if (result.untemplatedSeq && result.untemplatedSeqSize === undefined && result.untemplatedSeq !== '') {
@@ -533,8 +677,16 @@ const parseContinuous = (inputString) => {
     }
     // check for innapropriate types
     if (prefix === 'y') {
-        if (result.refSeq || result.untemplatedSeq) {
-            throw new ParsingError('cannot define sequence elements at the cytoband level');
+        if (result.refSeq) {
+            throw new ParsingError({
+                message: 'cannot define sequence elements at the cytoband level',
+                violatedAttr: 'refSeq'
+            });
+        } else if (result.untemplatedSeq) {
+            throw new ParsingError({
+                message: 'cannot define sequence elements at the cytoband level',
+                violatedAttr: 'untemplatedSeq'
+            });
         } else if (![
             EVENT_SUBTYPE.DUP,
             EVENT_SUBTYPE.DEL,
@@ -544,7 +696,8 @@ const parseContinuous = (inputString) => {
         ].includes(result.type)) {
             throw new ParsingError({
                 message: 'Invalid type for cytoband level event notation',
-                parsed: result
+                parsed: result,
+                violatedAttr: 'type'
             });
         }
     }
