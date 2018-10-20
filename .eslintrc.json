@@ -49,6 +49,7 @@
             "destructuring": "all"
         }],
         "no-restricted-syntax": "off",
+        "no-restricted-globals": "off",
         "no-continue": "off",
         "no-bitwise": "off",
         "no-use-before-define": "warn",
@@ -69,6 +70,7 @@
         }],
         "react/destructuring-assignment": "off",
         "no-await-in-loop": "off",
-        "no-unused-expressions": "off"
+        "no-unused-expressions": "off",
+        "no-new": "off"
     }
 }
