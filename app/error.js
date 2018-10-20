@@ -18,7 +18,7 @@ class ErrorMixin extends Error {
     constructor(content) {
         let message;
         if (typeof content === 'object' && content !== null) {
-            ({message, ... content} = content);
+            ({message, ...content} = content);
         } else {
             message = content;
             content = {};
@@ -44,4 +44,7 @@ class ErrorMixin extends Error {
 
 class ParsingError extends ErrorMixin {}
 
-module.exports = {ParsingError, ErrorMixin};
+
+class InputValidationError extends ErrorMixin {}
+
+module.exports = {ParsingError, ErrorMixin, InputValidationError};
