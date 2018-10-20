@@ -67,6 +67,24 @@ describe('VariantNotation', () => {
         });
         expect(variant.toString()).to.equal('a1bgas:g.(1_18)?>?');
     });
+    it('error on insertion without range', () => {
+        expect(() => {
+            new VariantNotation({
+                break1Start: {
+                    '@class': 'GenomicPosition',
+                    pos: 1
+                },
+                break1End: {
+                    '@class': 'GenomicPosition',
+                    pos: 18
+                },
+                germline: false,
+                prefix: 'g',
+                reference1: 'a1bgas',
+                type: 'insertion'
+            });
+        }).to.throw('must be specified with a range');
+    });
 });
 
 
