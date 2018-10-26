@@ -36,6 +36,22 @@ describe('VariantNotation', () => {
             });
         }).to.throw('cannot be a range');
     });
+    it('ok for insertion with a range', () => {
+        const notation = {
+            type: 'insertion',
+            reference1: 'egfr',
+            break1Start: {
+                '@class': 'ExonicPosition',
+                pos: 20,
+            },
+            break2Start: {
+                '@class':'ExonicPosition',
+                pos:21,
+            },
+        };
+        const variant = new VariantNotation(notation);
+        expect(variant.toString()).to.eql('egfr:e.20_21ins')
+    })
     it('throws error on invalid type', () => {
         expect(() => {
             new VariantNotation({

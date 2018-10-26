@@ -88,7 +88,7 @@ class VariantNotation {
             });
         }
         if (this.type === EVENT_SUBTYPE.INS) {
-            if (!this.break2Start) {
+            if (!opt.break2Start) {
                 throw new InputValidationError({
                     message: 'Insertion events must be specified with a range',
                     violatedAttr: 'type'
