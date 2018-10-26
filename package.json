@@ -1,6 +1,6 @@
 {
   "name": "knowledgebase-parser",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "A package for parsing and recreating variant notation",
   "main": "./app/index.js",
   "private": true,
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "nyc --reporter=html --reporter=text --reporter=clover mocha -R mocha-multi-reporters --reporter-options configFile=config/coverage.json --recursive test",
-    "jsdoc": "jsdoc -r app -R README.md -d jsdoc --package package.json -c config/jsdoc.config.js"
+    "jsdoc": "jsdoc -r app -R README.md -d jsdoc --package package.json -c config/jsdoc.config.js",
+    "version": "echo $npm_package_version"
   },
   "repository": {
     "type": "git",
