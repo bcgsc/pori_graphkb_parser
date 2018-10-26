@@ -116,6 +116,12 @@ class VariantNotation {
                 } else if (opt[breakAttr].prefix) {
                     posCls = _position[_position.PREFIX_CLASS[opt[breakAttr].prefix]];
                 }
+                if (!posCls) {
+                    throw new InputValidationError({
+                        message: 'Could not determine the type of position',
+                        violatedAttr: breakAttr
+                    });
+                }
                 opt[breakAttr] = new posCls(opt[breakAttr]);
             }
         }
@@ -163,7 +169,7 @@ class VariantNotation {
             }
         }
 
-        this.break1Repr = _position.breakRepr(this.prefix, this.break1Start, this.break1End, this.multiFeature);
+        this.break1Repr = _position.breakRepr(this.break1Start.prefix, this.break1Start, this.break1End, this.multiFeature);
         if (this.break2Start) {
             if ([
                 EVENT_SUBTYPE.SUB,
@@ -176,7 +182,7 @@ class VariantNotation {
                     violatedAttr: 'break2'
                 });
             }
-            this.break2Repr = _position.breakRepr(this.prefix, this.break2Start, this.break2End, this.multiFeature);
+            this.break2Repr = _position.breakRepr(this.break2Start.prefix, this.break2Start, this.break2End, this.multiFeature);
         }
     }
 
@@ -204,14 +210,14 @@ class VariantNotation {
             return result;
         }
         // continuous notation
-        const result = [`${this.reference1}:${this.prefix}.`];
+        const result = [`${this.reference1}:${this.break1Start.prefix}.`];
         result.push(this.break1Repr.slice(2));
         if (this.break2Repr) {
             result.push(`_${this.break2Repr.slice(2)}`);
         }
         if (this.type === EVENT_SUBTYPE.EXT
                 || this.type === EVENT_SUBTYPE.FS
-                || (this.type === EVENT_SUBTYPE.SUB && this.prefix === 'p')
+                || (this.type === EVENT_SUBTYPE.SUB && this.break1Start.prefix === 'p')
         ) {
             if (this.untemplatedSeq !== undefined) {
                 result.push(this.untemplatedSeq);
@@ -237,7 +243,7 @@ class VariantNotation {
             ) {
                 result.push(this.untemplatedSeq || this.untemplatedSeqSize);
             }
-        } else if (this.prefix !== 'p') {
+        } else if (this.break1Start.prefix !== 'p') {
             result.push(`${this.refSeq || '?'}${SUBTYPE_TO_NOTATION[this.type]}${this.untemplatedSeq || '?'}`);
         }
         return result.join('');
