@@ -1,9 +1,8 @@
 {
   "name": "knowledgebase-parser",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "description": "A package for parsing and recreating variant notation",
   "main": "./app/index.js",
-  "private": true,
   "directories": {
     "test": "test"
   },
@@ -14,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "ssh://git@svn.bcgsc.ca:7999/vdb/knowledgebase_parser.git"
+    "url": "https://svn.bcgsc.ca/bitbucket/projects/VDB/repos/knowledgebase_parser"
   },
   "author": "",
   "license": "ISC",

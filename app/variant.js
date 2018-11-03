@@ -64,8 +64,13 @@ class VariantNotation {
      * @param {boolean} [opt.multiFeature=false] flag to indicate this should be a multiple feature variant
      * @param {?Number} opt.truncation the new position of the next closest terminating AA
      * @param {string} opt.type the event type
+     * @param {boolean} opt.requireFeatures flag to allow variant notation with features (reference1/2)
      */
     constructor(opt) {
+        this.noFeatures = opt.requireFeatures === false && ! opt.reference1 && ! opt.reference2
+            ? true
+            : false;
+
         if (opt.untemplatedSeq !== undefined) {
             this.untemplatedSeq = opt.untemplatedSeq;
         }
@@ -189,7 +194,7 @@ class VariantNotation {
     toJSON() {
         const json = {};
         for (const [attr, value] of Object.entries(this)) {
-            if (value !== undefined && attr !== 'prefix') {
+            if (value !== undefined && attr !== 'prefix' && attr !== 'noFeatures') {
                 json[attr] = value;
             }
         }
@@ -199,9 +204,10 @@ class VariantNotation {
     toString() {
         if (this.multiFeature) {
             // multi-feature notation
-            let result = `(${this.reference1},${this.reference2}):${
-                SUBTYPE_TO_NOTATION[this.type]
-            }(${this.break1Repr},${this.break2Repr})`;
+            let result = this.noFeatures
+                ? ''
+                : `(${this.reference1},${this.reference2}):`;
+            result = `${result}${SUBTYPE_TO_NOTATION[this.type]}(${this.break1Repr},${this.break2Repr})`;
             if (this.untemplatedSeq !== undefined) {
                 result = `${result}${this.untemplatedSeq}`;
             } else if (this.untemplatedSeqSize !== undefined) {
@@ -210,8 +216,11 @@ class VariantNotation {
             return result;
         }
         // continuous notation
-        const result = [`${this.reference1}:${this.break1Start.prefix}.`];
-        result.push(this.break1Repr.slice(2));
+        const result = [];
+        if (!this.noFeatures) {
+            result.push(`${this.reference1}:`);
+        }
+        result.push(`${this.break1Start.prefix}.${this.break1Repr.slice(2)}`);
         if (this.break2Repr) {
             result.push(`_${this.break2Repr.slice(2)}`);
         }
@@ -290,7 +299,7 @@ const getPrefix = (string) => {
  *
  * @returns {object} the parsed content
  */
-const parse = (string) => {
+const parse = (string, requireFeatures=true) => {
     if (!string || string.length < 4) {
         throw new ParsingError({
             message: 'Too short. Must be a minimum of four characters',
@@ -301,7 +310,11 @@ const parse = (string) => {
     if (split.length > 2) {
         throw new ParsingError({message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation'});
     } else if (split.length === 1) {
-        throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'});
+        if (!requireFeatures) {
+            split.unshift(null);
+        } else {
+            throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'});
+        }
     }
     let result = {};
     const [featureString, variantString] = split;
