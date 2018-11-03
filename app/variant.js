@@ -92,14 +92,7 @@ class VariantNotation {
                 violatedAttr: 'type'
             });
         }
-        if (this.type === EVENT_SUBTYPE.INS) {
-            if (!opt.break2Start) {
-                throw new InputValidationError({
-                    message: 'Insertion events must be specified with a range',
-                    violatedAttr: 'type'
-                });
-            }
-        }
+
 
         // cast positions
         let defaultPosClass;
@@ -189,12 +182,22 @@ class VariantNotation {
             }
             this.break2Repr = _position.breakRepr(this.break2Start.prefix, this.break2Start, this.break2End, this.multiFeature);
         }
+
+        if (this.type === EVENT_SUBTYPE.INS) {
+            if (!this.break2Start && this.break1Start.prefix !== 'e') {
+                throw new InputValidationError({
+                    message: 'Insertion events must be specified with a range',
+                    violatedAttr: 'type'
+                });
+            }
+        }
     }
 
     toJSON() {
         const json = {};
+        const IGNORE = ['prefix', 'multiFeature', 'noFeatures'];
         for (const [attr, value] of Object.entries(this)) {
-            if (value !== undefined && attr !== 'prefix' && attr !== 'noFeatures') {
+            if (value !== undefined && !IGNORE.includes(attr)) {
                 json[attr] = value;
             }
         }
