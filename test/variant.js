@@ -39,7 +39,7 @@ describe('VariantNotation', () => {
     it('ok for insertion with a range', () => {
         const notation = {
             type: 'insertion',
-            reference1: 'egfr',
+            reference1: 'EGFR',
             break1Start: {
                 '@class': 'ExonicPosition',
                 pos: 20,
@@ -50,7 +50,7 @@ describe('VariantNotation', () => {
             },
         };
         const variant = new VariantNotation(notation);
-        expect(variant.toString()).to.eql('egfr:e.20_21ins')
+        expect(variant.toString()).to.eql('EGFR:e.20_21ins')
     })
     it('throws error on invalid type', () => {
         expect(() => {
@@ -81,7 +81,7 @@ describe('VariantNotation', () => {
             reference1: 'a1bgas',
             type: 'substitution'
         });
-        expect(variant.toString()).to.equal('a1bgas:g.(1_18)?>?');
+        expect(variant.toString()).to.equal('A1BGAS:g.(1_18)?>?');
     });
     it('error on insertion without range', () => {
         expect(() => {
@@ -879,18 +879,18 @@ describe('continuous notation', () => {
             expect(result.type).to.equal('frameshift');
         });
         it('lowercase substitution', () => {
-            const notation = 'FEATURE:p.d816n';
+            const notation = 'FEATURE:p.D816N';
             const result = parse(notation);
             expect(result.toString()).to.equal(notation);
-            expect(result.untemplatedSeq).to.equal('n');
+            expect(result.untemplatedSeq).to.equal('N');
             expect(result.type).to.equal('substitution');
-            expect(result.refSeq).to.equal('d');
+            expect(result.refSeq).to.equal('D');
         });
         it('substitution no alt', () => {
-            const notation = 'FEATURE:p.d816';
+            const notation = 'FEATURE:p.D816';
             const result = parse(notation);
             expect(result.toString()).to.equal(notation);
-            expect(result.refSeq).to.equal('d');
+            expect(result.refSeq).to.equal('D');
             expect(result.type).to.equal('substitution');
         });
         it('frameshift alt specified', () => {

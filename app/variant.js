@@ -72,7 +72,7 @@ class VariantNotation {
             : false;
 
         if (opt.untemplatedSeq !== undefined) {
-            this.untemplatedSeq = opt.untemplatedSeq;
+            this.untemplatedSeq = opt.untemplatedSeq.toUpperCase();
         }
         if (opt.untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = opt.untemplatedSeqSize;
@@ -131,6 +131,9 @@ class VariantNotation {
             });
         }
         this.reference1 = opt.reference1;
+        if (this.reference1) {
+            this.reference1 = this.reference1.toUpperCase();
+        }
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
         for (const optAttr of [
             'break1End',
@@ -142,6 +145,12 @@ class VariantNotation {
             if (opt[optAttr] !== undefined) {
                 this[optAttr] = opt[optAttr];
             }
+        }
+        if (this.reference2) {
+            this.reference2 = this.reference2.toUpperCase();
+        }
+        if (this.refSeq) {
+            this.refSeq = this.refSeq.toUpperCase();
         }
         if (opt.truncation === null) {
             this.truncation = null;
@@ -231,13 +240,13 @@ class VariantNotation {
                 || this.type === EVENT_SUBTYPE.FS
                 || (this.type === EVENT_SUBTYPE.SUB && this.break1Start.prefix === 'p')
         ) {
-            if (this.untemplatedSeq !== undefined) {
+            if (this.untemplatedSeq) {
                 result.push(this.untemplatedSeq);
             }
         }
         if (this.type !== EVENT_SUBTYPE.SUB) {
-            if (this.type === EVENT_SUBTYPE.INDEL && this.refSeq !== undefined) {
-                result.push(`del${this.refSeq || '?'}ins`);
+            if (this.type === EVENT_SUBTYPE.INDEL) {
+                result.push(`del${this.refSeq || ''}ins`);
             } else {
                 result.push(SUBTYPE_TO_NOTATION[this.type]);
             }

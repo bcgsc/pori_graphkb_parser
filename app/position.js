@@ -189,6 +189,9 @@ class ProteinPosition extends BasicPosition {
     constructor(opt) {
         super(opt);
         this.refAA = opt.refAA;
+        if (this.refAA) {
+            this.refAA = this.refAA.toUpperCase();
+        }
     }
 
     toString() {
