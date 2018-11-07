@@ -67,9 +67,11 @@ class VariantNotation {
      * @param {boolean} opt.requireFeatures flag to allow variant notation with features (reference1/2)
      */
     constructor(opt) {
-        this.noFeatures = opt.requireFeatures === false && ! opt.reference1 && ! opt.reference2
-            ? true
-            : false;
+        this.noFeatures = !!(
+            opt.requireFeatures === false
+            && ! opt.reference1
+            && ! opt.reference2
+        );
 
         if (opt.untemplatedSeq !== undefined) {
             this.untemplatedSeq = opt.untemplatedSeq.toUpperCase();
