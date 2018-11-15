@@ -69,8 +69,8 @@ class VariantNotation {
     constructor(opt) {
         this.noFeatures = !!(
             opt.requireFeatures === false
-            && ! opt.reference1
-            && ! opt.reference2
+            && !opt.reference1
+            && !opt.reference2
         );
 
         if (opt.untemplatedSeq !== undefined) {
@@ -313,7 +313,7 @@ const getPrefix = (string) => {
  *
  * @returns {object} the parsed content
  */
-const parse = (string, requireFeatures=true) => {
+const parse = (string, requireFeatures = true) => {
     if (!string || string.length < 4) {
         throw new ParsingError({
             message: 'Too short. Must be a minimum of four characters',

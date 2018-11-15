@@ -42,16 +42,16 @@ describe('VariantNotation', () => {
             reference1: 'EGFR',
             break1Start: {
                 '@class': 'ExonicPosition',
-                pos: 20,
+                pos: 20
             },
             break2Start: {
-                '@class':'ExonicPosition',
-                pos:21,
-            },
+                '@class': 'ExonicPosition',
+                pos: 21
+            }
         };
         const variant = new VariantNotation(notation);
-        expect(variant.toString()).to.eql('EGFR:e.20_21ins')
-    })
+        expect(variant.toString()).to.eql('EGFR:e.20_21ins');
+    });
     it('throws error on invalid type', () => {
         expect(() => {
             new VariantNotation({

@@ -1,7 +1,7 @@
 
 
 /** @module app/position */
-const { ParsingError, InputValidationError } = require('./error');
+const {ParsingError, InputValidationError} = require('./error');
 
 /**
  * the mapping of positional variant notation prefixes to their corresponging position classes
@@ -35,7 +35,6 @@ const CYTOBAND_PATT = /[pq]((\d+|\?)(\.(\d+|\?))?)?/;
 
 
 class Position {
-
     toJSON() {
         const json = {
             '@class': this.name
@@ -96,6 +95,7 @@ class CytobandPosition extends Position {
             }
         }
     }
+
     toString() {
         let result = `${this.arm}`;
         if (this.majorBand) {
@@ -251,15 +251,15 @@ const parsePosition = (prefix, string) => {
     switch (prefix) {
         case 'i':
             cls = IntronicPosition;
-            result = { pos: string };
+            result = {pos: string};
             break;
         case 'e':
             cls = ExonicPosition;
-            result = { pos: string };
+            result = {pos: string};
             break;
         case 'g':
             cls = GenomicPosition;
-            result = { pos: string };
+            result = {pos: string};
             break;
         case 'c': {
             const m = new RegExp(`^${CDS_PATT.source}$`).exec(string);
@@ -308,7 +308,7 @@ const parsePosition = (prefix, string) => {
             break;
         }
         default: {
-            throw new ParsingError({ message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix' });
+            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix'});
         }
     }
     try {
