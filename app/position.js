@@ -61,7 +61,6 @@ class CytobandPosition extends Position {
     /**
      * @param {Object} opt options
      * @param {string} opt.prefix the position prefix
-     * @param {string} opt.@class the class name
      * @param {string} opt.arm the chromosome arm
      * @param {?Number} opt.majorBand the major band number
      * @param {?Number} opt.minorBand the minor band number
@@ -113,7 +112,6 @@ class BasicPosition extends Position {
     /**
      * @param {Object} opt options
      * @param {string} opt.prefix the position prefix
-     * @param {string} opt.@class the class name
      * @param {Number} opt.pos
      */
     constructor(opt) {
@@ -149,7 +147,6 @@ class CdsPosition extends BasicPosition {
     /**
      * @param {Object} opt options
      * @param {string} opt.prefix the position prefix
-     * @param {string} opt.@class the class name
      * @param {Number} opt.offset the offset from the nearest cds position
      */
     constructor(opt) {
@@ -182,7 +179,6 @@ class ProteinPosition extends BasicPosition {
     /**
      * @param {Object} opt options
      * @param {string} opt.prefix the position prefix
-     * @param {string} opt.@class the class name
      * @param {Number} opt.pos
      * @param {string} opt.refAA the reference amino acid
      */
