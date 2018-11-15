@@ -12,12 +12,38 @@ const {
     ProteinPosition,
     CdsPosition,
     CytobandPosition,
-    ExonicPosition,
-    IntronicPosition
+    ExonicPosition
 } = require('./../app/position');
 
 
 describe('VariantNotation', () => {
+    it('use object name for reference', () => {
+        const notation = new VariantNotation({
+            reference1: {name: 'KRAS', sourceId: 'hgnc:1234'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('KRAS:p.G12D');
+    });
+    it('use sourceId if no name on reference object', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001:p.G12D');
+    });
+    it('include reference version if available', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001', version: '1'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+    });
     it('throws error on subsitituion with range', () => {
         expect(() => {
             new VariantNotation({

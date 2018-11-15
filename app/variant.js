@@ -50,6 +50,18 @@ for (const [notation, subtype] of [
 }
 
 
+const featureRepr = (feature) => {
+    if (feature) {
+        const string = feature.name || feature.sourceId || feature;
+        if (feature.version) {
+            return `${string}.${feature.version}`;
+        }
+        return string;
+    }
+    return feature;
+};
+
+
 class VariantNotation {
     /**
      * @param {Object} opt options
@@ -134,7 +146,7 @@ class VariantNotation {
         }
         this.reference1 = opt.reference1;
         if (this.reference1) {
-            this.reference1 = this.reference1.toUpperCase();
+            this.reference1 = featureRepr(this.reference1).toUpperCase();
         }
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
         for (const optAttr of [
@@ -149,7 +161,7 @@ class VariantNotation {
             }
         }
         if (this.reference2) {
-            this.reference2 = this.reference2.toUpperCase();
+            this.reference2 = featureRepr(this.reference2).toUpperCase();
         }
         if (this.refSeq) {
             this.refSeq = this.refSeq.toUpperCase();
