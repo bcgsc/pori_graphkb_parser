@@ -50,15 +50,15 @@ for (const [notation, subtype] of [
 }
 
 
-const featureRepr = (feature) => {
-    if (feature) {
-        const string = feature.name || feature.sourceId || feature;
-        if (feature.version) {
-            return `${string}.${feature.version}`;
+const ontologyTermRepr = (term) => {
+    if (term) {
+        const string = term.name || term.sourceId || term;
+        if (term.sourceIdVersion) {
+            return `${string}.${term.sourceIdVersion}`;
         }
         return string;
     }
-    return feature;
+    return term;
 };
 
 
@@ -99,7 +99,7 @@ class VariantNotation {
         } else if (this.untemplatedSeq !== undefined && this.untemplatedSeq !== null) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
-        this.type = opt.type;
+        this.type = ontologyTermRepr(opt.type);
         if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
             throw new InputValidationError({
                 message: `invalid type ${this.type}`,
@@ -146,7 +146,7 @@ class VariantNotation {
         }
         this.reference1 = opt.reference1;
         if (this.reference1) {
-            this.reference1 = featureRepr(this.reference1).toUpperCase();
+            this.reference1 = ontologyTermRepr(this.reference1).toUpperCase();
         }
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
         for (const optAttr of [
@@ -161,7 +161,7 @@ class VariantNotation {
             }
         }
         if (this.reference2) {
-            this.reference2 = featureRepr(this.reference2).toUpperCase();
+            this.reference2 = ontologyTermRepr(this.reference2).toUpperCase();
         }
         if (this.refSeq) {
             this.refSeq = this.refSeq.toUpperCase();

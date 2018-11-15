@@ -37,10 +37,19 @@ describe('VariantNotation', () => {
     });
     it('include reference version if available', () => {
         const notation = new VariantNotation({
-            reference1: {sourceId: 'ENSG001', version: '1'},
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
             untemplatedSeq: 'D',
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+    });
+    it('ontology term for type', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: {name: EVENT_SUBTYPE.SUB}
         });
         expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
     });

@@ -3,3 +3,6 @@ coverage/
 mocha.json
 node_modules/
 xunit.xml
+jsdoc
+*tar.gz
+env.sh
