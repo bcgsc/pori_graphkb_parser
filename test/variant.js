@@ -12,12 +12,47 @@ const {
     ProteinPosition,
     CdsPosition,
     CytobandPosition,
-    ExonicPosition,
-    IntronicPosition
+    ExonicPosition
 } = require('./../app/position');
 
 
 describe('VariantNotation', () => {
+    it('use object name for reference', () => {
+        const notation = new VariantNotation({
+            reference1: {name: 'KRAS', sourceId: 'hgnc:1234'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('KRAS:p.G12D');
+    });
+    it('use sourceId if no name on reference object', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001:p.G12D');
+    });
+    it('include reference version if available', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+    });
+    it('ontology term for type', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: {name: EVENT_SUBTYPE.SUB}
+        });
+        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+    });
     it('throws error on subsitituion with range', () => {
         expect(() => {
             new VariantNotation({
@@ -42,16 +77,16 @@ describe('VariantNotation', () => {
             reference1: 'EGFR',
             break1Start: {
                 '@class': 'ExonicPosition',
-                pos: 20,
+                pos: 20
             },
             break2Start: {
-                '@class':'ExonicPosition',
-                pos:21,
-            },
+                '@class': 'ExonicPosition',
+                pos: 21
+            }
         };
         const variant = new VariantNotation(notation);
-        expect(variant.toString()).to.eql('EGFR:e.20_21ins')
-    })
+        expect(variant.toString()).to.eql('EGFR:e.20_21ins');
+    });
     it('throws error on invalid type', () => {
         expect(() => {
             new VariantNotation({

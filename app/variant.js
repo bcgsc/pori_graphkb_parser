@@ -50,6 +50,18 @@ for (const [notation, subtype] of [
 }
 
 
+const ontologyTermRepr = (term) => {
+    if (term) {
+        const string = term.name || term.sourceId || term;
+        if (term.sourceIdVersion) {
+            return `${string}.${term.sourceIdVersion}`;
+        }
+        return string;
+    }
+    return term;
+};
+
+
 class VariantNotation {
     /**
      * @param {Object} opt options
@@ -69,8 +81,8 @@ class VariantNotation {
     constructor(opt) {
         this.noFeatures = !!(
             opt.requireFeatures === false
-            && ! opt.reference1
-            && ! opt.reference2
+            && !opt.reference1
+            && !opt.reference2
         );
 
         if (opt.untemplatedSeq !== undefined) {
@@ -87,7 +99,7 @@ class VariantNotation {
         } else if (this.untemplatedSeq !== undefined && this.untemplatedSeq !== null) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
-        this.type = opt.type;
+        this.type = ontologyTermRepr(opt.type);
         if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
             throw new InputValidationError({
                 message: `invalid type ${this.type}`,
@@ -134,7 +146,7 @@ class VariantNotation {
         }
         this.reference1 = opt.reference1;
         if (this.reference1) {
-            this.reference1 = this.reference1.toUpperCase();
+            this.reference1 = ontologyTermRepr(this.reference1).toUpperCase();
         }
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
         for (const optAttr of [
@@ -149,7 +161,7 @@ class VariantNotation {
             }
         }
         if (this.reference2) {
-            this.reference2 = this.reference2.toUpperCase();
+            this.reference2 = ontologyTermRepr(this.reference2).toUpperCase();
         }
         if (this.refSeq) {
             this.refSeq = this.refSeq.toUpperCase();
@@ -313,7 +325,7 @@ const getPrefix = (string) => {
  *
  * @returns {object} the parsed content
  */
-const parse = (string, requireFeatures=true) => {
+const parse = (string, requireFeatures = true) => {
     if (!string || string.length < 4) {
         throw new ParsingError({
             message: 'Too short. Must be a minimum of four characters',
