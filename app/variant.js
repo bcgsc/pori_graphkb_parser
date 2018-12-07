@@ -50,6 +50,18 @@ for (const [notation, subtype] of [
 }
 
 
+const ontologyTermRepr = (term) => {
+    if (term) {
+        const string = term.name || term.sourceId || term;
+        if (term.sourceIdVersion) {
+            return `${string}.${term.sourceIdVersion}`;
+        }
+        return string;
+    }
+    return term;
+};
+
+
 class VariantNotation {
     /**
      * @param {Object} opt options
@@ -64,10 +76,17 @@ class VariantNotation {
      * @param {boolean} [opt.multiFeature=false] flag to indicate this should be a multiple feature variant
      * @param {?Number} opt.truncation the new position of the next closest terminating AA
      * @param {string} opt.type the event type
+     * @param {boolean} opt.requireFeatures flag to allow variant notation with features (reference1/2)
      */
     constructor(opt) {
+        this.noFeatures = !!(
+            opt.requireFeatures === false
+            && !opt.reference1
+            && !opt.reference2
+        );
+
         if (opt.untemplatedSeq !== undefined) {
-            this.untemplatedSeq = opt.untemplatedSeq;
+            this.untemplatedSeq = opt.untemplatedSeq.toUpperCase();
         }
         if (opt.untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = opt.untemplatedSeqSize;
@@ -80,21 +99,14 @@ class VariantNotation {
         } else if (this.untemplatedSeq !== undefined && this.untemplatedSeq !== null) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
-        this.type = opt.type;
+        this.type = ontologyTermRepr(opt.type);
         if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
             throw new InputValidationError({
                 message: `invalid type ${this.type}`,
                 violatedAttr: 'type'
             });
         }
-        if (this.type === EVENT_SUBTYPE.INS) {
-            if (!opt.break2Start) {
-                throw new InputValidationError({
-                    message: 'Insertion events must be specified with a range',
-                    violatedAttr: 'type'
-                });
-            }
-        }
+
 
         // cast positions
         let defaultPosClass;
@@ -133,6 +145,9 @@ class VariantNotation {
             });
         }
         this.reference1 = opt.reference1;
+        if (this.reference1) {
+            this.reference1 = ontologyTermRepr(this.reference1).toUpperCase();
+        }
         this.multiFeature = opt.multiFeature || opt.reference2 || false;
         for (const optAttr of [
             'break1End',
@@ -144,6 +159,12 @@ class VariantNotation {
             if (opt[optAttr] !== undefined) {
                 this[optAttr] = opt[optAttr];
             }
+        }
+        if (this.reference2) {
+            this.reference2 = ontologyTermRepr(this.reference2).toUpperCase();
+        }
+        if (this.refSeq) {
+            this.refSeq = this.refSeq.toUpperCase();
         }
         if (opt.truncation === null) {
             this.truncation = null;
@@ -184,12 +205,22 @@ class VariantNotation {
             }
             this.break2Repr = _position.breakRepr(this.break2Start.prefix, this.break2Start, this.break2End, this.multiFeature);
         }
+
+        if (this.type === EVENT_SUBTYPE.INS) {
+            if (!this.break2Start && this.break1Start.prefix !== 'e') {
+                throw new InputValidationError({
+                    message: 'Insertion events must be specified with a range',
+                    violatedAttr: 'type'
+                });
+            }
+        }
     }
 
     toJSON() {
         const json = {};
+        const IGNORE = ['prefix', 'multiFeature', 'noFeatures'];
         for (const [attr, value] of Object.entries(this)) {
-            if (value !== undefined && attr !== 'prefix') {
+            if (value !== undefined && !IGNORE.includes(attr)) {
                 json[attr] = value;
             }
         }
@@ -199,9 +230,10 @@ class VariantNotation {
     toString() {
         if (this.multiFeature) {
             // multi-feature notation
-            let result = `(${this.reference1},${this.reference2}):${
-                SUBTYPE_TO_NOTATION[this.type]
-            }(${this.break1Repr},${this.break2Repr})`;
+            let result = this.noFeatures
+                ? ''
+                : `(${this.reference1},${this.reference2}):`;
+            result = `${result}${SUBTYPE_TO_NOTATION[this.type]}(${this.break1Repr},${this.break2Repr})`;
             if (this.untemplatedSeq !== undefined) {
                 result = `${result}${this.untemplatedSeq}`;
             } else if (this.untemplatedSeqSize !== undefined) {
@@ -210,8 +242,11 @@ class VariantNotation {
             return result;
         }
         // continuous notation
-        const result = [`${this.reference1}:${this.break1Start.prefix}.`];
-        result.push(this.break1Repr.slice(2));
+        const result = [];
+        if (!this.noFeatures) {
+            result.push(`${this.reference1}:`);
+        }
+        result.push(`${this.break1Start.prefix}.${this.break1Repr.slice(2)}`);
         if (this.break2Repr) {
             result.push(`_${this.break2Repr.slice(2)}`);
         }
@@ -219,13 +254,13 @@ class VariantNotation {
                 || this.type === EVENT_SUBTYPE.FS
                 || (this.type === EVENT_SUBTYPE.SUB && this.break1Start.prefix === 'p')
         ) {
-            if (this.untemplatedSeq !== undefined) {
+            if (this.untemplatedSeq) {
                 result.push(this.untemplatedSeq);
             }
         }
         if (this.type !== EVENT_SUBTYPE.SUB) {
-            if (this.type === EVENT_SUBTYPE.INDEL && this.refSeq !== undefined) {
-                result.push(`del${this.refSeq || '?'}ins`);
+            if (this.type === EVENT_SUBTYPE.INDEL) {
+                result.push(`del${this.refSeq || ''}ins`);
             } else {
                 result.push(SUBTYPE_TO_NOTATION[this.type]);
             }
@@ -290,7 +325,7 @@ const getPrefix = (string) => {
  *
  * @returns {object} the parsed content
  */
-const parse = (string) => {
+const parse = (string, requireFeatures = true) => {
     if (!string || string.length < 4) {
         throw new ParsingError({
             message: 'Too short. Must be a minimum of four characters',
@@ -301,7 +336,11 @@ const parse = (string) => {
     if (split.length > 2) {
         throw new ParsingError({message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation'});
     } else if (split.length === 1) {
-        throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'});
+        if (!requireFeatures) {
+            split.unshift(null);
+        } else {
+            throw new ParsingError({message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1'});
+        }
     }
     let result = {};
     const [featureString, variantString] = split;
