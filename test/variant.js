@@ -12,12 +12,47 @@ const {
     ProteinPosition,
     CdsPosition,
     CytobandPosition,
-    ExonicPosition,
-    IntronicPosition
+    ExonicPosition
 } = require('./../app/position');
 
 
 describe('VariantNotation', () => {
+    it('use object name for reference', () => {
+        const notation = new VariantNotation({
+            reference1: {name: 'KRAS', sourceId: 'hgnc:1234'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('KRAS:p.G12D');
+    });
+    it('use sourceId if no name on reference object', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001:p.G12D');
+    });
+    it('include reference version if available', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: EVENT_SUBTYPE.SUB
+        });
+        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+    });
+    it('ontology term for type', () => {
+        const notation = new VariantNotation({
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
+            untemplatedSeq: 'D',
+            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
+            type: {name: EVENT_SUBTYPE.SUB}
+        });
+        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+    });
     it('throws error on subsitituion with range', () => {
         expect(() => {
             new VariantNotation({
@@ -39,19 +74,19 @@ describe('VariantNotation', () => {
     it('ok for insertion with a range', () => {
         const notation = {
             type: 'insertion',
-            reference1: 'egfr',
+            reference1: 'EGFR',
             break1Start: {
                 '@class': 'ExonicPosition',
-                pos: 20,
+                pos: 20
             },
             break2Start: {
-                '@class':'ExonicPosition',
-                pos:21,
-            },
+                '@class': 'ExonicPosition',
+                pos: 21
+            }
         };
         const variant = new VariantNotation(notation);
-        expect(variant.toString()).to.eql('egfr:e.20_21ins')
-    })
+        expect(variant.toString()).to.eql('EGFR:e.20_21ins');
+    });
     it('throws error on invalid type', () => {
         expect(() => {
             new VariantNotation({
@@ -81,7 +116,7 @@ describe('VariantNotation', () => {
             reference1: 'a1bgas',
             type: 'substitution'
         });
-        expect(variant.toString()).to.equal('a1bgas:g.(1_18)?>?');
+        expect(variant.toString()).to.equal('A1BGAS:g.(1_18)?>?');
     });
     it('error on insertion without range', () => {
         expect(() => {
@@ -200,7 +235,8 @@ describe('multi-feature notation', () => {
             type: EVENT_SUBTYPE.FUSION,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
-            multiFeature: true
+            multiFeature: true,
+            noFeatures: false
         });
         expect(parsed.toString()).to.equal(notation);
     });
@@ -215,7 +251,8 @@ describe('multi-feature notation', () => {
             type: EVENT_SUBTYPE.TRANS,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
-            multiFeature: true
+            multiFeature: true,
+            noFeatures: false
         });
         expect(parsed.toString()).to.equal(notation);
     });
@@ -232,7 +269,8 @@ describe('multi-feature notation', () => {
             untemplatedSeqSize: 4,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
-            multiFeature: true
+            multiFeature: true,
+            noFeatures: false
         });
         expect(parsed.toString()).to.equal(notation);
     });
@@ -248,7 +286,8 @@ describe('multi-feature notation', () => {
             untemplatedSeqSize: 5,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
-            multiFeature: true
+            multiFeature: true,
+            noFeatures: false
         });
         expect(parsed.toString()).to.equal(notation);
     });
@@ -265,7 +304,8 @@ describe('multi-feature notation', () => {
             type: EVENT_SUBTYPE.FUSION,
             reference1: 'FEATURE1',
             reference2: 'FEATURE2',
-            multiFeature: true
+            multiFeature: true,
+            noFeatures: false
         });
         expect(parsed.toString()).to.equal(notation);
     });
@@ -283,7 +323,8 @@ describe('continuous notation', () => {
                 break1Repr: 'g.3',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -299,7 +340,8 @@ describe('continuous notation', () => {
                 break2Repr: 'g.5',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -316,7 +358,8 @@ describe('continuous notation', () => {
                 refSeq: 'TAA',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -333,7 +376,8 @@ describe('continuous notation', () => {
                 break2Repr: 'g.5',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -350,7 +394,8 @@ describe('continuous notation', () => {
                 break2Repr: 'g.(5_7)',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -368,7 +413,8 @@ describe('continuous notation', () => {
                 break2Repr: 'g.(5_7)',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -387,7 +433,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 3,
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -404,7 +451,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 1,
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -421,7 +469,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 1,
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -439,7 +488,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 1,
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -460,7 +510,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 3,
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -475,7 +526,8 @@ describe('continuous notation', () => {
                 refSeq: 'T',
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -491,7 +543,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 3,
                 prefix: 'g',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -510,7 +563,8 @@ describe('continuous notation', () => {
                 break1Repr: 'c.3+1',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -526,7 +580,8 @@ describe('continuous notation', () => {
                 break2Repr: 'c.5-2',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -543,7 +598,8 @@ describe('continuous notation', () => {
                 refSeq: 'TAA',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -560,7 +616,8 @@ describe('continuous notation', () => {
                 break2Repr: 'c.10',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -577,7 +634,8 @@ describe('continuous notation', () => {
                 break2Repr: 'c.(5+1_55-1)',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -595,7 +653,8 @@ describe('continuous notation', () => {
                 break2Repr: 'c.(5_7)',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -614,7 +673,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 3,
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -631,7 +691,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 1,
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -649,7 +710,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 1,
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -670,7 +732,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 3,
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -685,7 +748,8 @@ describe('continuous notation', () => {
                 refSeq: 'T',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -701,7 +765,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 3,
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).eql(exp);
             expect(result.toString()).to.equal(notation);
@@ -718,7 +783,8 @@ describe('continuous notation', () => {
                 refSeq: 'C',
                 prefix: 'c',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
             expect(result.toString()).to.equal('FEATURE:c.1-124C>T');
@@ -745,7 +811,8 @@ describe('continuous notation', () => {
                 break1Repr: 'e.1',
                 prefix: 'e',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('duplication single exon with uncertainty', () => {
@@ -759,7 +826,8 @@ describe('continuous notation', () => {
                 break1Repr: 'e.(1_2)',
                 prefix: 'e',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('duplication of multiple exons', () => {
@@ -774,7 +842,8 @@ describe('continuous notation', () => {
                 break2Repr: 'e.3',
                 prefix: 'e',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('duplication of multiple exons with uncertainty', () => {
@@ -791,7 +860,8 @@ describe('continuous notation', () => {
                 break2Repr: 'e.(3_4)',
                 prefix: 'e',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('duplication of multiple exons with uncertainty', () => {
@@ -807,7 +877,8 @@ describe('continuous notation', () => {
                 break2Repr: 'e.4',
                 prefix: 'e',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('duplication of multiple exons with uncertainty', () => {
@@ -823,7 +894,8 @@ describe('continuous notation', () => {
                 break2Repr: 'e.(3_4)',
                 prefix: 'e',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
     });
@@ -842,18 +914,18 @@ describe('continuous notation', () => {
             expect(result.type).to.equal('frameshift');
         });
         it('lowercase substitution', () => {
-            const notation = 'FEATURE:p.d816n';
+            const notation = 'FEATURE:p.D816N';
             const result = parse(notation);
             expect(result.toString()).to.equal(notation);
-            expect(result.untemplatedSeq).to.equal('n');
+            expect(result.untemplatedSeq).to.equal('N');
             expect(result.type).to.equal('substitution');
-            expect(result.refSeq).to.equal('d');
+            expect(result.refSeq).to.equal('D');
         });
         it('substitution no alt', () => {
-            const notation = 'FEATURE:p.d816';
+            const notation = 'FEATURE:p.D816';
             const result = parse(notation);
             expect(result.toString()).to.equal(notation);
-            expect(result.refSeq).to.equal('d');
+            expect(result.refSeq).to.equal('D');
             expect(result.type).to.equal('substitution');
         });
         it('frameshift alt specified', () => {
@@ -869,7 +941,8 @@ describe('continuous notation', () => {
                 untemplatedSeqSize: 1,
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -887,7 +960,8 @@ describe('continuous notation', () => {
                 break1Repr: 'p.R10',
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('frameshift truncation conflict error', () => {
@@ -911,7 +985,8 @@ describe('continuous notation', () => {
                 break1Repr: 'p.R10',
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('frameshift immeadiate truncation', () => {
@@ -928,7 +1003,8 @@ describe('continuous notation', () => {
                 break1Repr: 'p.R10',
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             });
         });
         it('frameshift errors on range', () => {
@@ -946,7 +1022,8 @@ describe('continuous notation', () => {
                 truncation: 10,
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -962,7 +1039,8 @@ describe('continuous notation', () => {
                 refSeq: 'R',
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -977,7 +1055,8 @@ describe('continuous notation', () => {
                 refSeq: 'R',
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -994,7 +1073,8 @@ describe('continuous notation', () => {
                 refSeq: 'F',
                 prefix: 'p',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1029,7 +1109,8 @@ describe('continuous notation', () => {
                 break1Repr: 'y.p',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1043,7 +1124,8 @@ describe('continuous notation', () => {
                 break1Repr: 'y.p11',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1057,7 +1139,8 @@ describe('continuous notation', () => {
                 break1Repr: 'y.p11.1',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1073,7 +1156,8 @@ describe('continuous notation', () => {
                 break2Repr: 'y.p13.3',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1091,7 +1175,8 @@ describe('continuous notation', () => {
                 break2Repr: 'y.(p13.4_p14)',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1108,7 +1193,8 @@ describe('continuous notation', () => {
                 break2Repr: 'y.p13.3',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1125,7 +1211,8 @@ describe('continuous notation', () => {
                 break2Repr: 'y.(p15.1_p15.2)',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1139,7 +1226,8 @@ describe('continuous notation', () => {
                 break1Repr: 'y.q',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1153,7 +1241,8 @@ describe('continuous notation', () => {
                 break1Repr: 'y.p',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
@@ -1169,7 +1258,8 @@ describe('continuous notation', () => {
                 break2Repr: 'y.p13.3',
                 prefix: 'y',
                 reference1: 'FEATURE',
-                multiFeature: false
+                multiFeature: false,
+                noFeatures: false
             };
             expect(result).to.eql(exp);
         });
