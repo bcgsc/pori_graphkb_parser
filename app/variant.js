@@ -3,51 +3,12 @@
 /** @module app/variant */
 const {ParsingError, InputValidationError} = require('./error');
 const _position = require('./position');
-
-const EVENT_SUBTYPE = {
-    INS: 'insertion',
-    DEL: 'deletion',
-    SUB: 'substitution',
-    INV: 'inversion',
-    INDEL: 'indel',
-    GAIN: 'copy gain',
-    LOSS: 'copy loss',
-    TRANS: 'translocation',
-    ITRANS: 'inverted translocation',
-    EXT: 'extension',
-    FS: 'frameshift',
-    FUSION: 'fusion',
-    DUP: 'duplication',
-    ME: 'methylation',
-    AC: 'acetylation',
-    UB: 'ubiquitination',
-    SPL: 'splice-site',
-    MUT: 'mutation'
-};
-
-
-const NOTATION_TO_SUBTYPE = {};
-const SUBTYPE_TO_NOTATION = {};
-for (const [notation, subtype] of [
-    ['fs', EVENT_SUBTYPE.FS],
-    ['>', EVENT_SUBTYPE.SUB],
-    ['delins', EVENT_SUBTYPE.INDEL],
-    ['inv', EVENT_SUBTYPE.INV],
-    ['ext', EVENT_SUBTYPE.EXT],
-    ['del', EVENT_SUBTYPE.DEL],
-    ['dup', EVENT_SUBTYPE.DUP],
-    ['ins', EVENT_SUBTYPE.INS],
-    ['copygain', EVENT_SUBTYPE.GAIN],
-    ['copyloss', EVENT_SUBTYPE.LOSS],
-    ['trans', EVENT_SUBTYPE.TRANS],
-    ['itrans', EVENT_SUBTYPE.ITRANS],
-    ['spl', EVENT_SUBTYPE.SPL],
-    ['fusion', EVENT_SUBTYPE.FUSION],
-    ['mut', EVENT_SUBTYPE.MUT]
-]) {
-    NOTATION_TO_SUBTYPE[notation] = subtype;
-    SUBTYPE_TO_NOTATION[subtype] = notation;
-}
+const {
+    AA_PATTERN,
+    EVENT_SUBTYPE,
+    NOTATION_TO_SUBTYPE,
+    SUBTYPE_TO_NOTATION
+} = require('./constants');
 
 
 const ontologyTermRepr = (term) => {
