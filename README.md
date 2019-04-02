@@ -2,19 +2,7 @@
 
 - [About](#about)
 - [Getting Started](#getting-started)
-- [Variant Notation](#variant-notation)
-    - [Introduction](#introduction)
-    - [General Notation](#general-notation)
-        - [Prefixes](#prefixes)
-        - [Variant Types](#variant-types)
-        - [Currently Unsupported HGVS Features](#currently-unsupported-hgvs-features)
-    - [Continuous Notation](#continuous-notation)
-        - [Examples](#examples)
-    - [CytoBand Coordinates](#cytoband-coordinates)
-        - [Deletion Example](#deletion-example)
-    - [Multi-Feature Notation](#multi-feature-notation)
-        - [Exon Gene Fusion Example](#exon-gene-fusion-example)
-        - [Genomic Translocation Example](#genomic-translocation-example)
+
 
 ## About
 

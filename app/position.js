@@ -2,6 +2,7 @@
 
 /** @module app/position */
 const {ParsingError, InputValidationError} = require('./error');
+const {AA_PATTERN, AA_CODES} = require('./constants');
 
 /**
  * the mapping of positional variant notation prefixes to their corresponging position classes
@@ -30,7 +31,7 @@ for (const [prefix, clsName] of Object.entries(PREFIX_CLASS)) {
 
 
 const CDS_PATT = /(\d+)?([-+]\d+)?/;
-const PROTEIN_PATT = /([A-Za-z?*])?(\d+|\?)/;
+const PROTEIN_PATT = new RegExp(`(${AA_PATTERN})?(\\d+|\\?)`);
 const CYTOBAND_PATT = /[pq]((\d+|\?)(\.(\d+|\?))?)?/;
 
 
@@ -185,13 +186,27 @@ class ProteinPosition extends BasicPosition {
     constructor(opt) {
         super(opt);
         this.refAA = opt.refAA;
+        this.longRefAA = null;
         if (this.refAA) {
+            if (AA_CODES[this.refAA.toLowerCase()]) {
+                this.longRefAA = this.refAA;
+                this.refAA = AA_CODES[this.refAA.toLowerCase()];
+            }
             this.refAA = this.refAA.toUpperCase();
         }
     }
 
     toString() {
         return `${this.refAA || '?'}${super.toString(this)}`;
+    }
+
+    toJSON() {
+        const json = {
+            '@class': this.name,
+            refAA: this.refAA,
+            pos: this.pos
+        };
+        return json;
     }
 }
 
@@ -243,22 +258,22 @@ const breakRepr = (prefix, start, end = null, multiFeature = false) => {
  */
 const parsePosition = (prefix, string) => {
     let result = {},
-        cls;
+        Cls;
     switch (prefix) {
         case 'i':
-            cls = IntronicPosition;
+            Cls = IntronicPosition;
             result = {pos: string};
             break;
         case 'e':
-            cls = ExonicPosition;
+            Cls = ExonicPosition;
             result = {pos: string};
             break;
         case 'g':
-            cls = GenomicPosition;
+            Cls = GenomicPosition;
             result = {pos: string};
             break;
         case 'c': {
-            const m = new RegExp(`^${CDS_PATT.source}$`).exec(string);
+            const m = new RegExp(`^${CDS_PATT.source}$`, 'i').exec(string);
             if (m === null || (!m[1] && !m[2])) {
                 throw new ParsingError(`input '${string}' did not match the expected pattern for 'c' prefixed positions`);
             }
@@ -268,12 +283,12 @@ const parsePosition = (prefix, string) => {
             result.offset = m[2] === undefined
                 ? 0
                 : parseInt(m[2], 10);
-            cls = CdsPosition;
+            Cls = CdsPosition;
 
             break;
         }
         case 'p': {
-            const m = new RegExp(`^${PROTEIN_PATT.source}$`).exec(string);
+            const m = new RegExp(`^${PROTEIN_PATT.source}$`, 'i').exec(string);
             if (m === null) {
                 throw new ParsingError(`input string '${string}' did not match the expected pattern for 'p' prefixed positions`);
             }
@@ -285,11 +300,11 @@ const parsePosition = (prefix, string) => {
             if (m[1] !== undefined && m[1] !== '?') {
                 [, result.refAA] = m;
             }
-            cls = ProteinPosition;
+            Cls = ProteinPosition;
             break;
         }
         case 'y': {
-            const m = new RegExp(`^${CYTOBAND_PATT.source}$`).exec(string);
+            const m = new RegExp(`^${CYTOBAND_PATT.source}$`, 'i').exec(string);
             if (m == null) {
                 throw new ParsingError(`input string '${string}' did not match the expected pattern for 'y' prefixed positions`);
             }
@@ -300,7 +315,7 @@ const parsePosition = (prefix, string) => {
             if (m[4] !== undefined && m[4] !== '?') {
                 result.minorBand = parseInt(m[4], 10);
             }
-            cls = CytobandPosition;
+            Cls = CytobandPosition;
             break;
         }
         default: {
@@ -308,7 +323,7 @@ const parsePosition = (prefix, string) => {
         }
     }
     try {
-        return new cls(result);
+        return new Cls(result);
     } catch (err) {
         const content = err.content || {};
         content.message = err.message;

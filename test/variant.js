@@ -964,6 +964,16 @@ describe('continuous notation', () => {
                 noFeatures: false
             });
         });
+        it('parses 3 letter amino acids for protein frameshift', () => {
+            const notation = 'FEATURE:p.Arg10Lysfs*10';
+            const result = parse(notation);
+            expect(result.toString()).to.equal('FEATURE:p.R10Kfs*10');
+        });
+        it('parses 3 letter amino acids for reference sequence', () => {
+            const notation = 'FEATURE:p.Arg10_Lys12delArgGluLysinsLeu';
+            const result = parse(notation);
+            expect(result.toString()).to.equal('FEATURE:p.R10_K12delREKinsL');
+        });
         it('frameshift truncation conflict error', () => {
             expect(() => {
                 parse('FEATURE:p.R10*fs*10');

@@ -3,51 +3,13 @@
 /** @module app/variant */
 const {ParsingError, InputValidationError} = require('./error');
 const _position = require('./position');
-
-const EVENT_SUBTYPE = {
-    INS: 'insertion',
-    DEL: 'deletion',
-    SUB: 'substitution',
-    INV: 'inversion',
-    INDEL: 'indel',
-    GAIN: 'copy gain',
-    LOSS: 'copy loss',
-    TRANS: 'translocation',
-    ITRANS: 'inverted translocation',
-    EXT: 'extension',
-    FS: 'frameshift',
-    FUSION: 'fusion',
-    DUP: 'duplication',
-    ME: 'methylation',
-    AC: 'acetylation',
-    UB: 'ubiquitination',
-    SPL: 'splice-site',
-    MUT: 'mutation'
-};
-
-
-const NOTATION_TO_SUBTYPE = {};
-const SUBTYPE_TO_NOTATION = {};
-for (const [notation, subtype] of [
-    ['fs', EVENT_SUBTYPE.FS],
-    ['>', EVENT_SUBTYPE.SUB],
-    ['delins', EVENT_SUBTYPE.INDEL],
-    ['inv', EVENT_SUBTYPE.INV],
-    ['ext', EVENT_SUBTYPE.EXT],
-    ['del', EVENT_SUBTYPE.DEL],
-    ['dup', EVENT_SUBTYPE.DUP],
-    ['ins', EVENT_SUBTYPE.INS],
-    ['copygain', EVENT_SUBTYPE.GAIN],
-    ['copyloss', EVENT_SUBTYPE.LOSS],
-    ['trans', EVENT_SUBTYPE.TRANS],
-    ['itrans', EVENT_SUBTYPE.ITRANS],
-    ['spl', EVENT_SUBTYPE.SPL],
-    ['fusion', EVENT_SUBTYPE.FUSION],
-    ['mut', EVENT_SUBTYPE.MUT]
-]) {
-    NOTATION_TO_SUBTYPE[notation] = subtype;
-    SUBTYPE_TO_NOTATION[subtype] = notation;
-}
+const {
+    AA_CODES,
+    AA_PATTERN,
+    EVENT_SUBTYPE,
+    NOTATION_TO_SUBTYPE,
+    SUBTYPE_TO_NOTATION
+} = require('./constants');
 
 
 const ontologyTermRepr = (term) => {
@@ -59,6 +21,25 @@ const ontologyTermRepr = (term) => {
         return string;
     }
     return term;
+};
+
+/**
+ * Covert some sequence of 3-letter amino acids to single letter version
+ *
+ * @example
+ * convert3to1('ArgLysLeu')
+ * 'RKL'
+ */
+const convert3to1 = (notation) => {
+    if (notation.length % 3 !== 0) {
+        throw new ParsingError(`Cannot convert to single letter AA notation. The input (${notation}) is not in 3-letter form`);
+    }
+    const result = [];
+    for (let i = 0; i < notation.length; i += 3) {
+        const code = notation.slice(i, i + 3).toLowerCase();
+        result.push(AA_CODES[code]);
+    }
+    return result.join('');
 };
 
 
@@ -122,19 +103,19 @@ class VariantNotation {
         }
         for (const breakAttr of ['break1Start', 'break1End', 'break2Start', 'break2End']) {
             if (opt[breakAttr] && !(opt[breakAttr] instanceof _position.Position)) {
-                let posCls = defaultPosClass;
+                let PosCls = defaultPosClass;
                 if (opt[breakAttr]['@class']) {
-                    posCls = _position[opt[breakAttr]['@class']];
+                    PosCls = _position[opt[breakAttr]['@class']];
                 } else if (opt[breakAttr].prefix) {
-                    posCls = _position[_position.PREFIX_CLASS[opt[breakAttr].prefix]];
+                    PosCls = _position[_position.PREFIX_CLASS[opt[breakAttr].prefix]];
                 }
-                if (!posCls) {
+                if (!PosCls) {
                     throw new InputValidationError({
                         message: 'Could not determine the type of position',
                         violatedAttr: breakAttr
                     });
                 }
-                opt[breakAttr] = new posCls(opt[breakAttr]);
+                opt[breakAttr] = new PosCls(opt[breakAttr]);
             }
         }
         this.break1Start = opt.break1Start;
@@ -545,7 +526,7 @@ const extractPositions = (prefix, string) => {
             case 'p': { pattern = _position.PROTEIN_PATT; break; }
             default: { pattern = /\d+/; }
         }
-        const match = new RegExp(`^(${pattern.source})`).exec(string);
+        const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
         if (!match) {
             throw new ParsingError('Failed to parse the initial position');
         }
@@ -639,7 +620,7 @@ const parseContinuous = (inputString) => {
                 result.refSeq = match[2];
             }
         }
-    } else if (match = /^[A-Z?*](\^[A-Z?*])*$/i.exec(tail) || tail.length === 0) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})(\\^(${AA_PATTERN}))*$`, 'i').exec(tail) || tail.length === 0) {
         if (prefix !== 'p') {
             throw new ParsingError({
                 message: 'only protein notation does not use ">" for a substitution',
@@ -664,7 +645,7 @@ const parseContinuous = (inputString) => {
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = /^([A-Z?*])?fs((\*)(\d+)?)?$/i.exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?fs((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
         if (prefix !== 'p') {
             throw new ParsingError({
                 message: 'only protein notation can notate frameshift variants',
@@ -746,9 +727,22 @@ const parseContinuous = (inputString) => {
             });
         }
     }
-    // special case refSeq protein substitutions
-    if (prefix === 'p' && !result.break1End && !result.break2Start && !result.break2End && result.break1Start.refAA) {
-        result.refSeq = result.break1Start.refAA;
+
+    if (prefix === 'p') {
+        // special case refSeq protein substitutions
+        if (!result.break1End && !result.break2Start && !result.break2End && result.break1Start.refAA) {
+            result.refSeq = result.break1Start.longRefAA || result.break1Start.refAA;
+        }
+        // covert to 1AA code? check if any of the positions were converted
+        const convert = [result.break1Start, result.break1End, result.break2Start, result.break2End].some(x => x && x.longRefAA);
+        if (convert) {
+            if (result.untemplatedSeq) {
+                result.untemplatedSeq = convert3to1(result.untemplatedSeq);
+            }
+            if (result.refSeq) {
+                result.refSeq = convert3to1(result.refSeq);
+            }
+        }
     }
     return result;
 };
