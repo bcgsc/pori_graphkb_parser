@@ -186,8 +186,10 @@ class ProteinPosition extends BasicPosition {
     constructor(opt) {
         super(opt);
         this.refAA = opt.refAA;
+        this.longRefAA = null;
         if (this.refAA) {
             if (AA_CODES[this.refAA.toLowerCase()]) {
+                this.longRefAA = this.refAA;
                 this.refAA = AA_CODES[this.refAA.toLowerCase()];
             }
             this.refAA = this.refAA.toUpperCase();
@@ -196,6 +198,15 @@ class ProteinPosition extends BasicPosition {
 
     toString() {
         return `${this.refAA || '?'}${super.toString(this)}`;
+    }
+
+    toJSON() {
+        const json = {
+            '@class': this.name,
+            refAA: this.refAA,
+            pos: this.pos
+        };
+        return json;
     }
 }
 
