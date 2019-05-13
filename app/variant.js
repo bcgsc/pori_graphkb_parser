@@ -202,7 +202,11 @@ class VariantNotation {
         const IGNORE = ['prefix', 'multiFeature', 'noFeatures'];
         for (const [attr, value] of Object.entries(this)) {
             if (value !== undefined && !IGNORE.includes(attr)) {
-                json[attr] = value;
+                if (value instanceof _position.Position) {
+                    json[attr] = value.toJSON();
+                } else {
+                    json[attr] = value;
+                }
             }
         }
         return json;
