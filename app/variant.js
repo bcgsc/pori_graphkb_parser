@@ -43,6 +43,15 @@ const convert3to1 = (notation) => {
 };
 
 
+const stripParentheses = (breakRepr) => {
+    const match = /^([a-z])\.\((.+)\)$/.exec(breakRepr);
+    if (match) {
+        return `${match[1]}.${match[2]}`;
+    }
+    return breakRepr;
+};
+
+
 class VariantNotation {
     /**
      * @param {Object} opt options
@@ -202,65 +211,87 @@ class VariantNotation {
         const IGNORE = ['prefix', 'multiFeature', 'noFeatures'];
         for (const [attr, value] of Object.entries(this)) {
             if (value !== undefined && !IGNORE.includes(attr)) {
-                json[attr] = value;
+                if (value instanceof _position.Position) {
+                    json[attr] = value.toJSON();
+                } else {
+                    json[attr] = value;
+                }
             }
         }
         return json;
     }
 
     toString() {
-        if (this.multiFeature) {
+        return this.constructor.toString(this);
+    }
+
+    static toString(variant) {
+        const {
+            multiFeature,
+            noFeatures,
+            reference1,
+            reference2,
+            break1Repr,
+            break2Repr,
+            untemplatedSeq,
+            untemplatedSeqSize,
+            truncation,
+            refSeq
+        } = variant;
+        const type = variant.type.name || variant.type;
+
+        if (multiFeature) {
             // multi-feature notation
-            let result = this.noFeatures
+            let result = noFeatures || noFeatures
                 ? ''
-                : `(${this.reference1},${this.reference2}):`;
-            result = `${result}${SUBTYPE_TO_NOTATION[this.type]}(${this.break1Repr},${this.break2Repr})`;
-            if (this.untemplatedSeq !== undefined) {
-                result = `${result}${this.untemplatedSeq}`;
-            } else if (this.untemplatedSeqSize !== undefined) {
-                result = `${result}${this.untemplatedSeqSize}`;
+                : `(${reference1},${reference2}):`;
+            result = `${result}${SUBTYPE_TO_NOTATION[type]}(${stripParentheses(break1Repr)},${stripParentheses(break2Repr)})`;
+            if (untemplatedSeq !== undefined) {
+                result = `${result}${untemplatedSeq}`;
+            } else if (untemplatedSeqSize !== undefined) {
+                result = `${result}${untemplatedSeqSize}`;
             }
             return result;
         }
         // continuous notation
         const result = [];
-        if (!this.noFeatures) {
-            result.push(`${this.reference1}:`);
+        if (!noFeatures && !noFeatures) {
+            result.push(`${reference1}:`);
         }
-        result.push(`${this.break1Start.prefix}.${this.break1Repr.slice(2)}`);
-        if (this.break2Repr) {
-            result.push(`_${this.break2Repr.slice(2)}`);
+        result.push(break1Repr);
+        if (break2Repr) {
+            result.push(`_${break2Repr.slice(2)}`);
         }
-        if (this.type === EVENT_SUBTYPE.EXT
-                || this.type === EVENT_SUBTYPE.FS
-                || (this.type === EVENT_SUBTYPE.SUB && this.break1Start.prefix === 'p')
+        if (type === EVENT_SUBTYPE.EXT
+                || type === EVENT_SUBTYPE.FS
+                || (type === EVENT_SUBTYPE.SUB && break1Repr.startsWith('p.'))
         ) {
-            if (this.untemplatedSeq) {
-                result.push(this.untemplatedSeq);
+            if (untemplatedSeq) {
+                result.push(untemplatedSeq);
             }
         }
-        if (this.type !== EVENT_SUBTYPE.SUB) {
-            if (this.type === EVENT_SUBTYPE.INDEL) {
-                result.push(`del${this.refSeq || ''}ins`);
+        if (type !== EVENT_SUBTYPE.SUB) {
+            if (type === EVENT_SUBTYPE.INDEL) {
+                result.push(`del${refSeq || ''}ins`);
             } else {
-                result.push(SUBTYPE_TO_NOTATION[this.type]);
+                result.push(SUBTYPE_TO_NOTATION[type]);
             }
-            if (this.truncation && this.truncation !== 1) {
-                result.push(`*${this.truncation}`);
+            if (truncation && truncation !== 1) {
+                result.push(`*${truncation}`);
             }
 
-            if (this.refSeq
-                    && [EVENT_SUBTYPE.DUP, EVENT_SUBTYPE.DEL, EVENT_SUBTYPE.INV].includes(this.type)
+            if (refSeq
+                    && [EVENT_SUBTYPE.DUP, EVENT_SUBTYPE.DEL, EVENT_SUBTYPE.INV].includes(type)
             ) {
-                result.push(this.refSeq);
+                result.push(refSeq);
             }
-            if ((this.untemplatedSeq || this.untemplatedSeqSize)
-                    && [EVENT_SUBTYPE.INS, EVENT_SUBTYPE.INDEL].includes(this.type)
+            if ((untemplatedSeq || untemplatedSeqSize)
+                    && [EVENT_SUBTYPE.INS, EVENT_SUBTYPE.INDEL].includes(type)
             ) {
-                result.push(this.untemplatedSeq || this.untemplatedSeqSize);
+                result.push(untemplatedSeq || untemplatedSeqSize);
             }
-        } else if (this.break1Start.prefix !== 'p') {
-            result.push(`${this.refSeq || '?'}${SUBTYPE_TO_NOTATION[this.type]}${this.untemplatedSeq || '?'}`);
+        } else if (!break1Repr.startsWith('p.')) {
+            result.push(`${refSeq || '?'}${SUBTYPE_TO_NOTATION[type]}${untemplatedSeq || '?'}`);
         }
         return result.join('');
     }
@@ -749,5 +780,5 @@ const parseContinuous = (inputString) => {
 
 
 module.exports = {
-    parse, NOTATION_TO_SUBTYPE, EVENT_SUBTYPE, VariantNotation
+    parse, NOTATION_TO_SUBTYPE, EVENT_SUBTYPE, VariantNotation, stripParentheses
 };
