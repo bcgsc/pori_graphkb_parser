@@ -5,7 +5,8 @@ const {ParsingError} = require('./../app/error');
 const {
     parse,
     EVENT_SUBTYPE,
-    VariantNotation
+    VariantNotation,
+    stripParentheses
 } = require('./../app/variant');
 const {
     GenomicPosition,
@@ -1282,5 +1283,17 @@ describe('continuous notation', () => {
     });
     it('errors on missing . delimiter after prefix', () => {
         expect(() => { parse('FEATURE:pG12D'); }).to.throw(ParsingError);
+    });
+});
+
+describe('stripParentheses', () => {
+    it('ignores single positions', () => {
+        expect(stripParentheses('e.1')).to.equal('e.1');
+    });
+    it('ignores range positions', () => {
+        expect(stripParentheses('e.1_2')).to.equal('e.1_2');
+    });
+    it('strips uncertain positions', () => {
+        expect(stripParentheses('e.(1_2)')).to.equal('e.1_2');
     });
 });
