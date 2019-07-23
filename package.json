@@ -1,6 +1,6 @@
 {
   "name": "@bcgsc/knowledgebase-parser",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "A package for parsing and recreating variant notation",
   "main": "./app/index.js",
   "directories": {
