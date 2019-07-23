@@ -1297,3 +1297,38 @@ describe('stripParentheses', () => {
         expect(stripParentheses('e.(1_2)')).to.equal('e.1_2');
     });
 });
+
+
+describe('VariantNotation.toString', () => {
+    it('builds string from duck-typed object', () => {
+        const obj = {
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: 'substitution',
+            break1Start: {'@class': 'ProteinPosition', pos: 12, refAA: 'G'},
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            uuid: '209f648a-ea5f-4e2a-9c4a-45186821cf1e',
+            createdAt: 1563408581057,
+            displayName: 'KRAS1:p.G12',
+            break1Repr: 'p.G12',
+            '@version': 1
+        };
+        expect(VariantNotation.toString(obj)).to.eql('KRAS1:p.G12D');
+    });
+    it('allows non-standard types', () => {
+        const obj = {
+            '@class': 'PositionalVariant',
+            reference1: 'EWSR1',
+            reference2: 'FLI1',
+            type: {name: 'in-frame fusion'},
+            break1Start: {'@class': 'GenomicPosition', pos: 1230},
+            break2Start: {'@class': 'GenomicPosition', pos: 1400},
+            uuid: '209f648a-ea5f-4e2a-9c4a-45186821cf1e',
+            createdAt: 1563408581057,
+            break1Repr: 'g.1230',
+            break2Repr: 'g.1400'
+        };
+        expect(VariantNotation.toString(obj)).to.eql('(EWSR1,FLI1):in-frame-fusion(g.1230,g.1400)');
+    });
+});

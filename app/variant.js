@@ -240,12 +240,17 @@ class VariantNotation {
         } = variant;
         const type = variant.type.name || variant.type;
 
-        if (multiFeature) {
+        let notationType = SUBTYPE_TO_NOTATION[type];
+        if (!notationType) {
+            notationType = type.replace(/\s+/, '-'); // default to type without whitespace
+        }
+
+        if (multiFeature || reference2 && (reference1 !== reference2)) {
             // multi-feature notation
             let result = noFeatures || noFeatures
                 ? ''
                 : `(${reference1},${reference2}):`;
-            result = `${result}${SUBTYPE_TO_NOTATION[type]}(${stripParentheses(break1Repr)},${stripParentheses(break2Repr)})`;
+            result = `${result}${notationType}(${stripParentheses(break1Repr)},${stripParentheses(break2Repr)})`;
             if (untemplatedSeq !== undefined) {
                 result = `${result}${untemplatedSeq}`;
             } else if (untemplatedSeqSize !== undefined) {
@@ -274,7 +279,7 @@ class VariantNotation {
             if (type === EVENT_SUBTYPE.INDEL) {
                 result.push(`del${refSeq || ''}ins`);
             } else {
-                result.push(SUBTYPE_TO_NOTATION[type]);
+                result.push(notationType);
             }
             if (truncation && truncation !== 1) {
                 result.push(`*${truncation}`);
@@ -291,7 +296,7 @@ class VariantNotation {
                 result.push(untemplatedSeq || untemplatedSeqSize);
             }
         } else if (!break1Repr.startsWith('p.')) {
-            result.push(`${refSeq || '?'}${SUBTYPE_TO_NOTATION[type]}${untemplatedSeq || '?'}`);
+            result.push(`${refSeq || '?'}${notationType}${untemplatedSeq || '?'}`);
         }
         return result.join('');
     }
