@@ -67,29 +67,33 @@ class CytobandPosition extends Position {
      * @param {?Number} opt.minorBand the minor band number
      */
 
-    constructor(opt) {
+    constructor({arm, majorBand, minorBand}) {
         super();
-        this.arm = opt.arm;
+        this.arm = arm;
         if (this.arm !== 'p' && this.arm !== 'q') {
             throw new InputValidationError({
                 message: `cytoband arm must be p or q (${this.arm})`,
                 violatedAttr: 'arm'
             });
         }
-        if (opt.majorBand !== undefined) {
-            this.majorBand = Number(opt.majorBand);
+        if (majorBand === null) {
+            this.majorBand = null;
+        } else if (majorBand !== undefined) {
+            this.majorBand = Number(majorBand);
             if (isNaN(this.majorBand) || this.majorBand <= 0) {
                 throw new InputValidationError({
-                    message: `majorBand must be a positive integer (${opt.majorBand})`,
+                    message: `majorBand must be a positive integer (${majorBand})`,
                     violatedAttr: 'majorBand'
                 });
             }
         }
-        if (opt.minorBand !== undefined) {
-            this.minorBand = Number(opt.minorBand);
+        if (minorBand === null) {
+            this.minorBand = null;
+        } else if (minorBand !== undefined) {
+            this.minorBand = Number(minorBand);
             if (isNaN(this.minorBand) || this.minorBand <= 0) {
                 throw new InputValidationError({
-                    message: `minorBand must be a positive integer (${opt.minorBand})`,
+                    message: `minorBand must be a positive integer (${minorBand})`,
                     violatedAttr: 'minorBand'
                 });
             }
@@ -98,10 +102,10 @@ class CytobandPosition extends Position {
 
     toString() {
         let result = `${this.arm}`;
-        if (this.majorBand) {
-            result = `${result}${this.majorBand}`;
-            if (this.minorBand) {
-                result = `${result}.${this.minorBand}`;
+        if (this.majorBand !== undefined) {
+            result = `${result}${this.majorBand || '?'}`;
+            if (this.minorBand !== undefined) {
+                result = `${result}.${this.minorBand || '?'}`;
             }
         }
         return result;
@@ -112,20 +116,19 @@ class CytobandPosition extends Position {
 class BasicPosition extends Position {
     /**
      * @param {Object} opt options
-     * @param {string} opt.prefix the position prefix
      * @param {Number} opt.pos
      */
-    constructor(opt) {
+    constructor({pos}) {
         super();
-        if (opt.pos === '?') {
+        if (pos === '?' || pos === null) {
             this.pos = null;
-        } else if (isNaN(opt.pos) || opt.pos <= 0) {
+        } else if (isNaN(pos) || pos <= 0) {
             throw new InputValidationError({
-                message: `pos (${opt.pos}) must be a positive integer`,
+                message: `pos (${pos}) must be a positive integer`,
                 violatedAttr: 'pos'
             });
-        } else if (opt.pos) {
-            this.pos = Number(opt.pos);
+        } else if (pos) {
+            this.pos = Number(pos);
         }
     }
 
@@ -151,12 +154,16 @@ class CdsPosition extends BasicPosition {
      * @param {Number} opt.offset the offset from the nearest cds position
      */
     constructor(opt) {
+        const {offset} = opt;
         super(opt);
-        if (opt.offset !== undefined) {
-            this.offset = Number(opt.offset);
+
+        if (offset === null) {
+            this.offset = null;
+        } else if (offset !== undefined) {
+            this.offset = Number(offset);
             if (isNaN(this.offset)) {
                 throw new InputValidationError({
-                    message: `offset (${opt.offset}) must be an integer`,
+                    message: `offset (${offset}) must be an integer`,
                     violatedAttr: 'offset'
                 });
             }
@@ -165,7 +172,9 @@ class CdsPosition extends BasicPosition {
 
     toString() {
         let offset = '';
-        if (this.offset) {
+        if (this.offset === null) {
+            offset = '?';
+        } else if (this.offset) {
             if (this.offset > 0) {
                 offset = '+';
             }
