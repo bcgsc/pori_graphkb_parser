@@ -245,7 +245,7 @@ class VariantNotation {
             notationType = type.replace(/\s+/, '-'); // default to type without whitespace
         }
 
-        if (multiFeature || reference2 && (reference1 !== reference2)) {
+        if (multiFeature || (reference2 && (reference1 !== reference2))) {
             // multi-feature notation
             let result = noFeatures || noFeatures
                 ? ''

@@ -48,7 +48,8 @@ const EVENT_SUBTYPE = {
     AC: 'acetylation',
     UB: 'ubiquitination',
     SPL: 'splice-site',
-    MUT: 'mutation'
+    MUT: 'mutation',
+    PHOS: 'phosphorylation'
 };
 
 
@@ -69,7 +70,8 @@ for (const [notation, subtype] of [
     ['itrans', EVENT_SUBTYPE.ITRANS],
     ['spl', EVENT_SUBTYPE.SPL],
     ['fusion', EVENT_SUBTYPE.FUSION],
-    ['mut', EVENT_SUBTYPE.MUT]
+    ['mut', EVENT_SUBTYPE.MUT],
+    ['phos', EVENT_SUBTYPE.PHOS]
 ]) {
     NOTATION_TO_SUBTYPE[notation] = subtype;
     SUBTYPE_TO_NOTATION[subtype] = notation;
