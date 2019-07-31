@@ -53,6 +53,18 @@ describe('Position', () => {
                 new CytobandPosition({arm: 'p', majorBand: 1, minorBand: -1});
             }).to.throw('must be a positive integer');
         });
+        it('allows explicit nulls', () => {
+            const pos = new CytobandPosition({arm: 'p', majorBand: null, minorBand: null});
+            expect(pos.toString()).to.eql('p?.?');
+        });
+        it('allows majorBand explicit null minorBand specified', () => {
+            const pos = new CytobandPosition({arm: 'p', majorBand: null, minorBand: 2});
+            expect(pos.toString()).to.eql('p?.2');
+        });
+        it('allows majorBand specified minorBand expect null', () => {
+            const pos = new CytobandPosition({arm: 'p', majorBand: 1, minorBand: null});
+            expect(pos.toString()).to.eql('p1.?');
+        });
     });
     describe('CdsPosition', () => {
         it('error on non-integer offset', () => {
@@ -60,10 +72,20 @@ describe('Position', () => {
                 new CdsPosition({pos: 1, offset: 'k'});
             }).to.throw('must be an integer');
         });
+        it('offset specified with explicit null position', () => {
+            const pos = new CdsPosition({pos: null, offset: -10});
+            expect(pos.toString()).to.eql('?-10');
+        });
     });
     describe('ProteinPosition', () => {
-        it('uses ? for null refAA', () => {
+        it('allows refAA explicit null', () => {
             expect((new ProteinPosition({pos: 1, refAA: null})).toString()).to.equal('?1');
+        });
+        it('allows both explicit null', () => {
+            expect((new ProteinPosition({pos: null, refAA: null})).toString()).to.equal('??');
+        });
+        it('allows pos explicit null refAA specified', () => {
+            expect((new ProteinPosition({pos: null, refAA: 'B'})).toString()).to.equal('B?');
         });
     });
 });
@@ -88,8 +110,8 @@ describe('parsePosition', () => {
             const result = parsePosition('i', '1');
             expect(result.pos).to.equal(1);
             expect(result).to.be.instanceof(IntronicPosition);
-        })
-    })
+        });
+    });
     describe('c prefix', () => {
         it('positive offset', () => {
             const result = parsePosition('c', '1+3');
