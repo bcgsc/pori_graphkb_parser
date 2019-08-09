@@ -23,14 +23,11 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new GenomicPosition({pos: 3}),
+            break1Start: {'@class': 'GenomicPosition', pos: 3},
             break1Repr: 'g.3',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('deletion spans a range', () => {
@@ -38,16 +35,13 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new GenomicPosition({pos: 3}),
-            break2Start: new GenomicPosition({pos: 5}),
+            break1Start: {'@class': 'GenomicPosition', pos: 3},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
             break1Repr: 'g.3',
             break2Repr: 'g.5',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('deletion has a reference sequence', () => {
@@ -55,17 +49,14 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new GenomicPosition({pos: 3}),
-            break2Start: new GenomicPosition({pos: 5}),
+            break1Start: {'@class': 'GenomicPosition', pos: 3},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
             break1Repr: 'g.3',
             break2Repr: 'g.5',
             refSeq: 'TAA',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication spans a range uncertain start', () => {
@@ -73,17 +64,14 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new GenomicPosition({pos: 3}),
-            break1End: new GenomicPosition({pos: 4}),
-            break2Start: new GenomicPosition({pos: 5}),
+            break1Start: {'@class': 'GenomicPosition', pos: 3},
+            break1End: {'@class': 'GenomicPosition', pos: 4},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
             break1Repr: 'g.(3_4)',
             break2Repr: 'g.5',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication spans a range uncertain end', () => {
@@ -91,17 +79,14 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new GenomicPosition({pos: 3}),
-            break2Start: new GenomicPosition({pos: 5}),
-            break2End: new GenomicPosition({pos: 7}),
+            break1Start: {'@class': 'GenomicPosition', pos: 3},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
+            break2End: {'@class': 'GenomicPosition', pos: 7},
             break1Repr: 'g.3',
             break2Repr: 'g.(5_7)',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication spans a range uncertain start and end', () => {
@@ -109,18 +94,15 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new GenomicPosition({pos: 1}),
-            break1End: new GenomicPosition({pos: 3}),
-            break2Start: new GenomicPosition({pos: 5}),
-            break2End: new GenomicPosition({pos: 7}),
+            break1Start: {'@class': 'GenomicPosition', pos: 1},
+            break1End: {'@class': 'GenomicPosition', pos: 3},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
+            break2End: {'@class': 'GenomicPosition', pos: 7},
             break1Repr: 'g.(1_3)',
             break2Repr: 'g.(5_7)',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication has a reference sequence', () => {
@@ -128,19 +110,16 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new GenomicPosition({pos: 3}),
-            break2Start: new GenomicPosition({pos: 5}),
+            break1Start: {'@class': 'GenomicPosition', pos: 3},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
             break1Repr: 'g.3',
             break2Repr: 'g.5',
             untemplatedSeq: 'TAA',
             refSeq: 'TAA',
             untemplatedSeqSize: 3,
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('basic substitution', () => {
@@ -148,17 +127,14 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new GenomicPosition({pos: 4}),
+            break1Start: {'@class': 'GenomicPosition', pos: 4},
             break1Repr: 'g.4',
             untemplatedSeq: 'T',
             refSeq: 'A',
             untemplatedSeqSize: 1,
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('substitution with alt seq options', () => {
@@ -166,17 +142,14 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new GenomicPosition({pos: 4}),
+            break1Start: {'@class': 'GenomicPosition', pos: 4},
             break1Repr: 'g.4',
             untemplatedSeq: 'T^C',
             refSeq: 'A',
             untemplatedSeqSize: 1,
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('substitution with uncertainty', () => {
@@ -184,18 +157,15 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new GenomicPosition({pos: 4}),
-            break1End: new GenomicPosition({pos: 7}),
+            break1Start: {'@class': 'GenomicPosition', pos: 4},
+            break1End: {'@class': 'GenomicPosition', pos: 7},
             break1Repr: 'g.(4_7)',
             untemplatedSeq: 'T',
             refSeq: 'A',
             untemplatedSeqSize: 1,
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('indel spans a range uncertain start and end ref and alt specified', () => {
@@ -203,21 +173,18 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.delins,
-            break1Start: new GenomicPosition({pos: 1}),
-            break1End: new GenomicPosition({pos: 3}),
-            break2Start: new GenomicPosition({pos: 5}),
-            break2End: new GenomicPosition({pos: 7}),
+            break1Start: {'@class': 'GenomicPosition', pos: 1},
+            break1End: {'@class': 'GenomicPosition', pos: 3},
+            break2Start: {'@class': 'GenomicPosition', pos: 5},
+            break2End: {'@class': 'GenomicPosition', pos: 7},
             break1Repr: 'g.(1_3)',
             break2Repr: 'g.(5_7)',
             untemplatedSeq: 'ACG',
             refSeq: 'TAA',
             untemplatedSeqSize: 3,
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('indel ref specified', () => {
@@ -225,15 +192,12 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.delins,
-            break1Start: new GenomicPosition({pos: 10}),
+            break1Start: {'@class': 'GenomicPosition', pos: 10},
             break1Repr: 'g.10',
             refSeq: 'T',
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('indel alt specified', () => {
@@ -241,16 +205,13 @@ describe('genomic', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.delins,
-            break1Start: new GenomicPosition({pos: 10}),
+            break1Start: {'@class': 'GenomicPosition', pos: 10},
             break1Repr: 'g.10',
             untemplatedSeq: 'ACC',
             untemplatedSeqSize: 3,
-            prefix: 'g',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('errors on protein style missense', () => {
@@ -264,14 +225,11 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new CdsPosition({pos: 3, offset: 1}),
+            break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
             break1Repr: 'c.3+1',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('deletion spans a range', () => {
@@ -279,16 +237,13 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new CdsPosition({pos: 3, offset: 1}),
-            break2Start: new CdsPosition({pos: 5, offset: -2}),
+            break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
+            break2Start: {'@class': 'CdsPosition', pos: 5, offset: -2},
             break1Repr: 'c.3+1',
             break2Repr: 'c.5-2',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('deletion has a reference sequence', () => {
@@ -296,17 +251,14 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new CdsPosition({pos: 3, offset: 0}),
-            break2Start: new CdsPosition({pos: 5, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
+            break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
             break1Repr: 'c.3',
             break2Repr: 'c.5',
             refSeq: 'TAA',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication spans a range uncertain start', () => {
@@ -314,17 +266,14 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CdsPosition({pos: 3, offset: 1}),
-            break1End: new CdsPosition({pos: 4, offset: -1}),
-            break2Start: new CdsPosition({pos: 10, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 3, offset: 1},
+            break1End: {'@class': 'CdsPosition', pos: 4, offset: -1},
+            break2Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
             break1Repr: 'c.(3+1_4-1)',
             break2Repr: 'c.10',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication spans a range uncertain end', () => {
@@ -332,17 +281,14 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CdsPosition({pos: 3, offset: 0}),
-            break2Start: new CdsPosition({pos: 5, offset: 1}),
-            break2End: new CdsPosition({pos: 55, offset: -1}),
+            break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
+            break2Start: {'@class': 'CdsPosition', pos: 5, offset: 1},
+            break2End: {'@class': 'CdsPosition', pos: 55, offset: -1},
             break1Repr: 'c.3',
             break2Repr: 'c.(5+1_55-1)',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication spans a range uncertain start and end', () => {
@@ -350,18 +296,15 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CdsPosition({pos: 1, offset: 0}),
-            break1End: new CdsPosition({pos: 3, offset: 0}),
-            break2Start: new CdsPosition({pos: 5, offset: 0}),
-            break2End: new CdsPosition({pos: 7, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 1, offset: 0},
+            break1End: {'@class': 'CdsPosition', pos: 3, offset: 0},
+            break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
+            break2End: {'@class': 'CdsPosition', pos: 7, offset: 0},
             break1Repr: 'c.(1_3)',
             break2Repr: 'c.(5_7)',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('duplication has a reference sequence', () => {
@@ -369,19 +312,16 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CdsPosition({pos: 3, offset: 0}),
-            break2Start: new CdsPosition({pos: 5, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 3, offset: 0},
+            break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
             break1Repr: 'c.3',
             break2Repr: 'c.5',
             refSeq: 'TAA',
             untemplatedSeq: 'TAA',
             untemplatedSeqSize: 3,
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('basic substitution', () => {
@@ -389,17 +329,14 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new CdsPosition({pos: 4, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 4, offset: 0},
             break1Repr: 'c.4',
             refSeq: 'A',
             untemplatedSeq: 'T',
             untemplatedSeqSize: 1,
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('substitution with uncertainty', () => {
@@ -407,18 +344,15 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new CdsPosition({pos: 4, offset: 0}),
-            break1End: new CdsPosition({pos: 7, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 4, offset: 0},
+            break1End: {'@class': 'CdsPosition', pos: 7, offset: 0},
             break1Repr: 'c.(4_7)',
             refSeq: 'A',
             untemplatedSeq: 'T',
             untemplatedSeqSize: 1,
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('indel spans a range uncertain start and end ref and alt specified', () => {
@@ -426,21 +360,18 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.delins,
-            break1Start: new CdsPosition({pos: 1, offset: 0}),
-            break1End: new CdsPosition({pos: 3, offset: 0}),
-            break2Start: new CdsPosition({pos: 5, offset: 0}),
-            break2End: new CdsPosition({pos: 7, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 1, offset: 0},
+            break1End: {'@class': 'CdsPosition', pos: 3, offset: 0},
+            break2Start: {'@class': 'CdsPosition', pos: 5, offset: 0},
+            break2End: {'@class': 'CdsPosition', pos: 7, offset: 0},
             break1Repr: 'c.(1_3)',
             break2Repr: 'c.(5_7)',
             refSeq: 'TAA',
             untemplatedSeq: 'ACG',
             untemplatedSeqSize: 3,
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('indel ref specified', () => {
@@ -448,15 +379,12 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.delins,
-            break1Start: new CdsPosition({pos: 10, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
             break1Repr: 'c.10',
             refSeq: 'T',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('indel alt specified', () => {
@@ -464,16 +392,13 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES.delins,
-            break1Start: new CdsPosition({pos: 10, offset: 0}),
+            break1Start: {'@class': 'CdsPosition', pos: 10, offset: 0},
             break1Repr: 'c.10',
             untemplatedSeq: 'ACC',
             untemplatedSeqSize: 3,
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).eql(exp);
+        expect(result.toJSON()).eql(exp);
         expect(result.toString()).to.equal(notation);
     });
     it('substitution before the coding sequence', () => {
@@ -481,17 +406,14 @@ describe('coding sequence', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new CdsPosition({pos: 1, offset: -124}),
+            break1Start: {'@class': 'CdsPosition', pos: 1, offset: -124},
             break1Repr: 'c.1-124',
             untemplatedSeq: 'T',
             untemplatedSeqSize: 1,
             refSeq: 'C',
-            prefix: 'c',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
         expect(result.toString()).to.equal('FEATURE:c.1-124C>T');
     });
 });
@@ -511,97 +433,79 @@ describe('exonic', () => {
         const notation = 'FEATURE:e.1dup';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new ExonicPosition({pos: 1}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
             break1Repr: 'e.1',
-            prefix: 'e',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('duplication single exon with uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)dup';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new ExonicPosition({pos: 1}),
-            break1End: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break1End: {'@class': 'ExonicPosition', pos: 2},
             break1Repr: 'e.(1_2)',
-            prefix: 'e',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('duplication of multiple exons', () => {
         const notation = 'FEATURE:e.1_3dup';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new ExonicPosition({pos: 1}),
-            break2Start: new ExonicPosition({pos: 3}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break2Start: {'@class': 'ExonicPosition', pos: 3},
             break1Repr: 'e.1',
             break2Repr: 'e.3',
-            prefix: 'e',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('duplication of multiple exons with uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)_(3_4)dup';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new ExonicPosition({pos: 1}),
-            break1End: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break1End: {'@class': 'ExonicPosition', pos: 2},
             break1Repr: 'e.(1_2)',
-            break2Start: new ExonicPosition({pos: 3}),
-            break2End: new ExonicPosition({pos: 4}),
+            break2Start: {'@class': 'ExonicPosition', pos: 3},
+            break2End: {'@class': 'ExonicPosition', pos: 4},
             break2Repr: 'e.(3_4)',
-            prefix: 'e',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('duplication of multiple exons with uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)_4dup';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new ExonicPosition({pos: 1}),
-            break1End: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break1End: {'@class': 'ExonicPosition', pos: 2},
             break1Repr: 'e.(1_2)',
-            break2Start: new ExonicPosition({pos: 4}),
+            break2Start: {'@class': 'ExonicPosition', pos: 4},
             break2Repr: 'e.4',
-            prefix: 'e',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('duplication of multiple exons with uncertainty', () => {
         const notation = 'FEATURE:e.2_(3_4)dup';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 2},
             break1Repr: 'e.2',
-            break2Start: new ExonicPosition({pos: 3}),
-            break2End: new ExonicPosition({pos: 4}),
+            break2Start: {'@class': 'ExonicPosition', pos: 3},
+            break2End: {'@class': 'ExonicPosition', pos: 4},
             break2Repr: 'e.(3_4)',
-            prefix: 'e',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
 });
@@ -641,34 +545,28 @@ describe('protein', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
             untemplatedSeq: 'K',
             break1Repr: 'p.R10',
             refSeq: 'R',
             untemplatedSeqSize: 1,
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('frameshift alt specified and truncation point', () => {
         const notation = 'FEATURE:p.R10Kfs*10';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
             untemplatedSeq: 'K',
             untemplatedSeqSize: 1,
             truncation: 10,
             refSeq: 'R',
             break1Repr: 'p.R10',
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('parses 3 letter amino acids for protein frameshift', () => {
@@ -692,36 +590,30 @@ describe('protein', () => {
         const notation = 'FEATURE:p.R10Kfs*';
         const result = parse(notation);
         expect(result.toString()).to.equal('FEATURE:p.R10Kfs');
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
             untemplatedSeq: 'K',
             untemplatedSeqSize: 1,
             truncation: null,
             refSeq: 'R',
             break1Repr: 'p.R10',
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('frameshift immeadiate truncation', () => {
         const notation = 'FEATURE:p.R10*fs';
         const result = parse(notation);
         expect(result.toString()).to.equal(notation);
-        expect(result).to.eql({
+        expect(result.toJSON()).to.eql({
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
             untemplatedSeq: '*',
             untemplatedSeqSize: 1,
             truncation: 1,
             refSeq: 'R',
             break1Repr: 'p.R10',
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         });
     });
     it('frameshift errors on range', () => {
@@ -733,16 +625,13 @@ describe('protein', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
-            break1End: new ProteinPosition({pos: 11, refAA: 'M'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
+            break1End: {'@class': 'ProteinPosition', pos: 11, refAA: 'M'},
             break1Repr: 'p.(R10_M11)',
             truncation: 10,
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('frameshift no alt but truncation point specified', () => {
         const notation = 'FEATURE:p.R10fs*10';
@@ -750,16 +639,13 @@ describe('protein', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
             break1Repr: 'p.R10',
             truncation: 10,
             refSeq: 'R',
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('frameshift no alt or truncation point', () => {
         const notation = 'FEATURE:p.R10fs';
@@ -767,15 +653,12 @@ describe('protein', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.fs,
-            break1Start: new ProteinPosition({pos: 10, refAA: 'R'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 10, refAA: 'R'},
             break1Repr: 'p.R10',
             refSeq: 'R',
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('missense mutation', () => {
         const notation = 'FEATURE:p.F12G';
@@ -783,17 +666,14 @@ describe('protein', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: new ProteinPosition({pos: 12, refAA: 'F'}),
+            break1Start: {'@class': 'ProteinPosition', pos: 12, refAA: 'F'},
             break1Repr: 'p.F12',
             untemplatedSeq: 'G',
             untemplatedSeqSize: 1,
             refSeq: 'F',
-            prefix: 'p',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('errors on genomic style missense', () => {
         expect(() => { parse('p.G12G>T'); }).to.throw(ParsingError);
@@ -854,14 +734,11 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p'}),
+            break1Start: {'@class': 'CytobandPosition', arm: 'p'},
             break1Repr: 'y.p',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication of range on p major band', () => {
         const notation = 'FEATURE:y.p11dup';
@@ -869,14 +746,11 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 11}),
+            break1Start: {'@class': 'CytobandPosition', arm: 'p', majorBand: 11},
             break1Repr: 'y.p11',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication of range on p minor band', () => {
         const notation = 'FEATURE:y.p11.1dup';
@@ -884,14 +758,13 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
+            break1Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
+            },
             break1Repr: 'y.p11.1',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication of range on p arm', () => {
         const notation = 'FEATURE:y.p11.1_p13.3dup';
@@ -899,16 +772,17 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
+            break1Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
+            },
             break1Repr: 'y.p11.1',
-            break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
+            break2Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
+            },
             break2Repr: 'y.p13.3',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication on p arm uncertain positions', () => {
         const notation = 'FEATURE:y.(p11.1_p11.2)_(p13.4_p14)dup';
@@ -916,18 +790,21 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
-            break1End: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 2}),
+            break1Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
+            },
+            break1End: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 2
+            },
             break1Repr: 'y.(p11.1_p11.2)',
-            break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 4}),
-            break2End: new CytobandPosition({arm: 'p', majorBand: 14}),
+            break2Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 4
+            },
+            break2End: {'@class': 'CytobandPosition', arm: 'p', majorBand: 14},
             break2Repr: 'y.(p13.4_p14)',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication on p arm uncertain start', () => {
         const notation = 'FEATURE:y.(p11.1_p11.2)_p13.3dup';
@@ -935,17 +812,20 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
-            break1End: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 2}),
+            break1Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
+            },
+            break1End: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 2
+            },
             break1Repr: 'y.(p11.1_p11.2)',
-            break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
+            break2Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
+            },
             break2Repr: 'y.p13.3',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication on p arm uncertain end', () => {
         const notation = 'FEATURE:y.p13.3_(p15.1_p15.2)dup';
@@ -953,17 +833,20 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
+            break1Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
+            },
             break1Repr: 'y.p13.3',
-            break2Start: new CytobandPosition({arm: 'p', majorBand: 15, minorBand: 1}),
-            break2End: new CytobandPosition({arm: 'p', majorBand: 15, minorBand: 2}),
+            break2Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 15, minorBand: 1
+            },
+            break2End: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 15, minorBand: 2
+            },
             break2Repr: 'y.(p15.1_p15.2)',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('duplication of whole q arm', () => {
         const notation = 'FEATURE:y.qdup';
@@ -971,14 +854,11 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.dup,
-            break1Start: new CytobandPosition({arm: 'q'}),
+            break1Start: {'@class': 'CytobandPosition', arm: 'q'},
             break1Repr: 'y.q',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('deletion of whole p arm', () => {
         const notation = 'FEATURE:y.pdel';
@@ -986,14 +866,11 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.del,
-            break1Start: new CytobandPosition({arm: 'p'}),
+            break1Start: {'@class': 'CytobandPosition', arm: 'p'},
             break1Repr: 'y.p',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
     it('inversion of a range on the p arm', () => {
         const notation = 'FEATURE:y.p11.1_p13.3inv';
@@ -1001,16 +878,17 @@ describe('cytoband', () => {
         expect(result.toString()).to.equal(notation);
         const exp = {
             type: NOTATION_TO_TYPES.inv,
-            break1Start: new CytobandPosition({arm: 'p', majorBand: 11, minorBand: 1}),
-            break2Start: new CytobandPosition({arm: 'p', majorBand: 13, minorBand: 3}),
+            break1Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 11, minorBand: 1
+            },
+            break2Start: {
+                '@class': 'CytobandPosition', arm: 'p', majorBand: 13, minorBand: 3
+            },
             break1Repr: 'y.p11.1',
             break2Repr: 'y.p13.3',
-            prefix: 'y',
-            reference1: 'FEATURE',
-            multiFeature: false,
-            noFeatures: false
+            reference1: 'FEATURE'
         };
-        expect(result).to.eql(exp);
+        expect(result.toJSON()).to.eql(exp);
     });
 });
 

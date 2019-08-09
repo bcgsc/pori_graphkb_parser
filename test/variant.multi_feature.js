@@ -5,10 +5,6 @@ const {
     parse
 } = require('../app/variant');
 const {
-    GenomicPosition,
-    ExonicPosition
-} = require('../app/position');
-const {
     NOTATION_TO_TYPES
 } = require('../app/constants');
 
@@ -100,85 +96,75 @@ describe('multi-feature notation', () => {
     it('parses exon gene fusion', () => {
         const notation = '(FEATURE1,FEATURE2):fusion(e.1,e.2)';
         const parsed = parse(notation);
-        expect(parsed).to.eql({
+        expect(parsed.toJSON()).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
-            break1Start: new ExonicPosition({pos: 1}),
-            break2Start: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break2Start: {'@class': 'ExonicPosition', pos: 2},
             type: NOTATION_TO_TYPES.fusion,
             reference1: 'FEATURE1',
-            reference2: 'FEATURE2',
-            multiFeature: true,
-            noFeatures: false
+            reference2: 'FEATURE2'
         });
         expect(parsed.toString()).to.equal(notation);
     });
     it('parses genomic translocation', () => {
         const notation = '(FEATURE1,FEATURE2):trans(g.1,g.2)';
         const parsed = parse(notation);
-        expect(parsed).to.eql({
+        expect(parsed.toJSON()).to.eql({
             break1Repr: 'g.1',
             break2Repr: 'g.2',
-            break1Start: new GenomicPosition({pos: 1}),
-            break2Start: new GenomicPosition({pos: 2}),
+            break1Start: {'@class': 'GenomicPosition', pos: 1},
+            break2Start: {'@class': 'GenomicPosition', pos: 2},
             type: NOTATION_TO_TYPES.trans,
             reference1: 'FEATURE1',
-            reference2: 'FEATURE2',
-            multiFeature: true,
-            noFeatures: false
+            reference2: 'FEATURE2'
         });
         expect(parsed.toString()).to.equal(notation);
     });
     it('parses untemplated sequence', () => {
         const notation = '(FEATURE1,FEATURE2):fusion(e.1,e.2)ATGC';
         const parsed = parse(notation);
-        expect(parsed).to.eql({
+        expect(parsed.toJSON()).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
-            break1Start: new ExonicPosition({pos: 1}),
-            break2Start: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break2Start: {'@class': 'ExonicPosition', pos: 2},
             type: NOTATION_TO_TYPES.fusion,
             untemplatedSeq: 'ATGC',
             untemplatedSeqSize: 4,
             reference1: 'FEATURE1',
-            reference2: 'FEATURE2',
-            multiFeature: true,
-            noFeatures: false
+            reference2: 'FEATURE2'
         });
         expect(parsed.toString()).to.equal(notation);
     });
     it('parses non-specific untemplated sequence', () => {
         const notation = '(FEATURE1,FEATURE2):fusion(e.1,e.2)5';
         const parsed = parse(notation);
-        expect(parsed).to.eql({
+        expect(parsed.toJSON()).to.eql({
             break1Repr: 'e.1',
             break2Repr: 'e.2',
-            break1Start: new ExonicPosition({pos: 1}),
-            break2Start: new ExonicPosition({pos: 2}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break2Start: {'@class': 'ExonicPosition', pos: 2},
             type: NOTATION_TO_TYPES.fusion,
             untemplatedSeqSize: 5,
             reference1: 'FEATURE1',
-            reference2: 'FEATURE2',
-            multiFeature: true,
-            noFeatures: false
+            reference2: 'FEATURE2'
         });
         expect(parsed.toString()).to.equal(notation);
     });
     it('parses breakpoint ranges', () => {
         const notation = '(FEATURE1,FEATURE2):fusion(e.1_17,e.20_28)';
         const parsed = parse(notation);
-        expect(parsed).to.eql({
+        expect(parsed.toJSON()).to.eql({
             break1Repr: 'e.1_17',
             break2Repr: 'e.20_28',
-            break1Start: new ExonicPosition({pos: 1}),
-            break1End: new ExonicPosition({pos: 17}),
-            break2Start: new ExonicPosition({pos: 20}),
-            break2End: new ExonicPosition({pos: 28}),
+            break1Start: {'@class': 'ExonicPosition', pos: 1},
+            break1End: {'@class': 'ExonicPosition', pos: 17},
+            break2Start: {'@class': 'ExonicPosition', pos: 20},
+            break2End: {'@class': 'ExonicPosition', pos: 28},
             type: NOTATION_TO_TYPES.fusion,
             reference1: 'FEATURE1',
-            reference2: 'FEATURE2',
-            multiFeature: true,
-            noFeatures: false
+            reference2: 'FEATURE2'
         });
         expect(parsed.toString()).to.equal(notation);
     });

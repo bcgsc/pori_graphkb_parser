@@ -14,39 +14,30 @@ const {
 
 
 describe('VariantNotation', () => {
-    it('use object name for reference', () => {
+    it('use object name if no sourceId on reference', () => {
         const notation = new VariantNotation({
-            reference1: {name: 'KRAS', sourceId: 'hgnc:1234'},
+            reference1: {name: 'KRAS'},
             untemplatedSeq: 'D',
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: NOTATION_TO_TYPES['>']
         });
         expect(notation.toString()).to.equal('KRAS:p.G12D');
     });
-    it('use sourceId if no name on reference object', () => {
+    it('use sourceId before name on reference object', () => {
         const notation = new VariantNotation({
-            reference1: {sourceId: 'ENSG001'},
+            reference1: {sourceId: 'ENSG001', name: 'blargh'},
             untemplatedSeq: 'D',
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: NOTATION_TO_TYPES['>']
         });
         expect(notation.toString()).to.equal('ENSG001:p.G12D');
     });
-    it('include reference version if available', () => {
+    it('prefer displayName', () => {
         const notation = new VariantNotation({
-            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
+            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1', displayName: 'ENSG001.1'},
             untemplatedSeq: 'D',
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: NOTATION_TO_TYPES['>']
-        });
-        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
-    });
-    it('ontology term for type', () => {
-        const notation = new VariantNotation({
-            reference1: {sourceId: 'ENSG001', sourceIdVersion: '1'},
-            untemplatedSeq: 'D',
-            break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
-            type: {name: NOTATION_TO_TYPES['>']}
         });
         expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
     });
@@ -110,7 +101,7 @@ describe('VariantNotation', () => {
             },
             germline: false,
             prefix: 'g',
-            reference1: 'a1bgas',
+            reference1: 'A1BGAS',
             type: 'substitution'
         });
         expect(variant.toString()).to.equal('A1BGAS:g.(1_18)?>?');
