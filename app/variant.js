@@ -672,39 +672,38 @@ const parseContinuous = (inputString) => {
             });
         } else if (prefix === 'e') {
             throw new ParsingError({
-                message: 'Cannot defined substitutions at the exon coordinate level',
+                message: 'Cannot define substitutions at the exon coordinate level',
                 violatedAttr: 'type'
             });
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?fs((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
+        const [, alt, type,, stop, truncation] = match;
+
         if (prefix !== 'p') {
             throw new ParsingError({
                 message: 'only protein notation can notate frameshift variants',
                 violatedAttr: 'type'
             });
         }
-        result.type = 'fs';
-        if (match[1] !== undefined && match[1] !== '?') {
-            result.untemplatedSeq = match[1];
+        result.type = type.toLowerCase();
+        if (alt !== undefined && alt !== '?') {
+            result.untemplatedSeq = alt;
         }
-        if (match[3] !== undefined) {
-            if (match[4] === undefined) {
-                result.truncation = match[1] === '*'
-                    ? 1
-                    : null;
-            } else {
-                result.truncation = parseInt(match[4], 10);
-                if (match[1] === '*' && result.truncation !== 1) {
-                    throw new ParsingError({
-                        message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
-                        violatedAttr: 'truncation'
-                    });
-                }
+        if (truncation !== undefined) {
+            result.truncation = parseInt(truncation, 10);
+            if (match[1] === '*' && result.truncation !== 1) {
+                throw new ParsingError({
+                    message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
+                    violatedAttr: 'truncation'
+                });
             }
-        } else if (match[1] === '*') {
+        } else if (alt === '*') {
             result.truncation = 1;
+        } else if (stop) {
+            // specified trunction at some unknown position
+            result.truncation = null;
         }
         if (result.break2Start !== undefined) {
             throw new ParsingError({

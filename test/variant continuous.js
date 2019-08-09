@@ -681,15 +681,16 @@ describe('protein', () => {
     it('extension without alt AA', () => {
         const notation = 'p.*807ext';
         const result = parse(notation, false);
-        console.log(result);
         expect(result).to.have.property('type', NOTATION_TO_TYPES.ext);
+        expect(result).to.have.property('untemplatedSeq', undefined);
+        expect(result).to.have.property('truncation', undefined);
         expect(result.toString()).to.equal(notation);
     });
-    it('extnesion without alt AA with new truncation', () => {
+    it('extension without alt AA with new truncation', () => {
         const notation = 'p.*807ext*101';
         const result = parse(notation, false);
         expect(result).to.have.property('type', NOTATION_TO_TYPES.ext);
-        expect(result).to.have.property('untemplatedSeq', null);
+        expect(result).to.have.property('untemplatedSeq', undefined);
         expect(result).to.have.property('truncation', 101);
         expect(result.toString()).to.equal(notation);
     });
@@ -698,7 +699,7 @@ describe('protein', () => {
         const result = parse(notation, false);
         expect(result).to.have.property('type', NOTATION_TO_TYPES.ext);
         expect(result).to.have.property('untemplatedSeq', 'L');
-        expect(result).to.have.property('truncation', 101);
+        expect(result).to.have.property('truncation', undefined);
         expect(result.toString()).to.equal(notation);
     });
     it('extension with alt AA and new truncation', () => {
