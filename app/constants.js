@@ -30,53 +30,37 @@ const AA_PATTERN = `${
     Object.keys(AA_CODES).join('|')
 }`;
 
-const EVENT_SUBTYPE = {
-    INS: 'insertion',
-    DEL: 'deletion',
-    SUB: 'substitution',
-    INV: 'inversion',
-    INDEL: 'indel',
-    GAIN: 'copy gain',
-    LOSS: 'copy loss',
-    TRANS: 'translocation',
-    ITRANS: 'inverted translocation',
-    EXT: 'extension',
-    FS: 'frameshift',
-    FUSION: 'fusion',
-    DUP: 'duplication',
-    ME: 'methylation',
-    AC: 'acetylation',
-    UB: 'ubiquitination',
-    SPL: 'splice-site',
-    MUT: 'mutation',
-    PHOS: 'phosphorylation'
+const NOTATION_TO_TYPES = {
+    ins: 'insertion',
+    del: 'deletion',
+    '>': 'substitution',
+    inv: 'inversion',
+    delins: 'indel',
+    copygain: 'copy gain',
+    copyloss: 'copy loss',
+    trans: 'translocation',
+    itrans: 'inverted translocation',
+    ext: 'extension',
+    fs: 'frameshift',
+    fusion: 'fusion',
+    dup: 'duplication',
+    me: 'methylation',
+    ac: 'acetylation',
+    ub: 'ubiquitination',
+    spl: 'splice-site',
+    mut: 'mutation',
+    mis: 'missense mutation',
+    phos: 'phosphorylation'
 };
 
-
-const NOTATION_TO_SUBTYPE = {};
-const SUBTYPE_TO_NOTATION = {};
-for (const [notation, subtype] of [
-    ['fs', EVENT_SUBTYPE.FS],
-    ['>', EVENT_SUBTYPE.SUB],
-    ['delins', EVENT_SUBTYPE.INDEL],
-    ['inv', EVENT_SUBTYPE.INV],
-    ['ext', EVENT_SUBTYPE.EXT],
-    ['del', EVENT_SUBTYPE.DEL],
-    ['dup', EVENT_SUBTYPE.DUP],
-    ['ins', EVENT_SUBTYPE.INS],
-    ['copygain', EVENT_SUBTYPE.GAIN],
-    ['copyloss', EVENT_SUBTYPE.LOSS],
-    ['trans', EVENT_SUBTYPE.TRANS],
-    ['itrans', EVENT_SUBTYPE.ITRANS],
-    ['spl', EVENT_SUBTYPE.SPL],
-    ['fusion', EVENT_SUBTYPE.FUSION],
-    ['mut', EVENT_SUBTYPE.MUT],
-    ['phos', EVENT_SUBTYPE.PHOS]
-]) {
-    NOTATION_TO_SUBTYPE[notation] = subtype;
-    SUBTYPE_TO_NOTATION[subtype] = notation;
+const TYPES_TO_NOTATION = {};
+for (const [notation, type] of Object.entries(NOTATION_TO_TYPES)) {
+    if (TYPES_TO_NOTATION[type]) {
+        throw new Error(`Mapping must be reversible unique. Duplicate key found (${type})`);
+    }
+    TYPES_TO_NOTATION[type] = notation;
 }
 
 module.exports = {
-    AA_CODES, AA_PATTERN, EVENT_SUBTYPE, NOTATION_TO_SUBTYPE, SUBTYPE_TO_NOTATION
+    AA_CODES, AA_PATTERN, NOTATION_TO_TYPES, TYPES_TO_NOTATION
 };

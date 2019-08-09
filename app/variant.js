@@ -6,9 +6,8 @@ const _position = require('./position');
 const {
     AA_CODES,
     AA_PATTERN,
-    EVENT_SUBTYPE,
-    NOTATION_TO_SUBTYPE,
-    SUBTYPE_TO_NOTATION
+    NOTATION_TO_TYPES,
+    TYPES_TO_NOTATION
 } = require('./constants');
 
 
@@ -90,7 +89,7 @@ class VariantNotation {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
         this.type = ontologyTermRepr(opt.type);
-        if (SUBTYPE_TO_NOTATION[this.type] === undefined) {
+        if (TYPES_TO_NOTATION[this.type] === undefined) {
             throw new InputValidationError({
                 message: `invalid type ${this.type}`,
                 violatedAttr: 'type'
@@ -158,7 +157,7 @@ class VariantNotation {
         }
         if (opt.truncation === null) {
             this.truncation = null;
-            if (![EVENT_SUBTYPE.FS, EVENT_SUBTYPE.EXT, EVENT_SUBTYPE.SPL].includes(this.type)) {
+            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
                 throw new InputValidationError({
                     message: `truncation cannot be specified with this event type (${this.type})`,
                     violatedAttr: 'type'
@@ -166,7 +165,7 @@ class VariantNotation {
             }
         } else if (opt.truncation !== undefined) {
             this.truncation = Number(opt.truncation);
-            if (![EVENT_SUBTYPE.FS, EVENT_SUBTYPE.EXT, EVENT_SUBTYPE.SPL].includes(this.type)) {
+            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
                 throw new InputValidationError({
                     message: `truncation cannot be specified with this event type (${this.type})`,
                     violatedAttr: 'type'
@@ -183,10 +182,10 @@ class VariantNotation {
         this.break1Repr = _position.breakRepr(this.break1Start.prefix, this.break1Start, this.break1End, this.multiFeature);
         if (this.break2Start) {
             if ([
-                EVENT_SUBTYPE.SUB,
-                EVENT_SUBTYPE.EXT,
-                EVENT_SUBTYPE.FS,
-                EVENT_SUBTYPE.SPL
+                NOTATION_TO_TYPES['>'],
+                NOTATION_TO_TYPES.ext,
+                NOTATION_TO_TYPES.fs,
+                NOTATION_TO_TYPES.spl
             ].includes(this.type)) {
                 throw new ParsingError({
                     message: `${this.type} variants cannot be a range`,
@@ -196,7 +195,7 @@ class VariantNotation {
             this.break2Repr = _position.breakRepr(this.break2Start.prefix, this.break2Start, this.break2End, this.multiFeature);
         }
 
-        if (this.type === EVENT_SUBTYPE.INS) {
+        if (this.type === NOTATION_TO_TYPES.ins) {
             if (!this.break2Start && this.break1Start.prefix !== 'e') {
                 throw new InputValidationError({
                     message: 'Insertion events must be specified with a range',
@@ -240,7 +239,7 @@ class VariantNotation {
         } = variant;
         const type = variant.type.name || variant.type;
 
-        let notationType = SUBTYPE_TO_NOTATION[type];
+        let notationType = TYPES_TO_NOTATION[type];
         if (!notationType) {
             notationType = type.replace(/\s+/, '-'); // default to type without whitespace
         }
@@ -267,16 +266,16 @@ class VariantNotation {
         if (break2Repr) {
             result.push(`_${break2Repr.slice(2)}`);
         }
-        if (type === EVENT_SUBTYPE.EXT
-                || type === EVENT_SUBTYPE.FS
-                || (type === EVENT_SUBTYPE.SUB && break1Repr.startsWith('p.'))
+        if (type === NOTATION_TO_TYPES.ext
+                || type === NOTATION_TO_TYPES.fs
+                || (type === NOTATION_TO_TYPES['>'] && break1Repr.startsWith('p.'))
         ) {
             if (untemplatedSeq) {
                 result.push(untemplatedSeq);
             }
         }
-        if (type !== EVENT_SUBTYPE.SUB) {
-            if (type === EVENT_SUBTYPE.INDEL) {
+        if (type !== NOTATION_TO_TYPES['>']) {
+            if (type === NOTATION_TO_TYPES.delins) {
                 result.push(`del${refSeq || ''}ins`);
             } else {
                 result.push(notationType);
@@ -286,12 +285,12 @@ class VariantNotation {
             }
 
             if (refSeq
-                    && [EVENT_SUBTYPE.DUP, EVENT_SUBTYPE.DEL, EVENT_SUBTYPE.INV].includes(type)
+                && [NOTATION_TO_TYPES.dup, NOTATION_TO_TYPES.del, NOTATION_TO_TYPES.inv].includes(type)
             ) {
                 result.push(refSeq);
             }
             if ((untemplatedSeq || untemplatedSeqSize)
-                    && [EVENT_SUBTYPE.INS, EVENT_SUBTYPE.INDEL].includes(type)
+                    && [NOTATION_TO_TYPES.ins, NOTATION_TO_TYPES.delins].includes(type)
             ) {
                 result.push(untemplatedSeq || untemplatedSeqSize);
             }
@@ -449,9 +448,9 @@ const parseMultiFeature = (string) => {
             violatedAttr: 'type'
         });
     }
-    if (!NOTATION_TO_SUBTYPE[parsed.type]) {
+    if (!NOTATION_TO_TYPES[parsed.type]) {
         throw new ParsingError({
-            message: 'Variant type not recognized', parsed, input: string, violatedAttr: 'type'
+            message: `Variant type (${parsed.type}) not recognized`, parsed, input: string, violatedAttr: 'type'
         });
     }
     if (!['fusion', 'trans', 'itrans'].includes(parsed.type)) {
@@ -461,7 +460,7 @@ const parseMultiFeature = (string) => {
             input: string
         });
     }
-    parsed.type = NOTATION_TO_SUBTYPE[parsed.type];
+    parsed.type = NOTATION_TO_TYPES[parsed.type];
     if (string.indexOf(')') < 0) {
         throw new ParsingError({
             message: 'Missing closing parentheses', parsed, input: string, violatedAttr: 'punctuation'
@@ -720,13 +719,13 @@ const parseContinuous = (inputString) => {
     } else {
         result.type = tail;
     }
-    if (!NOTATION_TO_SUBTYPE[result.type]) {
+    if (!NOTATION_TO_TYPES[result.type]) {
         throw new ParsingError({
             message: `unsupported event type: '${result.type}'`,
             violatedAttr: 'type'
         });
     }
-    result.type = NOTATION_TO_SUBTYPE[result.type];
+    result.type = NOTATION_TO_TYPES[result.type];
     if (result.untemplatedSeq && result.untemplatedSeqSize === undefined && result.untemplatedSeq !== '') {
         const altSeqs = result.untemplatedSeq.split('^');
         result.untemplatedSeqSize = altSeqs[0].length;
@@ -750,11 +749,11 @@ const parseContinuous = (inputString) => {
                 violatedAttr: 'untemplatedSeq'
             });
         } else if (![
-            EVENT_SUBTYPE.DUP,
-            EVENT_SUBTYPE.DEL,
-            EVENT_SUBTYPE.GAIN,
-            EVENT_SUBTYPE.LOSS,
-            EVENT_SUBTYPE.INV
+            NOTATION_TO_TYPES.dup,
+            NOTATION_TO_TYPES.del,
+            NOTATION_TO_TYPES.gain,
+            NOTATION_TO_TYPES.loss,
+            NOTATION_TO_TYPES.inv
         ].includes(result.type)) {
             throw new ParsingError({
                 message: 'Invalid type for cytoband level event notation',
@@ -785,5 +784,5 @@ const parseContinuous = (inputString) => {
 
 
 module.exports = {
-    parse, NOTATION_TO_SUBTYPE, EVENT_SUBTYPE, VariantNotation, stripParentheses
+    parse, VariantNotation, stripParentheses
 };
