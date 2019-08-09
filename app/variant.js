@@ -13,11 +13,7 @@ const {
 
 const ontologyTermRepr = (term) => {
     if (term) {
-        const string = term.name || term.sourceId || term;
-        if (term.sourceIdVersion) {
-            return `${string}.${term.sourceIdVersion}`;
-        }
-        return string;
+        return term.displayName || term.sourceId || term.name || term;
     }
     return term;
 };
@@ -51,6 +47,9 @@ const stripParentheses = (breakRepr) => {
 };
 
 
+const isNullOrUndefined = thing => thing === undefined || thing === null;
+
+
 class VariantNotation {
     /**
      * @param {Object} opt options
@@ -68,27 +67,69 @@ class VariantNotation {
      * @param {boolean} opt.requireFeatures flag to allow variant notation with features (reference1/2)
      */
     constructor(opt) {
-        this.noFeatures = !!(
-            opt.requireFeatures === false
-            && !opt.reference1
-            && !opt.reference2
+        const {
+            requireFeatures = false,
+            reference1,
+            reference2,
+            untemplatedSeq,
+            untemplatedSeqSize,
+            type,
+            refSeq,
+            prefix,
+            multiFeature,
+            truncation
+        } = opt;
+        this.noFeatures = Boolean(
+            !requireFeatures
+            && !reference1
+            && !reference2
         );
+        this.reference1 = ontologyTermRepr(reference1);
+        this.reference2 = ontologyTermRepr(reference2);
+        this.multiFeature = Boolean(multiFeature || reference2);
 
-        if (opt.untemplatedSeq !== undefined) {
-            this.untemplatedSeq = opt.untemplatedSeq.toUpperCase();
+        this.type = ontologyTermRepr(type);
+        this.untemplatedSeq = !isNullOrUndefined(untemplatedSeq)
+            ? untemplatedSeq.toUpperCase()
+            : untemplatedSeq;
+
+        this.refSeq = !isNullOrUndefined(refSeq)
+            ? refSeq.toUpperCase()
+            : refSeq;
+
+        this.truncation = truncation;
+
+        if (truncation !== undefined) {
+            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
+                throw new InputValidationError({
+                    message: `truncation cannot be specified with this event type (${this.type})`,
+                    violatedAttr: 'type'
+                });
+            }
+            if (truncation !== null) {
+                if (isNaN(truncation)) {
+                    throw new InputValidationError({
+                        message: 'truncation must be a number',
+                        violatedAttr: 'truncation'
+                    });
+                }
+                this.truncation = Number(truncation);
+            }
         }
-        if (opt.untemplatedSeqSize !== undefined) {
-            this.untemplatedSeqSize = opt.untemplatedSeqSize;
+
+        // default to the same length as the input seq size if not otherwise specified
+        if (untemplatedSeqSize !== undefined) {
+            this.untemplatedSeqSize = untemplatedSeqSize;
             if (isNaN(Number(this.untemplatedSeqSize))) {
                 throw new InputValidationError({
                     message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
                     violatedAttr: 'untemplatedSeqSize'
                 });
             }
-        } else if (this.untemplatedSeq !== undefined && this.untemplatedSeq !== null) {
+        } else if (!isNullOrUndefined(this.untemplatedSeq)) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
-        this.type = ontologyTermRepr(opt.type);
+        this.type = ontologyTermRepr(type);
         if (TYPES_TO_NOTATION[this.type] === undefined) {
             throw new InputValidationError({
                 message: `invalid type ${this.type}`,
@@ -96,11 +137,10 @@ class VariantNotation {
             });
         }
 
-
         // cast positions
         let defaultPosClass;
-        if (opt.prefix) {
-            this.prefix = opt.prefix;
+        if (prefix) {
+            this.prefix = prefix;
             if (this.prefix && _position.PREFIX_CLASS[this.prefix] === undefined) {
                 throw new InputValidationError({
                     message: `unrecognized prefix: ${this.prefix}`,
@@ -109,6 +149,7 @@ class VariantNotation {
             }
             defaultPosClass = _position[_position.PREFIX_CLASS[this.prefix]];
         }
+        this.break1Start = opt.break1Start;
         for (const breakAttr of ['break1Start', 'break1End', 'break2Start', 'break2End']) {
             if (opt[breakAttr] && !(opt[breakAttr] instanceof _position.Position)) {
                 let PosCls = defaultPosClass;
@@ -123,60 +164,17 @@ class VariantNotation {
                         violatedAttr: breakAttr
                     });
                 }
-                opt[breakAttr] = new PosCls(opt[breakAttr]);
+                this[breakAttr] = new PosCls(opt[breakAttr]);
+            } else {
+                this[breakAttr] = opt[breakAttr];
             }
         }
-        this.break1Start = opt.break1Start;
+
         if (!(this.break1Start instanceof _position.Position)) {
             throw new InputValidationError({
                 message: 'break1Start is a required attribute',
                 violatedAttr: 'break1Start'
             });
-        }
-        this.reference1 = opt.reference1;
-        if (this.reference1) {
-            this.reference1 = ontologyTermRepr(this.reference1).toUpperCase();
-        }
-        this.multiFeature = opt.multiFeature || opt.reference2 || false;
-        for (const optAttr of [
-            'break1End',
-            'break2Start',
-            'break2End',
-            'reference2',
-            'refSeq'
-        ]) {
-            if (opt[optAttr] !== undefined) {
-                this[optAttr] = opt[optAttr];
-            }
-        }
-        if (this.reference2) {
-            this.reference2 = ontologyTermRepr(this.reference2).toUpperCase();
-        }
-        if (this.refSeq) {
-            this.refSeq = this.refSeq.toUpperCase();
-        }
-        if (opt.truncation === null) {
-            this.truncation = null;
-            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
-                throw new InputValidationError({
-                    message: `truncation cannot be specified with this event type (${this.type})`,
-                    violatedAttr: 'type'
-                });
-            }
-        } else if (opt.truncation !== undefined) {
-            this.truncation = Number(opt.truncation);
-            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
-                throw new InputValidationError({
-                    message: `truncation cannot be specified with this event type (${this.type})`,
-                    violatedAttr: 'type'
-                });
-            }
-            if (isNaN(this.truncation)) {
-                throw new InputValidationError({
-                    message: 'truncation must be a number',
-                    violatedAttr: 'truncation'
-                });
-            }
         }
 
         this.break1Repr = _position.breakRepr(this.break1Start.prefix, this.break1Start, this.break1End, this.multiFeature);
@@ -415,7 +413,7 @@ const parse = (string, requireFeatures = true) => {
             throw err;
         }
     }
-    return new VariantNotation(result);
+    return new VariantNotation({...result, requireFeatures});
 };
 
 /**
@@ -674,39 +672,38 @@ const parseContinuous = (inputString) => {
             });
         } else if (prefix === 'e') {
             throw new ParsingError({
-                message: 'Cannot defined substitutions at the exon coordinate level',
+                message: 'Cannot define substitutions at the exon coordinate level',
                 violatedAttr: 'type'
             });
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?fs((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
+        const [, alt, type,, stop, truncation] = match;
+
         if (prefix !== 'p') {
             throw new ParsingError({
                 message: 'only protein notation can notate frameshift variants',
                 violatedAttr: 'type'
             });
         }
-        result.type = 'fs';
-        if (match[1] !== undefined && match[1] !== '?') {
-            result.untemplatedSeq = match[1];
+        result.type = type.toLowerCase();
+        if (alt !== undefined && alt !== '?') {
+            result.untemplatedSeq = alt;
         }
-        if (match[3] !== undefined) {
-            if (match[4] === undefined) {
-                result.truncation = match[1] === '*'
-                    ? 1
-                    : null;
-            } else {
-                result.truncation = parseInt(match[4], 10);
-                if (match[1] === '*' && result.truncation !== 1) {
-                    throw new ParsingError({
-                        message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
-                        violatedAttr: 'truncation'
-                    });
-                }
+        if (truncation !== undefined) {
+            result.truncation = parseInt(truncation, 10);
+            if (match[1] === '*' && result.truncation !== 1) {
+                throw new ParsingError({
+                    message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
+                    violatedAttr: 'truncation'
+                });
             }
-        } else if (match[1] === '*') {
+        } else if (alt === '*') {
             result.truncation = 1;
+        } else if (stop) {
+            // specified trunction at some unknown position
+            result.truncation = null;
         }
         if (result.break2Start !== undefined) {
             throw new ParsingError({
