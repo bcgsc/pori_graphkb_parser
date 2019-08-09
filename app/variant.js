@@ -415,7 +415,7 @@ const parse = (string, requireFeatures = true) => {
             throw err;
         }
     }
-    return new VariantNotation(result);
+    return new VariantNotation({...result, noFeatures: !requireFeatures && !result.reference1});
 };
 
 /**
