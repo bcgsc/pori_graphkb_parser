@@ -21,7 +21,8 @@ const PREFIX_CLASS = {
     e: 'ExonicPosition',
     p: 'ProteinPosition',
     y: 'CytobandPosition',
-    c: 'CdsPosition'
+    c: 'CdsPosition',
+    r: 'RnaPosition'
 };
 
 const CLASS_PREFIX = {};
@@ -183,6 +184,9 @@ class CdsPosition extends BasicPosition {
         return `${super.toString(this)}${offset}`;
     }
 }
+
+
+class RnaPosition extends CdsPosition {}
 
 
 class ProteinPosition extends BasicPosition {
@@ -355,5 +359,6 @@ module.exports = {
     Position,
     PREFIX_CLASS,
     PROTEIN_PATT,
-    ProteinPosition
+    ProteinPosition,
+    RnaPosition
 };
