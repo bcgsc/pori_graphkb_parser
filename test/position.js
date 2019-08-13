@@ -9,6 +9,7 @@ const {
     IntronicPosition,
     ProteinPosition,
     CdsPosition,
+    RnaPosition,
     CytobandPosition
 } = require('./../app/position');
 
@@ -74,6 +75,12 @@ describe('Position', () => {
         });
         it('offset specified with explicit null position', () => {
             const pos = new CdsPosition({pos: null, offset: -10});
+            expect(pos.toString()).to.eql('?-10');
+        });
+    });
+    describe('RnaPosition', () => {
+        it('offset specified with explicit null position', () => {
+            const pos = new RnaPosition({pos: null, offset: -10});
             expect(pos.toString()).to.eql('?-10');
         });
     });
