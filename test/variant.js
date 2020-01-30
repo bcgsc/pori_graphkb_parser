@@ -1,6 +1,5 @@
 
 
-const {expect} = require('chai');
 const {
     VariantNotation,
     stripParentheses
@@ -21,7 +20,7 @@ describe('VariantNotation', () => {
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: NOTATION_TO_TYPES['>']
         });
-        expect(notation.toString()).to.equal('KRAS:p.G12D');
+        expect(notation.toString()).toBe('KRAS:p.G12D');
     });
     it('use sourceId before name on reference object', () => {
         const notation = new VariantNotation({
@@ -30,7 +29,7 @@ describe('VariantNotation', () => {
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: NOTATION_TO_TYPES['>']
         });
-        expect(notation.toString()).to.equal('ENSG001:p.G12D');
+        expect(notation.toString()).toBe('ENSG001:p.G12D');
     });
     it('prefer displayName', () => {
         const notation = new VariantNotation({
@@ -39,7 +38,7 @@ describe('VariantNotation', () => {
             break1Start: new ProteinPosition({pos: 12, refAA: 'G'}),
             type: NOTATION_TO_TYPES['>']
         });
-        expect(notation.toString()).to.equal('ENSG001.1:p.G12D');
+        expect(notation.toString()).toBe('ENSG001.1:p.G12D');
     });
     it('throws error on subsitituion with range', () => {
         expect(() => {
@@ -57,7 +56,7 @@ describe('VariantNotation', () => {
                 reference1: 'a1bgas',
                 type: 'substitution'
             });
-        }).to.throw('cannot be a range');
+        }).toThrowError('cannot be a range');
     });
     it('ok for insertion with a range', () => {
         const notation = {
@@ -73,7 +72,7 @@ describe('VariantNotation', () => {
             }
         };
         const variant = new VariantNotation(notation);
-        expect(variant.toString()).to.eql('EGFR:e.20_21ins');
+        expect(variant.toString()).toBe('EGFR:e.20_21ins');
     });
     it('throws error on invalid type', () => {
         expect(() => {
@@ -87,7 +86,7 @@ describe('VariantNotation', () => {
                 reference1: 'a1bgas',
                 type: 'bad_type'
             });
-        }).to.throw('invalid type');
+        }).toThrowError('invalid type');
     });
     it('use ? for undefined elements', () => {
         const variant = new VariantNotation({
@@ -104,7 +103,7 @@ describe('VariantNotation', () => {
             reference1: 'A1BGAS',
             type: 'substitution'
         });
-        expect(variant.toString()).to.equal('A1BGAS:g.(1_18)?>?');
+        expect(variant.toString()).toBe('A1BGAS:g.(1_18)?>?');
     });
     it('error on insertion without range', () => {
         expect(() => {
@@ -122,19 +121,19 @@ describe('VariantNotation', () => {
                 reference1: 'a1bgas',
                 type: 'insertion'
             });
-        }).to.throw('must be specified with a range');
+        }).toThrowError('must be specified with a range');
     });
 });
 
 describe('stripParentheses', () => {
     it('ignores single positions', () => {
-        expect(stripParentheses('e.1')).to.equal('e.1');
+        expect(stripParentheses('e.1')).toBe('e.1');
     });
     it('ignores range positions', () => {
-        expect(stripParentheses('e.1_2')).to.equal('e.1_2');
+        expect(stripParentheses('e.1_2')).toBe('e.1_2');
     });
     it('strips uncertain positions', () => {
-        expect(stripParentheses('e.(1_2)')).to.equal('e.1_2');
+        expect(stripParentheses('e.(1_2)')).toBe('e.1_2');
     });
 });
 
@@ -154,7 +153,7 @@ describe('VariantNotation.toString', () => {
             break1Repr: 'p.G12',
             '@version': 1
         };
-        expect(VariantNotation.toString(obj)).to.eql('KRAS1:p.G12D');
+        expect(VariantNotation.toString(obj)).toBe('KRAS1:p.G12D');
     });
     it('allows non-standard types', () => {
         const obj = {
@@ -169,6 +168,6 @@ describe('VariantNotation.toString', () => {
             break1Repr: 'g.1230',
             break2Repr: 'g.1400'
         };
-        expect(VariantNotation.toString(obj)).to.eql('(EWSR1,FLI1):in-frame-fusion(g.1230,g.1400)');
+        expect(VariantNotation.toString(obj)).toBe('(EWSR1,FLI1):in-frame-fusion(g.1230,g.1400)');
     });
 });
