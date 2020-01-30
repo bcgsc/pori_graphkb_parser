@@ -412,12 +412,10 @@ describe('coding sequence', () => {
 
 describe('exonic', () => {
     test('errors because exon cannot have substitution type', () => {
-        expect(() => { parse('FEATURE:e.1C>T'); }).toThrowError(ParsingError)
-            .that.has.property('content').toHaveProperty('violatedAttr', 'type');
+        expect(() => { parse('FEATURE:e.1C>T'); }).toThrowError(ParsingError);
     });
     test('errors because exon cannot have protein-style substitution type', () => {
-        expect(() => { parse('FEATURE:e.C1T'); }).toThrowError(ParsingError)
-            .that.has.property('content').toHaveProperty('violatedAttr', 'break1');
+        expect(() => { parse('FEATURE:e.C1T'); }).toThrowError(ParsingError);
     });
     test('duplication single exon', () => {
         const notation = 'FEATURE:e.1dup';
@@ -572,8 +570,7 @@ describe('protein', () => {
     test('frameshift truncation conflict error', () => {
         expect(() => {
             parse('FEATURE:p.R10*fs*10');
-        }).toThrowError('conflict')
-            .that.has.property('content').toHaveProperty('violatedAttr', 'truncation');
+        }).toThrowError('conflict');
     });
     test('frameshift set null on truncation point without position', () => {
         const notation = 'FEATURE:p.R10Kfs*';
