@@ -58,6 +58,7 @@
         ],
         "no-mixed-spaces-and-tabs": "error",
         "no-multi-assign": "off",
+        "no-new": "off",
         "no-param-reassign": "warn",
         "no-plusplus": [
             "error",

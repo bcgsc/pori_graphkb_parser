@@ -57,8 +57,7 @@ describe('multi-feature notation', () => {
         test('bad first breakpoint', () => {
             expect(() => {
                 const notation = '(FEATURE1,FEATURE2):trans(e.123k,e.1234)';
-                const result = parse(notation);
-                console.log(result);
+                parse(notation);
             }).toThrowError('Error in parsing the first breakpoint');
         });
         test('bad second breakpoint', () => {

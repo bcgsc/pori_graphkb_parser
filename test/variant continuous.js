@@ -5,13 +5,6 @@ const {
     parse,
 } = require('../src/variant');
 const {
-    GenomicPosition,
-    ProteinPosition,
-    CdsPosition,
-    CytobandPosition,
-    ExonicPosition,
-} = require('../src/position');
-const {
     NOTATION_TO_TYPES,
 } = require('../src/constants');
 
@@ -477,7 +470,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
-    test('duplication of multiple exons with uncertainty', () => {
+    test('duplication of multiple exons with break1 uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)_4dup';
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
@@ -491,7 +484,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
-    test('duplication of multiple exons with uncertainty', () => {
+    test('duplication of multiple exons with break2 uncertainty', () => {
         const notation = 'FEATURE:e.2_(3_4)dup';
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
@@ -613,7 +606,7 @@ describe('protein', () => {
         });
     });
     test('frameshift errors on range', () => {
-        expect(() => { const result = parse('FEATURE:p.R10_M11Kfs*'); console.log(result); }).toThrowError(ParsingError);
+        expect(() => { parse('FEATURE:p.R10_M11Kfs*'); }).toThrowError(ParsingError);
     });
     test('frameshift allows uncertain range', () => {
         const notation = 'FEATURE:p.(R10_M11)fs*10';
