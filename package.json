@@ -37,6 +37,6 @@
     "jest-circus": "^25.1.0",
     "jest-environment-node": "^25.1.0",
     "jest-junit": "^10.0.0",
-    "jsdoc": "^3.6.2"
+    "jsdoc": "^3.6.3"
   }
 }
