@@ -2,10 +2,10 @@
 
 const {
     parse,
-} = require('../app/variant');
+} = require('../src/variant');
 const {
     NOTATION_TO_TYPES,
-} = require('../app/constants');
+} = require('../src/constants');
 
 describe('multi-feature notation', () => {
     describe('throws an error on', () => {

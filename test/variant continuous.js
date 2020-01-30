@@ -1,19 +1,19 @@
 
 
-const { ParsingError } = require('../app/error');
+const { ParsingError } = require('../src/error');
 const {
     parse,
-} = require('../app/variant');
+} = require('../src/variant');
 const {
     GenomicPosition,
     ProteinPosition,
     CdsPosition,
     CytobandPosition,
     ExonicPosition,
-} = require('../app/position');
+} = require('../src/position');
 const {
     NOTATION_TO_TYPES,
-} = require('../app/constants');
+} = require('../src/constants');
 
 
 describe('genomic', () => {

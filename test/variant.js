@@ -3,13 +3,13 @@
 const {
     VariantNotation,
     stripParentheses,
-} = require('./../app/variant');
+} = require('./../src/variant');
 const {
     ProteinPosition,
-} = require('./../app/position');
+} = require('./../src/position');
 const {
     NOTATION_TO_TYPES,
-} = require('./../app/constants');
+} = require('./../src/constants');
 
 
 describe('VariantNotation', () => {

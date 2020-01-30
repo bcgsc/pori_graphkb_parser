@@ -1,6 +1,6 @@
 
 
-const { ParsingError } = require('./../app/error');
+const { ParsingError } = require('./../src/error');
 const {
     parsePosition,
     GenomicPosition,
@@ -10,7 +10,7 @@ const {
     CdsPosition,
     RnaPosition,
     CytobandPosition,
-} = require('./../app/position');
+} = require('./../src/position');
 
 
 describe('Position', () => {
