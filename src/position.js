@@ -1,8 +1,8 @@
 
 
 /** @module app/position */
-const {ParsingError, InputValidationError} = require('./error');
-const {AA_PATTERN, AA_CODES} = require('./constants');
+const { ParsingError, InputValidationError } = require('./error');
+const { AA_PATTERN, AA_CODES } = require('./constants');
 
 /**
  * the mapping of positional variant notation prefixes to their corresponging position classes
@@ -22,10 +22,11 @@ const PREFIX_CLASS = {
     p: 'ProteinPosition',
     y: 'CytobandPosition',
     c: 'CdsPosition',
-    r: 'RnaPosition'
+    r: 'RnaPosition',
 };
 
 const CLASS_PREFIX = {};
+
 for (const [prefix, clsName] of Object.entries(PREFIX_CLASS)) {
     CLASS_PREFIX[clsName] = prefix;
 }
@@ -39,8 +40,9 @@ const CYTOBAND_PATT = /[pq]((\d+|\?)(\.(\d+|\?))?)?/;
 class Position {
     toJSON() {
         const json = {
-            '@class': this.name
+            '@class': this.name,
         };
+
         for (const [attr, val] of Object.entries(this)) {
             if (val !== undefined) {
                 json[attr] = val;
@@ -68,23 +70,25 @@ class CytobandPosition extends Position {
      * @param {?Number} opt.minorBand the minor band number
      */
 
-    constructor({arm, majorBand, minorBand}) {
+    constructor({ arm, majorBand, minorBand }) {
         super();
         this.arm = arm;
+
         if (this.arm !== 'p' && this.arm !== 'q') {
             throw new InputValidationError({
                 message: `cytoband arm must be p or q (${this.arm})`,
-                violatedAttr: 'arm'
+                violatedAttr: 'arm',
             });
         }
         if (majorBand === null) {
             this.majorBand = null;
         } else if (majorBand !== undefined) {
             this.majorBand = Number(majorBand);
+
             if (isNaN(this.majorBand) || this.majorBand <= 0) {
                 throw new InputValidationError({
                     message: `majorBand must be a positive integer (${majorBand})`,
-                    violatedAttr: 'majorBand'
+                    violatedAttr: 'majorBand',
                 });
             }
         }
@@ -92,10 +96,11 @@ class CytobandPosition extends Position {
             this.minorBand = null;
         } else if (minorBand !== undefined) {
             this.minorBand = Number(minorBand);
+
             if (isNaN(this.minorBand) || this.minorBand <= 0) {
                 throw new InputValidationError({
                     message: `minorBand must be a positive integer (${minorBand})`,
-                    violatedAttr: 'minorBand'
+                    violatedAttr: 'minorBand',
                 });
             }
         }
@@ -103,8 +108,10 @@ class CytobandPosition extends Position {
 
     toString() {
         let result = `${this.arm}`;
+
         if (this.majorBand !== undefined) {
             result = `${result}${this.majorBand || '?'}`;
+
             if (this.minorBand !== undefined) {
                 result = `${result}.${this.minorBand || '?'}`;
             }
@@ -119,14 +126,15 @@ class BasicPosition extends Position {
      * @param {Object} opt options
      * @param {Number} opt.pos
      */
-    constructor({pos}) {
+    constructor({ pos }) {
         super();
+
         if (pos === '?' || pos === null) {
             this.pos = null;
         } else if (isNaN(pos) || pos <= 0) {
             throw new InputValidationError({
                 message: `pos (${pos}) must be a positive integer`,
-                violatedAttr: 'pos'
+                violatedAttr: 'pos',
             });
         } else if (pos) {
             this.pos = Number(pos);
@@ -155,17 +163,18 @@ class CdsPosition extends BasicPosition {
      * @param {Number} opt.offset the offset from the nearest cds position
      */
     constructor(opt) {
-        const {offset} = opt;
+        const { offset } = opt;
         super(opt);
 
         if (offset === null) {
             this.offset = null;
         } else if (offset !== undefined) {
             this.offset = Number(offset);
+
             if (isNaN(this.offset)) {
                 throw new InputValidationError({
                     message: `offset (${offset}) must be an integer`,
-                    violatedAttr: 'offset'
+                    violatedAttr: 'offset',
                 });
             }
         }
@@ -173,6 +182,7 @@ class CdsPosition extends BasicPosition {
 
     toString() {
         let offset = '';
+
         if (this.offset === null) {
             offset = '?';
         } else if (this.offset) {
@@ -200,6 +210,7 @@ class ProteinPosition extends BasicPosition {
         super(opt);
         this.refAA = opt.refAA;
         this.longRefAA = null;
+
         if (this.refAA) {
             if (AA_CODES[this.refAA.toLowerCase()]) {
                 this.longRefAA = this.refAA;
@@ -217,7 +228,7 @@ class ProteinPosition extends BasicPosition {
         const json = {
             '@class': this.name,
             refAA: this.refAA,
-            pos: this.pos
+            pos: this.pos,
         };
         return json;
     }
@@ -272,21 +283,24 @@ const breakRepr = (prefix, start, end = null, multiFeature = false) => {
 const parsePosition = (prefix, string) => {
     let result = {},
         Cls;
+
     switch (prefix) {
         case 'i':
             Cls = IntronicPosition;
-            result = {pos: string};
+            result = { pos: string };
             break;
         case 'e':
             Cls = ExonicPosition;
-            result = {pos: string};
+            result = { pos: string };
             break;
         case 'g':
             Cls = GenomicPosition;
-            result = {pos: string};
+            result = { pos: string };
             break;
+
         case 'c': {
             const m = new RegExp(`^${CDS_PATT.source}$`, 'i').exec(string);
+
             if (m === null || (!m[1] && !m[2])) {
                 throw new ParsingError(`input '${string}' did not match the expected pattern for 'c' prefixed positions`);
             }
@@ -300,8 +314,10 @@ const parsePosition = (prefix, string) => {
 
             break;
         }
+
         case 'p': {
             const m = new RegExp(`^${PROTEIN_PATT.source}$`, 'i').exec(string);
+
             if (m === null) {
                 throw new ParsingError(`input string '${string}' did not match the expected pattern for 'p' prefixed positions`);
             }
@@ -316,12 +332,15 @@ const parsePosition = (prefix, string) => {
             Cls = ProteinPosition;
             break;
         }
+
         case 'y': {
             const m = new RegExp(`^${CYTOBAND_PATT.source}$`, 'i').exec(string);
+
             if (m == null) {
                 throw new ParsingError(`input string '${string}' did not match the expected pattern for 'y' prefixed positions`);
             }
             [result.arm] = string;
+
             if (m[2] !== undefined && m[2] !== '?') {
                 result.majorBand = parseInt(m[2], 10);
             }
@@ -331,10 +350,12 @@ const parsePosition = (prefix, string) => {
             Cls = CytobandPosition;
             break;
         }
+
         default: {
-            throw new ParsingError({message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix'});
+            throw new ParsingError({ message: `Prefix not recognized: ${prefix}`, input: string, violatedAttr: 'prefix' });
         }
     }
+
     try {
         return new Cls(result);
     } catch (err) {
@@ -360,5 +381,5 @@ module.exports = {
     PREFIX_CLASS,
     PROTEIN_PATT,
     ProteinPosition,
-    RnaPosition
+    RnaPosition,
 };

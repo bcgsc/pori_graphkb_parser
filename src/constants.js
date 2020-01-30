@@ -21,7 +21,7 @@ const AA_CODES = {
     trp: 'w',
     tyr: 'y',
     val: 'v',
-    ter: '*'
+    ter: '*',
 };
 
 const AA_PATTERN = `${
@@ -50,10 +50,11 @@ const NOTATION_TO_TYPES = {
     spl: 'splice-site',
     mut: 'mutation',
     mis: 'missense mutation',
-    phos: 'phosphorylation'
+    phos: 'phosphorylation',
 };
 
 const TYPES_TO_NOTATION = {};
+
 for (const [notation, type] of Object.entries(NOTATION_TO_TYPES)) {
     if (TYPES_TO_NOTATION[type]) {
         throw new Error(`Mapping must be reversible unique. Duplicate key found (${type})`);
@@ -62,5 +63,5 @@ for (const [notation, type] of Object.entries(NOTATION_TO_TYPES)) {
 }
 
 module.exports = {
-    AA_CODES, AA_PATTERN, NOTATION_TO_TYPES, TYPES_TO_NOTATION
+    AA_CODES, AA_PATTERN, NOTATION_TO_TYPES, TYPES_TO_NOTATION,
 };

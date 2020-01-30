@@ -17,8 +17,9 @@ class ErrorMixin extends Error {
      */
     constructor(content) {
         let message;
+
         if (typeof content === 'object' && content !== null) {
-            ({message, ...content} = content);
+            ({ message, ...content } = content);
         } else {
             message = content;
             content = {};
@@ -26,6 +27,7 @@ class ErrorMixin extends Error {
         super(message);
         this.message = message;
         this.name = this.constructor.name;
+
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this);
         }
@@ -39,7 +41,7 @@ class ErrorMixin extends Error {
         return jc.decycle(Object.assign(this.content, {
             message: this.message,
             name: this.name,
-            stacktrace: Array.from(this.stack.split('\n'), line => line.trim())
+            stacktrace: Array.from(this.stack.split('\n'), line => line.trim()),
         }));
     }
 }
@@ -49,4 +51,4 @@ class ParsingError extends ErrorMixin {}
 
 class InputValidationError extends ErrorMixin {}
 
-module.exports = {ParsingError, ErrorMixin, InputValidationError};
+module.exports = { ParsingError, ErrorMixin, InputValidationError };
