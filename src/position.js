@@ -85,7 +85,7 @@ class CytobandPosition extends Position {
         } else if (majorBand !== undefined) {
             this.majorBand = Number(majorBand);
 
-            if (isNaN(this.majorBand) || this.majorBand <= 0) {
+            if (Number.isNaN(Number(this.majorBand)) || this.majorBand <= 0) {
                 throw new InputValidationError({
                     message: `majorBand must be a positive integer (${majorBand})`,
                     violatedAttr: 'majorBand',
@@ -97,7 +97,7 @@ class CytobandPosition extends Position {
         } else if (minorBand !== undefined) {
             this.minorBand = Number(minorBand);
 
-            if (isNaN(this.minorBand) || this.minorBand <= 0) {
+            if (Number.isNaN(Number(this.minorBand)) || this.minorBand <= 0) {
                 throw new InputValidationError({
                     message: `minorBand must be a positive integer (${minorBand})`,
                     violatedAttr: 'minorBand',
@@ -131,7 +131,7 @@ class BasicPosition extends Position {
 
         if (pos === '?' || pos === null) {
             this.pos = null;
-        } else if (isNaN(pos) || pos <= 0) {
+        } else if (Number.isNaN(Number(pos)) || pos <= 0) {
             throw new InputValidationError({
                 message: `pos (${pos}) must be a positive integer`,
                 violatedAttr: 'pos',
@@ -171,7 +171,7 @@ class CdsPosition extends BasicPosition {
         } else if (offset !== undefined) {
             this.offset = Number(offset);
 
-            if (isNaN(this.offset)) {
+            if (Number.isNaN(Number(this.offset))) {
                 throw new InputValidationError({
                     message: `offset (${offset}) must be an integer`,
                     violatedAttr: 'offset',

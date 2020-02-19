@@ -109,7 +109,7 @@ class VariantNotation {
                 });
             }
             if (truncation !== null) {
-                if (isNaN(truncation)) {
+                if (Number.isNaN(Number(truncation))) {
                     throw new InputValidationError({
                         message: 'truncation must be a number',
                         violatedAttr: 'truncation',
@@ -123,7 +123,7 @@ class VariantNotation {
         if (untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = untemplatedSeqSize;
 
-            if (isNaN(Number(this.untemplatedSeqSize))) {
+            if (Number.isNaN(Number(this.untemplatedSeqSize))) {
                 throw new InputValidationError({
                     message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
                     violatedAttr: 'untemplatedSeqSize',
