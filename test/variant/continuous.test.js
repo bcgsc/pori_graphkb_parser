@@ -1,12 +1,12 @@
 
 
-const { ParsingError } = require('../src/error');
+const { ParsingError } = require('../../src/error');
 const {
     parse,
-} = require('../src/variant');
+} = require('../../src/variant');
 const {
     NOTATION_TO_TYPES,
-} = require('../src/constants');
+} = require('../../src/constants');
 
 
 describe('genomic', () => {
@@ -22,6 +22,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('deletion spans a range', () => {
         const notation = 'FEATURE:g.3_5del';
         const result = parse(notation);
@@ -36,6 +37,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('deletion has a reference sequence', () => {
         const notation = 'FEATURE:g.3_5delTAA';
         const result = parse(notation);
@@ -51,6 +53,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication spans a range uncertain start', () => {
         const notation = 'FEATURE:g.(3_4)_5dup';
         const result = parse(notation);
@@ -66,6 +69,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication spans a range uncertain end', () => {
         const notation = 'FEATURE:g.3_(5_7)dup';
         const result = parse(notation);
@@ -81,6 +85,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication spans a range uncertain start and end', () => {
         const notation = 'FEATURE:g.(1_3)_(5_7)dup';
         const result = parse(notation);
@@ -97,6 +102,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication has a reference sequence', () => {
         const notation = 'FEATURE:g.3_5dupTAA';
         const result = parse(notation);
@@ -114,6 +120,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('basic substitution', () => {
         const notation = 'FEATURE:g.4A>T';
         const result = parse(notation);
@@ -129,6 +136,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('substitution with alt seq options', () => {
         const notation = 'FEATURE:g.4A>T^C';
         const result = parse(notation);
@@ -144,6 +152,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('substitution with uncertainty', () => {
         const notation = 'FEATURE:g.(4_7)A>T';
         const result = parse(notation);
@@ -160,6 +169,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('indel spans a range uncertain start and end ref and alt specified', () => {
         const notation = 'FEATURE:g.(1_3)_(5_7)delTAAinsACG';
         const result = parse(notation);
@@ -179,6 +189,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('indel ref specified', () => {
         const notation = 'FEATURE:g.10delTins';
         const result = parse(notation);
@@ -192,6 +203,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('indel alt specified', () => {
         const notation = 'FEATURE:g.10delinsACC';
         const result = parse(notation);
@@ -206,6 +218,7 @@ describe('genomic', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('errors on protein style missense', () => {
         expect(() => { parse('FEATURE:g.15T'); }).toThrowError(ParsingError);
     });
@@ -224,6 +237,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('deletion spans a range', () => {
         const notation = 'FEATURE:c.3+1_5-2del';
         const result = parse(notation);
@@ -238,6 +252,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('deletion has a reference sequence', () => {
         const notation = 'FEATURE:c.3_5delTAA';
         const result = parse(notation);
@@ -253,6 +268,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication spans a range uncertain start', () => {
         const notation = 'FEATURE:c.(3+1_4-1)_10dup';
         const result = parse(notation);
@@ -268,6 +284,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication spans a range uncertain end', () => {
         const notation = 'FEATURE:c.3_(5+1_55-1)dup';
         const result = parse(notation);
@@ -283,6 +300,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication spans a range uncertain start and end', () => {
         const notation = 'FEATURE:c.(1_3)_(5_7)dup';
         const result = parse(notation);
@@ -299,6 +317,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('duplication has a reference sequence', () => {
         const notation = 'FEATURE:c.3_5dupTAA';
         const result = parse(notation);
@@ -316,6 +335,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('basic substitution', () => {
         const notation = 'FEATURE:c.4A>T';
         const result = parse(notation);
@@ -331,6 +351,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('substitution with uncertainty', () => {
         const notation = 'FEATURE:c.(4_7)A>T';
         const result = parse(notation);
@@ -347,6 +368,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('indel spans a range uncertain start and end ref and alt specified', () => {
         const notation = 'FEATURE:c.(1_3)_(5_7)delTAAinsACG';
         const result = parse(notation);
@@ -366,6 +388,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('indel ref specified', () => {
         const notation = 'FEATURE:c.10delTins';
         const result = parse(notation);
@@ -379,6 +402,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('indel alt specified', () => {
         const notation = 'FEATURE:c.10delinsACC';
         const result = parse(notation);
@@ -393,6 +417,7 @@ describe('coding sequence', () => {
         expect(result.toJSON()).toEqual(exp);
         expect(result.toString()).toBe(notation);
     });
+
     test('substitution before the coding sequence', () => {
         const notation = 'FEATURE:c.-124C>T';
         const result = parse(notation);
@@ -414,9 +439,11 @@ describe('exonic', () => {
     test('errors because exon cannot have substitution type', () => {
         expect(() => { parse('FEATURE:e.1C>T'); }).toThrowError(ParsingError);
     });
+
     test('errors because exon cannot have protein-style substitution type', () => {
         expect(() => { parse('FEATURE:e.C1T'); }).toThrowError(ParsingError);
     });
+
     test('duplication single exon', () => {
         const notation = 'FEATURE:e.1dup';
         const result = parse(notation);
@@ -428,6 +455,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('duplication single exon with uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)dup';
         const result = parse(notation);
@@ -440,6 +468,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('duplication of multiple exons', () => {
         const notation = 'FEATURE:e.1_3dup';
         const result = parse(notation);
@@ -453,6 +482,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('duplication of multiple exons with uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)_(3_4)dup';
         const result = parse(notation);
@@ -468,6 +498,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('duplication of multiple exons with break1 uncertainty', () => {
         const notation = 'FEATURE:e.(1_2)_4dup';
         const result = parse(notation);
@@ -482,6 +513,7 @@ describe('exonic', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('duplication of multiple exons with break2 uncertainty', () => {
         const notation = 'FEATURE:e.2_(3_4)dup';
         const result = parse(notation);
@@ -505,6 +537,7 @@ describe('protein', () => {
         expect(result.toString()).toBe(notation);
         expect(result.type).toBe('splice-site');
     });
+
     test('case insensitive frameshift', () => {
         // civic example
         const notation = 'FEATURE:p.W288FS';
@@ -512,6 +545,7 @@ describe('protein', () => {
         expect(result.toString()).toBe('FEATURE:p.W288fs');
         expect(result.type).toBe('frameshift');
     });
+
     test('lowercase substitution', () => {
         const notation = 'FEATURE:p.D816N';
         const result = parse(notation);
@@ -520,6 +554,7 @@ describe('protein', () => {
         expect(result.type).toBe('substitution');
         expect(result.refSeq).toBe('D');
     });
+
     test('substitution no alt', () => {
         const notation = 'FEATURE:p.D816';
         const result = parse(notation);
@@ -527,6 +562,7 @@ describe('protein', () => {
         expect(result.refSeq).toBe('D');
         expect(result.type).toBe('substitution');
     });
+
     test('frameshift alt specified', () => {
         const notation = 'FEATURE:p.R10Kfs';
         const result = parse(notation);
@@ -542,6 +578,7 @@ describe('protein', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('frameshift alt specified and truncation point', () => {
         const notation = 'FEATURE:p.R10Kfs*10';
         const result = parse(notation);
@@ -557,21 +594,25 @@ describe('protein', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('parses 3 letter amino acids for protein frameshift', () => {
         const notation = 'FEATURE:p.Arg10Lysfs*10';
         const result = parse(notation);
         expect(result.toString()).toBe('FEATURE:p.R10Kfs*10');
     });
+
     test('parses 3 letter amino acids for reference sequence', () => {
         const notation = 'FEATURE:p.Arg10_Lys12delArgGluLysinsLeu';
         const result = parse(notation);
         expect(result.toString()).toBe('FEATURE:p.R10_K12delREKinsL');
     });
+
     test('frameshift truncation conflict error', () => {
         expect(() => {
             parse('FEATURE:p.R10*fs*10');
         }).toThrowError('conflict');
     });
+
     test('frameshift set null on truncation point without position', () => {
         const notation = 'FEATURE:p.R10Kfs*';
         const result = parse(notation);
@@ -587,6 +628,7 @@ describe('protein', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('frameshift immeadiate truncation', () => {
         const notation = 'FEATURE:p.R10*fs';
         const result = parse(notation);
@@ -602,9 +644,11 @@ describe('protein', () => {
             reference1: 'FEATURE',
         });
     });
+
     test('frameshift errors on range', () => {
         expect(() => { parse('FEATURE:p.R10_M11Kfs*'); }).toThrowError(ParsingError);
     });
+
     test('frameshift allows uncertain range', () => {
         const notation = 'FEATURE:p.(R10_M11)fs*10';
         const result = parse(notation);
@@ -619,6 +663,7 @@ describe('protein', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('frameshift no alt but truncation point specified', () => {
         const notation = 'FEATURE:p.R10fs*10';
         const result = parse(notation);
@@ -633,6 +678,7 @@ describe('protein', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('frameshift no alt or truncation point', () => {
         const notation = 'FEATURE:p.R10fs';
         const result = parse(notation);
@@ -646,6 +692,7 @@ describe('protein', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('missense mutation', () => {
         const notation = 'FEATURE:p.F12G';
         const result = parse(notation);
@@ -661,9 +708,11 @@ describe('protein', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('errors on genomic style missense', () => {
         expect(() => { parse('p.G12G>T'); }).toThrowError(ParsingError);
     });
+
     test('extension without alt AA', () => {
         const notation = 'p.*807ext';
         const result = parse(notation, false);
@@ -672,6 +721,7 @@ describe('protein', () => {
         expect(result).toHaveProperty('truncation', undefined);
         expect(result.toString()).toBe(notation);
     });
+
     test('extension without alt AA with new truncation', () => {
         const notation = 'p.*807ext*101';
         const result = parse(notation, false);
@@ -680,6 +730,7 @@ describe('protein', () => {
         expect(result).toHaveProperty('truncation', 101);
         expect(result.toString()).toBe(notation);
     });
+
     test('extension with alt AA', () => {
         const notation = 'p.*807Lext';
         const result = parse(notation, false);
@@ -688,6 +739,7 @@ describe('protein', () => {
         expect(result).toHaveProperty('truncation', undefined);
         expect(result.toString()).toBe(notation);
     });
+
     test('extension with alt AA and new truncation', () => {
         const notation = 'p.*807Lext*101';
         const result = parse(notation, false);
@@ -696,6 +748,15 @@ describe('protein', () => {
         expect(result).toHaveProperty('truncation', 101);
         expect(result.toString()).toBe(notation);
     });
+
+    test('extension with new truncation position not specified', () => {
+        const notation = 'p.*661Lext*?';
+        const result = parse(notation, false);
+        expect(result).toHaveProperty('type', NOTATION_TO_TYPES.ext);
+        expect(result).toHaveProperty('untemplatedSeq', 'L');
+        expect(result).toHaveProperty('truncation', null);
+        expect(result.toString()).toBe('p.*661Lext');
+    });
 });
 
 describe('cytoband', () => {
@@ -703,18 +764,22 @@ describe('cytoband', () => {
         expect(() => { parse('FEATURE:y.p12.1ins'); }).toThrowError(ParsingError);
         expect(() => { parse('FEATURE:y.p12.1_p13ins'); }).toThrowError(ParsingError);
     });
+
     test('errors because cytoband variant cannot have delins type', () => {
         expect(() => { parse('FEATURE:y.p12.1delins'); }).toThrowError(ParsingError);
         expect(() => { parse('FEATURE:y.p12.1_p13delins'); }).toThrowError(ParsingError);
     });
+
     test('errors because cytoband variant cannot have > type', () => {
         expect(() => { parse('FEATURE:y.p12.1G>T'); }).toThrowError(ParsingError);
         expect(() => { parse('FEATURE:y.Gp12.1T'); }).toThrowError(ParsingError);
     });
+
     test('errors because cytoband variant cannot have fs type', () => {
         expect(() => { parse('FEATURE:y.p12.1fs'); }).toThrowError(ParsingError);
         expect(() => { parse('FEATURE:y.(p12.1_p13)fs'); }).toThrowError(ParsingError);
     });
+
     test('duplication of whole p arm', () => {
         const notation = 'FEATURE:y.pdup';
         const result = parse(notation);
@@ -727,6 +792,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication of range on p major band', () => {
         const notation = 'FEATURE:y.p11dup';
         const result = parse(notation);
@@ -739,6 +805,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication of range on p minor band', () => {
         const notation = 'FEATURE:y.p11.1dup';
         const result = parse(notation);
@@ -753,6 +820,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication of range on p arm', () => {
         const notation = 'FEATURE:y.p11.1_p13.3dup';
         const result = parse(notation);
@@ -771,6 +839,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication on p arm uncertain positions', () => {
         const notation = 'FEATURE:y.(p11.1_p11.2)_(p13.4_p14)dup';
         const result = parse(notation);
@@ -793,6 +862,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication on p arm uncertain start', () => {
         const notation = 'FEATURE:y.(p11.1_p11.2)_p13.3dup';
         const result = parse(notation);
@@ -814,6 +884,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication on p arm uncertain end', () => {
         const notation = 'FEATURE:y.p13.3_(p15.1_p15.2)dup';
         const result = parse(notation);
@@ -835,6 +906,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('duplication of whole q arm', () => {
         const notation = 'FEATURE:y.qdup';
         const result = parse(notation);
@@ -847,6 +919,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('deletion of whole p arm', () => {
         const notation = 'FEATURE:y.pdel';
         const result = parse(notation);
@@ -859,6 +932,7 @@ describe('cytoband', () => {
         };
         expect(result.toJSON()).toEqual(exp);
     });
+
     test('inversion of a range on the p arm', () => {
         const notation = 'FEATURE:y.p11.1_p13.3inv';
         const result = parse(notation);
@@ -882,9 +956,11 @@ describe('cytoband', () => {
 test('error on short string', () => {
     expect(() => { parse(''); }).toThrowError(ParsingError);
 });
+
 test('errors on bad prefix', () => {
     expect(() => { parse('FEATURE:f.G12D'); }).toThrowError(ParsingError);
 });
+
 test('errors on missing . delimiter after prefix', () => {
     expect(() => { parse('FEATURE:pG12D'); }).toThrowError(ParsingError);
 });
