@@ -109,7 +109,7 @@ class VariantNotation {
                 });
             }
             if (truncation !== null) {
-                if (isNaN(truncation)) {
+                if (Number.isNaN(Number(truncation))) {
                     throw new InputValidationError({
                         message: 'truncation must be a number',
                         violatedAttr: 'truncation',
@@ -123,7 +123,7 @@ class VariantNotation {
         if (untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = untemplatedSeqSize;
 
-            if (isNaN(Number(this.untemplatedSeqSize))) {
+            if (Number.isNaN(Number(this.untemplatedSeqSize))) {
                 throw new InputValidationError({
                     message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
                     violatedAttr: 'untemplatedSeqSize',
@@ -721,7 +721,7 @@ const parseContinuous = (inputString) => {
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
         const [, alt, type,, stop, truncation] = match;
 
         if (prefix !== 'p') {
@@ -735,7 +735,9 @@ const parseContinuous = (inputString) => {
         if (alt !== undefined && alt !== '?') {
             result.untemplatedSeq = alt;
         }
-        if (truncation !== undefined) {
+        if (truncation === '?') {
+            result.truncation = null;
+        } else if (truncation !== undefined) {
             result.truncation = parseInt(truncation, 10);
 
             if (match[1] === '*' && result.truncation !== 1) {

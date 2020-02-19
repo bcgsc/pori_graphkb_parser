@@ -748,6 +748,15 @@ describe('protein', () => {
         expect(result).toHaveProperty('truncation', 101);
         expect(result.toString()).toBe(notation);
     });
+
+    test('extension with new truncation position not specified', () => {
+        const notation = 'p.*661Lext*?';
+        const result = parse(notation, false);
+        expect(result).toHaveProperty('type', NOTATION_TO_TYPES.ext);
+        expect(result).toHaveProperty('untemplatedSeq', 'L');
+        expect(result).toHaveProperty('truncation', null);
+        expect(result.toString()).toBe('p.*661Lext');
+    });
 });
 
 describe('cytoband', () => {
