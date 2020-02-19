@@ -3,13 +3,13 @@
 const {
     VariantNotation,
     stripParentheses,
-} = require('./../src/variant');
+} = require('../../src/variant');
 const {
     ProteinPosition,
-} = require('./../src/position');
+} = require('../../src/position');
 const {
     NOTATION_TO_TYPES,
-} = require('./../src/constants');
+} = require('../../src/constants');
 
 
 describe('VariantNotation', () => {
@@ -22,6 +22,7 @@ describe('VariantNotation', () => {
         });
         expect(notation.toString()).toBe('KRAS:p.G12D');
     });
+
     test('use sourceId before name on reference object', () => {
         const notation = new VariantNotation({
             reference1: { sourceId: 'ENSG001', name: 'blargh' },
@@ -31,6 +32,7 @@ describe('VariantNotation', () => {
         });
         expect(notation.toString()).toBe('ENSG001:p.G12D');
     });
+
     test('prefer displayName', () => {
         const notation = new VariantNotation({
             reference1: { sourceId: 'ENSG001', sourceIdVersion: '1', displayName: 'ENSG001.1' },
@@ -40,6 +42,7 @@ describe('VariantNotation', () => {
         });
         expect(notation.toString()).toBe('ENSG001.1:p.G12D');
     });
+
     test('throws error on subsitituion with range', () => {
         expect(() => {
             new VariantNotation({
@@ -58,6 +61,7 @@ describe('VariantNotation', () => {
             });
         }).toThrowError('cannot be a range');
     });
+
     test('ok for insertion with a range', () => {
         const notation = {
             type: 'insertion',
@@ -74,6 +78,7 @@ describe('VariantNotation', () => {
         const variant = new VariantNotation(notation);
         expect(variant.toString()).toBe('EGFR:e.20_21ins');
     });
+
     test('throws error on invalid type', () => {
         expect(() => {
             new VariantNotation({
@@ -88,6 +93,7 @@ describe('VariantNotation', () => {
             });
         }).toThrowError('invalid type');
     });
+
     test('use ? for undefined elements', () => {
         const variant = new VariantNotation({
             break1Start: {
@@ -105,6 +111,7 @@ describe('VariantNotation', () => {
         });
         expect(variant.toString()).toBe('A1BGAS:g.(1_18)?>?');
     });
+
     test('error on insertion without range', () => {
         expect(() => {
             new VariantNotation({
@@ -129,9 +136,11 @@ describe('stripParentheses', () => {
     test('ignores single positions', () => {
         expect(stripParentheses('e.1')).toBe('e.1');
     });
+
     test('ignores range positions', () => {
         expect(stripParentheses('e.1_2')).toBe('e.1_2');
     });
+
     test('strips uncertain positions', () => {
         expect(stripParentheses('e.(1_2)')).toBe('e.1_2');
     });
@@ -155,6 +164,7 @@ describe('VariantNotation.toString', () => {
         };
         expect(VariantNotation.toString(obj)).toBe('KRAS1:p.G12D');
     });
+
     test('allows non-standard types', () => {
         const obj = {
             '@class': 'PositionalVariant',
