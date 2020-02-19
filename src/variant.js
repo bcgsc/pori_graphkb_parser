@@ -721,7 +721,7 @@ const parseContinuous = (inputString) => {
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+)?)?$`, 'i').exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
         const [, alt, type,, stop, truncation] = match;
 
         if (prefix !== 'p') {
@@ -735,7 +735,9 @@ const parseContinuous = (inputString) => {
         if (alt !== undefined && alt !== '?') {
             result.untemplatedSeq = alt;
         }
-        if (truncation !== undefined) {
+        if (truncation === '?') {
+            result.truncation = null;
+        } else if (truncation !== undefined) {
             result.truncation = parseInt(truncation, 10);
 
             if (match[1] === '*' && result.truncation !== 1) {
