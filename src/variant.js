@@ -797,12 +797,12 @@ const parseContinuous = (inputString) => {
         } else if (![
             NOTATION_TO_TYPES.dup,
             NOTATION_TO_TYPES.del,
-            NOTATION_TO_TYPES.gain,
-            NOTATION_TO_TYPES.loss,
+            NOTATION_TO_TYPES.copygain,
+            NOTATION_TO_TYPES.copyloss,
             NOTATION_TO_TYPES.inv,
         ].includes(result.type)) {
             throw new ParsingError({
-                message: 'Invalid type for cytoband level event notation',
+                message: `Invalid type (${result.type}) for cytoband level event notation`,
                 parsed: result,
                 violatedAttr: 'type',
             });
