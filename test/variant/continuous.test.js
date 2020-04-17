@@ -780,6 +780,21 @@ describe('cytoband', () => {
         expect(() => { parse('FEATURE:y.(p12.1_p13)fs'); }).toThrowError(ParsingError);
     });
 
+    test('copy gain', () => {
+        const notation = '12:y.q13_q14copygain';
+        const result = parse(notation);
+        expect(result.toString()).toBe(notation);
+        const exp = {
+            type: 'copy gain',
+            break1Start: { '@class': 'CytobandPosition', arm: 'q', majorBand: 13 },
+            break2Start: { '@class': 'CytobandPosition', arm: 'q', majorBand: 14 },
+            break1Repr: 'y.q13',
+            break2Repr: 'y.q14',
+            reference1: '12',
+        };
+        expect(result.toJSON()).toEqual(exp);
+    });
+
     test('duplication of whole p arm', () => {
         const notation = 'FEATURE:y.pdup';
         const result = parse(notation);
