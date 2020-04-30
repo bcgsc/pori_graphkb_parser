@@ -722,6 +722,18 @@ describe('protein', () => {
         expect(result.toString()).toBe(notation);
     });
 
+    test('extension new initiation site', () => {
+        const notation = 'p.M1ext-85';
+        const result = parse(notation, false);
+        expect(result).toHaveProperty('type', NOTATION_TO_TYPES.ext);
+        expect(result).toHaveProperty('untemplatedSeq', undefined);
+        expect(result).toHaveProperty('truncation', -85);
+        expect(result).toHaveProperty('break1Start');
+        expect(result.break1Start).toHaveProperty('pos', 1);
+        expect(result.break1Start).toHaveProperty('refAA', 'M');
+        expect(result.toString()).toBe(notation);
+    });
+
     test('extension without alt AA with new truncation', () => {
         const notation = 'p.*807ext*101';
         const result = parse(notation, false);
