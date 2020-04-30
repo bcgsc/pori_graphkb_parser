@@ -293,7 +293,11 @@ class VariantNotation {
                 result.push(notationType);
             }
             if (truncation && truncation !== 1) {
-                result.push(`*${truncation}`);
+                if (truncation < 0) {
+                    result.push(truncation);
+                } else {
+                    result.push(`*${truncation}`);
+                }
             }
 
             if (refSeq
@@ -721,7 +725,7 @@ const parseContinuous = (inputString) => {
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*|-)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
         const [, alt, type,, stop, truncation] = match;
 
         if (prefix !== 'p') {
@@ -740,7 +744,11 @@ const parseContinuous = (inputString) => {
         } else if (truncation !== undefined) {
             result.truncation = parseInt(truncation, 10);
 
-            if (match[1] === '*' && result.truncation !== 1) {
+            if (stop === '-') {
+                result.truncation *= -1;
+            }
+
+            if (alt === '*' && result.truncation !== 1) {
                 throw new ParsingError({
                     message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
                     violatedAttr: 'truncation',
