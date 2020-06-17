@@ -55,13 +55,17 @@ const NOTATION_TO_TYPES = {
 
 const TYPES_TO_NOTATION = {};
 
-for (const [notation, type] of Object.entries(NOTATION_TO_TYPES)) {
-    if (TYPES_TO_NOTATION[type]) {
-        throw new Error(`Mapping must be reversible unique. Duplicate key found (${type})`);
+const addTypeMappings = (mapping) => {
+    for (const [notation, type] of Object.entries(mapping)) {
+        if (TYPES_TO_NOTATION[type]) {
+            throw new Error(`Mapping must be reversible unique. Duplicate key found (${type})`);
+        }
+        TYPES_TO_NOTATION[type] = notation;
     }
-    TYPES_TO_NOTATION[type] = notation;
-}
+};
+
+addTypeMappings(NOTATION_TO_TYPES);
 
 module.exports = {
-    AA_CODES, AA_PATTERN, NOTATION_TO_TYPES, TYPES_TO_NOTATION,
+    AA_CODES, AA_PATTERN, NOTATION_TO_TYPES, TYPES_TO_NOTATION, addTypeMappings,
 };
