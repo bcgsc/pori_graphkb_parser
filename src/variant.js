@@ -245,7 +245,11 @@ class VariantNotation {
             truncation,
             refSeq,
         } = variant;
-        const type = variant.type.name || variant.type;
+        let type = variant.type.name || variant.type;
+
+        if (NOTATION_TO_TYPES[type] && !TYPES_TO_NOTATION[type]) {
+            type = NOTATION_TO_TYPES[type];
+        }
 
         let notationType = TYPES_TO_NOTATION[type];
 
