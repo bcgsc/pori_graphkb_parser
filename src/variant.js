@@ -677,30 +677,32 @@ const parseContinuous = (inputString) => {
 
     if (match = /^del([A-Z?*]+)?ins([A-Z?*]+|\d+)?$/i.exec(tail)) { // indel
         result.type = 'delins';
+        const [, refSeq, altSeq] = match;
 
-        if (match[1]) {
-            result.refSeq = match[1];
+        if (refSeq) {
+            result.refSeq = refSeq;
         }
-        if (parseInt(match[2], 10)) {
-            result.untemplatedSeqSize = parseInt(match[2], 10);
-        } else if (match[2] && match[2] !== '?') {
-            result.untemplatedSeq = match[2];
+        if (parseInt(altSeq, 10)) {
+            result.untemplatedSeqSize = parseInt(altSeq, 10);
+        } else if (altSeq && altSeq !== '?') {
+            result.untemplatedSeq = altSeq;
         }
     } else if (match = /^(del|inv|ins|dup)([A-Z?*]+|\d+)?$/i.exec(tail)) { // deletion
-        result.type = match[1];
+        let altSeq;
+        [, result.type, altSeq] = match;
 
-        if (parseInt(match[2], 10)) {
+        if (parseInt(altSeq, 10)) {
             if (result.type === 'ins' || result.type === 'dup') {
-                result.untemplatedSeqSize = parseInt(match[2], 10);
+                result.untemplatedSeqSize = parseInt(altSeq, 10);
             }
-        } else if (match[2] && match[2] !== '?') {
+        } else if (altSeq && altSeq !== '?') {
             if (result.type === 'dup') {
-                result.untemplatedSeq = match[2];
-                result.refSeq = match[2];
+                result.untemplatedSeq = altSeq;
+                result.refSeq = altSeq;
             } else if (result.type === 'ins') {
-                result.untemplatedSeq = match[2];
+                result.untemplatedSeq = altSeq;
             } else {
-                result.refSeq = match[2];
+                result.refSeq = altSeq;
             }
         }
     } else if (match = new RegExp(`^(${AA_PATTERN})(\\^(${AA_PATTERN}))*$`, 'i').exec(tail) || tail.length === 0) {
@@ -729,7 +731,7 @@ const parseContinuous = (inputString) => {
         }
         result.type = '>';
         [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*|-)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
+    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*|-|Ter)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
         const [, alt, type,, stop, truncation] = match;
 
         if (prefix !== 'p') {
