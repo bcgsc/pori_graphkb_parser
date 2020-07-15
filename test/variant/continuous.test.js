@@ -743,6 +743,15 @@ describe('protein', () => {
         expect(result.toString()).toBe(notation);
     });
 
+    test('frameshift truncation with three letter AA', () => {
+        const notation = 'p.E55RfsTer11';
+        const result = parse(notation, false);
+        expect(result).toHaveProperty('type', NOTATION_TO_TYPES.fs);
+        expect(result).toHaveProperty('untemplatedSeq', 'R');
+        expect(result).toHaveProperty('truncation', 11);
+        expect(result.toString()).toBe('p.E55Rfs*11');
+    });
+
     test('extension with alt AA', () => {
         const notation = 'p.*807Lext';
         const result = parse(notation, false);
