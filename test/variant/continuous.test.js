@@ -743,6 +743,14 @@ describe('protein', () => {
         expect(result.toString()).toBe(notation);
     });
 
+    test('synonymous/silent mutation', () => {
+        const notation = 'p.R80=';
+        const result = parse(notation, false);
+        expect(result).toHaveProperty('type', NOTATION_TO_TYPES['>']);
+        expect(result).toHaveProperty('untemplatedSeq', '=');
+        expect(result.toString()).toBe(notation);
+    });
+
     test('frameshift truncation with three letter AA', () => {
         const notation = 'p.E55RfsTer11';
         const result = parse(notation, false);

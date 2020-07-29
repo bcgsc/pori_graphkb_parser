@@ -705,7 +705,7 @@ const parseContinuous = (inputString) => {
                 result.refSeq = altSeq;
             }
         }
-    } else if (match = new RegExp(`^(${AA_PATTERN})(\\^(${AA_PATTERN}))*$`, 'i').exec(tail) || tail.length === 0) {
+    } else if (match = new RegExp(`^(${AA_PATTERN}|=)$`, 'i').exec(tail) || tail.length === 0) {
         if (prefix !== 'p') {
             throw new ParsingError({
                 message: 'only protein notation does not use ">" for a substitution',
