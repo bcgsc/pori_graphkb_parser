@@ -26,6 +26,10 @@ const ontologyTermRepr = (term) => {
  * 'RKL'
  */
 const convert3to1 = (notation) => {
+    if (notation === '=') {
+        // = does not have a 3-letter AA equivalent
+        return '=';
+    }
     if (notation.length % 3 !== 0) {
         throw new ParsingError(`Cannot convert to single letter AA notation. The input (${notation}) is not in 3-letter form`);
     }
