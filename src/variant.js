@@ -203,11 +203,11 @@ class VariantNotation {
                     violatedAttr: 'break2',
                 });
             }
-            this.break2Repr = _position.breakRepr(this.break2Start.prefix, this.break2Start, this.break2End, this.multiFeature);
+            this.break2Repr = _position.breakRepr(this.break2Start, this.break2End, this.multiFeature);
         }
 
         if (this.type === NOTATION_TO_TYPES.ins) {
-            if (!this.break2Start && this.break1Start.prefix !== 'e') {
+            if (!this.break2Start && this.break1Start.prefix !== _position.ExonicPosition.prefix) {
                 throw new InputValidationError({
                     message: 'Insertion events must be specified with a range',
                     violatedAttr: 'type',
@@ -595,11 +595,23 @@ const extractPositions = (prefix, string) => {
         let pattern;
 
         switch (prefix) {
-            case 'y': { pattern = _position.CYTOBAND_PATT; break; }
+            case _position.CytobandPosition.prefix: {
+                pattern = _position.CYTOBAND_PATT;
+                break;
+            }
 
-            case 'c': { pattern = _position.CDS_PATT; break; }
+            case _position.RnaPosition.prefix:
+            case _position.NonCdsPosition.prefix:
 
-            case 'p': { pattern = _position.PROTEIN_PATT; break; }
+            case _position.CdsPosition.prefix: { // eslint-disable-line no-fallthrough
+                pattern = _position.CDS_PATT;
+                break;
+            }
+
+            case _position.ProteinPosition.prefix: {
+                pattern = _position.PROTEIN_PATT;
+                break;
+            }
 
             default: { pattern = /\d+/; }
         }
@@ -710,7 +722,7 @@ const parseContinuous = (inputString) => {
             }
         }
     } else if (match = new RegExp(`^(${AA_PATTERN}|=)$`, 'i').exec(tail) || tail.length === 0) {
-        if (prefix !== 'p') {
+        if (prefix !== _position.ProteinPosition.prefix) {
             throw new ParsingError({
                 message: 'only protein notation does not use ">" for a substitution',
                 violatedAttr: 'break1',
@@ -722,12 +734,12 @@ const parseContinuous = (inputString) => {
             result.untemplatedSeq = tail;
         }
     } else if (match = /^([A-Z?])>([A-Z?](\^[A-Z?])*)$/i.exec(tail)) {
-        if (prefix === 'p') {
+        if (prefix === _position.ProteinPosition.prefix) {
             throw new ParsingError({
                 message: 'protein notation does not use ">" for a substitution',
                 violatedAttr: 'type',
             });
-        } else if (prefix === 'e') {
+        } else if (prefix === _position.ExonicPosition.prefix) {
             throw new ParsingError({
                 message: 'Cannot define substitutions at the exon coordinate level',
                 violatedAttr: 'type',
@@ -738,7 +750,7 @@ const parseContinuous = (inputString) => {
     } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*|-|Ter)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
         const [, alt, type,, stop, truncation] = match;
 
-        if (prefix !== 'p') {
+        if (prefix !== _position.ProteinPosition.prefix) {
             throw new ParsingError({
                 message: 'only protein notation can notate frameshift variants',
                 violatedAttr: 'type',
@@ -801,7 +813,7 @@ const parseContinuous = (inputString) => {
         }
     }
     // check for innapropriate types
-    if (prefix === 'y') {
+    if (prefix === _position.CytobandPosition.prefix) {
         if (result.refSeq) {
             throw new ParsingError({
                 message: 'cannot define sequence elements at the cytoband level',
@@ -827,7 +839,7 @@ const parseContinuous = (inputString) => {
         }
     }
 
-    if (prefix === 'p') {
+    if (prefix === _position.ProteinPosition.prefix) {
         // special case refSeq protein substitutions
         if (!result.break1End && !result.break2Start && !result.break2End && result.break1Start.refAA) {
             result.refSeq = result.break1Start.longRefAA || result.break1Start.refAA;
