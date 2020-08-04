@@ -260,7 +260,7 @@ class ProteinPosition extends BasicPosition {
  *
  * @returns {string} the string representation of a breakpoint or breakpoint range including the prefix
  */
-const breakRepr = (prefix, start, end = null, multiFeature = false) => {
+const breakRepr = (start, end = null, multiFeature = false) => {
     if (end) {
         if (start.prefix !== end.prefix) {
             throw new ParsingError('Mismatch prefix in range');

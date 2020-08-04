@@ -189,7 +189,7 @@ class VariantNotation {
             });
         }
 
-        this.break1Repr = _position.breakRepr(this.break1Start.prefix, this.break1Start, this.break1End, this.multiFeature);
+        this.break1Repr = _position.breakRepr(this.break1Start, this.break1End, this.multiFeature);
 
         if (this.break2Start) {
             if ([
