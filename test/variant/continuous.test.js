@@ -224,7 +224,7 @@ describe('genomic', () => {
     });
 });
 
-describe('coding sequence', () => {
+describe('coding sequence like', () => {
     test('deletion single bp', () => {
         const notation = 'FEATURE:c.3+1del';
         const result = parse(notation);
@@ -232,6 +232,19 @@ describe('coding sequence', () => {
             type: NOTATION_TO_TYPES.del,
             break1Start: { '@class': 'CdsPosition', pos: 3, offset: 1 },
             break1Repr: 'c.3+1',
+            reference1: 'FEATURE',
+        };
+        expect(result.toJSON()).toEqual(exp);
+        expect(result.toString()).toBe(notation);
+    });
+
+    test('noncoding deletion single bp', () => {
+        const notation = 'FEATURE:n.3+1del';
+        const result = parse(notation);
+        const exp = {
+            type: NOTATION_TO_TYPES.del,
+            break1Start: { '@class': 'NonCdsPosition', pos: 3, offset: 1 },
+            break1Repr: 'n.3+1',
             reference1: 'FEATURE',
         };
         expect(result.toJSON()).toEqual(exp);
