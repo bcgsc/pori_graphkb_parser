@@ -416,6 +416,7 @@ module.exports = {
     ExonicPosition,
     GenomicPosition,
     IntronicPosition,
+    NonCdsPosition,
     parsePosition,
     Position,
     PREFIX_CLASS,
