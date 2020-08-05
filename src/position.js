@@ -4,33 +4,6 @@
 const { ParsingError, InputValidationError } = require('./error');
 const { AA_PATTERN, AA_CODES } = require('./constants');
 
-/**
- * the mapping of positional variant notation prefixes to their corresponging position classes
- * @namespace
- *
- * @property {string} g genomic postions
- * @property {string} i intronic positions
- * @property {string} e exonic positions
- * @property {string} p protein positions (amino acid coordinates)
- * @property {string} y cytoband positions
- * @property {string} c coding sequence positions
- */
-const PREFIX_CLASS = {
-    g: 'GenomicPosition',
-    i: 'IntronicPosition',
-    e: 'ExonicPosition',
-    p: 'ProteinPosition',
-    y: 'CytobandPosition',
-    c: 'CdsPosition',
-    r: 'RnaPosition',
-};
-
-const CLASS_PREFIX = {};
-
-for (const [prefix, clsName] of Object.entries(PREFIX_CLASS)) {
-    CLASS_PREFIX[clsName] = prefix;
-}
-
 
 const CDS_PATT = /(\d+)?([-+]\d+)?/;
 const PROTEIN_PATT = new RegExp(`(${AA_PATTERN})?(\\d+|\\?)`);
@@ -56,7 +29,7 @@ class Position {
     }
 
     get prefix() {
-        return CLASS_PREFIX[this.name];
+        return this.constructor.prefix;
     }
 }
 
@@ -118,6 +91,10 @@ class CytobandPosition extends Position {
         }
         return result;
     }
+
+    static get prefix() {
+        return 'y';
+    }
 }
 
 
@@ -147,13 +124,25 @@ class BasicPosition extends Position {
 }
 
 
-class GenomicPosition extends BasicPosition { }
+class GenomicPosition extends BasicPosition {
+    static get prefix() {
+        return 'g';
+    }
+}
 
 
-class ExonicPosition extends BasicPosition { }
+class ExonicPosition extends BasicPosition {
+    static get prefix() {
+        return 'e';
+    }
+}
 
 
-class IntronicPosition extends BasicPosition { }
+class IntronicPosition extends BasicPosition {
+    static get prefix() {
+        return 'i';
+    }
+}
 
 
 class CdsPosition extends BasicPosition {
@@ -193,10 +182,24 @@ class CdsPosition extends BasicPosition {
         }
         return `${super.toString(this)}${offset}`;
     }
+
+    static get prefix() {
+        return 'c';
+    }
 }
 
 
-class RnaPosition extends CdsPosition {}
+class RnaPosition extends CdsPosition {
+    static get prefix() {
+        return 'r';
+    }
+}
+
+class NonCdsPosition extends CdsPosition {
+    static get prefix() {
+        return 'n';
+    }
+}
 
 
 class ProteinPosition extends BasicPosition {
@@ -232,6 +235,10 @@ class ProteinPosition extends BasicPosition {
         };
         return json;
     }
+
+    static get prefix() {
+        return 'p';
+    }
 }
 
 
@@ -253,7 +260,7 @@ class ProteinPosition extends BasicPosition {
  *
  * @returns {string} the string representation of a breakpoint or breakpoint range including the prefix
  */
-const breakRepr = (prefix, start, end = null, multiFeature = false) => {
+const breakRepr = (start, end = null, multiFeature = false) => {
     if (end) {
         if (start.prefix !== end.prefix) {
             throw new ParsingError('Mismatch prefix in range');
@@ -267,6 +274,34 @@ const breakRepr = (prefix, start, end = null, multiFeature = false) => {
     return `${start.prefix}.${start.toString()}`;
 };
 
+
+/**
+ * the mapping of positional variant notation prefixes to their corresponging position classes
+ * @namespace
+ *
+ * @property {string} g genomic postions
+ * @property {string} i intronic positions
+ * @property {string} e exonic positions
+ * @property {string} p protein positions (amino acid coordinates)
+ * @property {string} y cytoband positions
+ * @property {string} c coding sequence positions
+ */
+const PREFIX_CLASS = {
+    [GenomicPosition.prefix]: GenomicPosition,
+    [IntronicPosition.prefix]: IntronicPosition,
+    [ExonicPosition.prefix]: ExonicPosition,
+    [ProteinPosition.prefix]: ProteinPosition,
+    [CytobandPosition.prefix]: CytobandPosition,
+    [CdsPosition.prefix]: CdsPosition,
+    [RnaPosition.prefix]: RnaPosition,
+    [NonCdsPosition.prefix]: NonCdsPosition,
+};
+
+const CLASS_PREFIX = {};
+
+for (const [prefix, clsName] of Object.entries(PREFIX_CLASS)) {
+    CLASS_PREFIX[clsName.name] = prefix;
+}
 
 /**
  * Given a prefix and string, parse a position
@@ -285,20 +320,24 @@ const parsePosition = (prefix, string) => {
         Cls;
 
     switch (prefix) {
-        case 'i':
+        case IntronicPosition.prefix:
             Cls = IntronicPosition;
             result = { pos: string };
             break;
-        case 'e':
+        case ExonicPosition.prefix:
             Cls = ExonicPosition;
             result = { pos: string };
             break;
-        case 'g':
+        case GenomicPosition.prefix:
             Cls = GenomicPosition;
             result = { pos: string };
             break;
 
-        case 'c': {
+        case RnaPosition.prefix:
+
+        case NonCdsPosition.prefix: // eslint-disable-line no-fallthrough
+
+        case CdsPosition.prefix: { // eslint-disable-line no-fallthrough
             const m = new RegExp(`^${CDS_PATT.source}$`, 'i').exec(string);
 
             if (m === null || (!m[1] && !m[2])) {
@@ -310,12 +349,13 @@ const parsePosition = (prefix, string) => {
             result.offset = m[2] === undefined
                 ? 0
                 : parseInt(m[2], 10);
-            Cls = CdsPosition;
+
+            Cls = PREFIX_CLASS[prefix];
 
             break;
         }
 
-        case 'p': {
+        case ProteinPosition.prefix: {
             const m = new RegExp(`^${PROTEIN_PATT.source}$`, 'i').exec(string);
 
             if (m === null) {
@@ -333,7 +373,7 @@ const parsePosition = (prefix, string) => {
             break;
         }
 
-        case 'y': {
+        case CytobandPosition.prefix: {
             const m = new RegExp(`^${CYTOBAND_PATT.source}$`, 'i').exec(string);
 
             if (m == null) {
@@ -376,6 +416,7 @@ module.exports = {
     ExonicPosition,
     GenomicPosition,
     IntronicPosition,
+    NonCdsPosition,
     parsePosition,
     Position,
     PREFIX_CLASS,
