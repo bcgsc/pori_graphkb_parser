@@ -1,7 +1,7 @@
 {
-  "name": "@bcgsc/knowledgebase-parser",
+  "name": "@pori/graphkb-parser",
   "version": "0.9.0",
-  "description": "A package for parsing and recreating variant notation",
+  "description": "A package for parsing and recreating HGVS-like variant notation used in GraphKB",
   "main": "./src/index.js",
   "directories": {
     "test": "test"
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://svn.bcgsc.ca/bitbucket/projects/dat/repos/knowledgebase_parser"
+    "url": "https://github.com/bcgsc/pori_graphkb_parser"
   },
   "bugs": {
     "email": "graphkb@bcgsc.ca"

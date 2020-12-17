@@ -1,43 +1,44 @@
-# Knowledgebase Parser
+# GraphKB Parser
 
 - [About](#about)
 - [Getting Started](#getting-started)
 
-
 ## About
 
-The Knowledgebase parser is a node module for parsing variant notation and producing strings from
+The GraphKB parser is a node module for parsing variant notation and producing strings from
 parsed notation.
 
 ## Getting Started
 
 Import the package
 
-```
-const kbp = require('knowledgebase-parser');
+```js
+const kbp = require('@pori/graphkb-parser');
 ```
 
 To use the variant parser methods simply pass a string into
 
-```
+```js
 > const parsedResult = kbp.variant.parse('FEATURE:p.G12D');
 VariantNotation(....)
 ```
+
 Which returns a variant notation object. This can be turned back into a string
 
-```
+```js
 > parsedResult.toString();
 'FEATURE:p.G12D'
 ```
 
 or a JSON
-```
+
+```js
 > parsedResult.toJSON()
 ```
 
 If the notation is improperly formatted, the parse function will raise a parsing error
 
-```
+```js
 try {
    const parsedResult = kbp.variant.parse('FEATUREp.G12D');
 } catch (err) {
@@ -48,5 +49,3 @@ try {
 ```
 
 See [notation](doc/notation.md) for information regarding the notation syntax.
-
-
