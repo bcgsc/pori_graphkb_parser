@@ -1,5 +1,7 @@
 # GraphKB Parser
 
+[![codecov](https://codecov.io/gh/bcgsc/pori_graphkb_parser/branch/master/graph/badge.svg?token=D3IG5YL6JT)](https://codecov.io/gh/bcgsc/pori_graphkb_parser) ![build](https://github.com/bcgsc/pori_graphkb_parser/workflows/build/badge.svg)
+
 - [About](#about)
 - [Getting Started](#getting-started)
 
