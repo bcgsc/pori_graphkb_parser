@@ -15,7 +15,7 @@ parsed notation.
 Import the package
 
 ```js
-const kbp = require('@pori/graphkb-parser');
+const kbp = require('@bcgsc-pori/graphkb-parser');
 ```
 
 To use the variant parser methods simply pass a string into
