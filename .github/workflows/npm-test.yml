@@ -30,10 +30,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           files: coverage/junit.xml/junit.xml
       - name: Upload coverage
-        - uses: actions/download-artifact@v1
-          with:
-            name: coverage
-        - uses: codecov/codecov-action@v1
-          with:
-            yml: codecov.yml
-            token: ${{ secrets.CODECOV_TOKEN }}
+        uses: actions/download-artifact@v1
+        with:
+          name: coverage
+        uses: codecov/codecov-action@v1
+        with:
+          yml: codecov.yml
+          token: ${{ secrets.CODECOV_TOKEN }}
