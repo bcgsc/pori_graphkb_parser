@@ -23,17 +23,17 @@ jobs:
           node-version: 12
       - run: npm ci
       - run: npm test
-    - name: Publish Unit Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v1.6
-      if: always()
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        files: coverage/junit.xml/junit.xml
-    - name: Upload coverage
-      - uses: actions/download-artifact@v1
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1.6
+        if: always()
         with:
-          name: coverage
-      - uses: codecov/codecov-action@v1
-        with:
-          yml: codecov.yml
-          token: ${{ secrets.CODECOV_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: coverage/junit.xml/junit.xml
+      - name: Upload coverage
+        - uses: actions/download-artifact@v1
+          with:
+            name: coverage
+        - uses: codecov/codecov-action@v1
+          with:
+            yml: codecov.yml
+            token: ${{ secrets.CODECOV_TOKEN }}
