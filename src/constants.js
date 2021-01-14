@@ -59,7 +59,15 @@ const NONSENSE = 'nonsense mutation';
 
 const TYPES_TO_NOTATION = {
     [NONSENSE]: '>',
-    [TRUNCATING_FS]: '>',
+    [TRUNCATING_FS]: 'fs',
+    // deprecated forms and aliases
+    'frameshift mutation': 'fs',
+    'frameshift truncation': 'fs',
+    'missense variant': 'mis',
+    'truncating frameshift': 'fs',
+    missense: 'mis',
+    mutations: 'mut',
+    nonsense: '>',
 };
 
 const addTypeMappings = (mapping) => {
