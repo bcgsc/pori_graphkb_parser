@@ -230,7 +230,10 @@ class VariantNotation {
                 result.push(untemplatedSeq);
             }
         }
-        if (notationType !== '>') {
+
+        if (notationType === 'mis' && untemplatedSeq && break1Repr.startsWith('p.')) {
+            result.push(untemplatedSeq);
+        } else if (notationType !== '>') {
             if (notationType === 'delins') {
                 result.push(`del${refSeq || ''}ins`);
             } else {
