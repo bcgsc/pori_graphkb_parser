@@ -754,7 +754,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         const exp = {
-            type: 'nonsense',
+            type: 'nonsense mutation',
             break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'F' },
             break1Repr: 'p.F12',
             untemplatedSeq: '*',

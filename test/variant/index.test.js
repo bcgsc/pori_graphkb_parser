@@ -165,6 +165,74 @@ describe('VariantNotation.toString', () => {
         expect(VariantNotation.toString(obj)).toBe('KRAS1:p.G12D');
     });
 
+    test('protein missense', () => {
+        expect(VariantNotation.toString({
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: { name: 'missense' },
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'G' },
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            break1Repr: 'p.G12',
+        })).toBe('KRAS1:p.G12D');
+
+        expect(VariantNotation.toString({
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: { name: 'missense mutation' },
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'G' },
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            break1Repr: 'p.G12',
+        })).toBe('KRAS1:p.G12D');
+    });
+
+    test('protein frameshift', () => {
+        expect(VariantNotation.toString({
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: { name: 'frameshift' },
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'G' },
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            truncation: 2,
+            break1Repr: 'p.G12',
+        })).toBe('KRAS1:p.G12Dfs*2');
+
+        expect(VariantNotation.toString({
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: { name: 'truncating frameshift' },
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'G' },
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            truncation: 2,
+            break1Repr: 'p.G12',
+        })).toBe('KRAS1:p.G12Dfs*2');
+
+        expect(VariantNotation.toString({
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: { name: 'truncating frameshift mutation' },
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'G' },
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            truncation: 2,
+            break1Repr: 'p.G12',
+        })).toBe('KRAS1:p.G12Dfs*2');
+
+        expect(VariantNotation.toString({
+            '@class': 'PositionalVariant',
+            reference1: 'KRAS1',
+            type: { name: 'frameshift mutation' },
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'G' },
+            untemplatedSeq: 'D',
+            untemplatedSeqSize: 1,
+            truncation: 2,
+            break1Repr: 'p.G12',
+        })).toBe('KRAS1:p.G12Dfs*2');
+    });
+
     test('allows non-standard types', () => {
         const obj = {
             '@class': 'PositionalVariant',

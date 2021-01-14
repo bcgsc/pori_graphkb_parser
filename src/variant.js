@@ -190,7 +190,8 @@ class VariantNotation {
         let { notationType } = variant;
 
         if (notationType === undefined) {
-            notationType = TYPES_TO_NOTATION[variant.type] || (variant.type.name || variant.type).replace(/\s+/, '-');
+            const variantType = (variant.type.name || variant.type);
+            notationType = TYPES_TO_NOTATION[variantType] || variantType.replace(/\s+/, '-');
         }
 
         const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
@@ -229,7 +230,10 @@ class VariantNotation {
                 result.push(untemplatedSeq);
             }
         }
-        if (notationType !== '>') {
+
+        if (notationType === 'mis' && untemplatedSeq && break1Repr.startsWith('p.')) {
+            result.push(untemplatedSeq);
+        } else if (notationType !== '>') {
             if (notationType === 'delins') {
                 result.push(`del${refSeq || ''}ins`);
             } else {
