@@ -190,7 +190,8 @@ class VariantNotation {
         let { notationType } = variant;
 
         if (notationType === undefined) {
-            notationType = TYPES_TO_NOTATION[variant.type] || (variant.type.name || variant.type).replace(/\s+/, '-');
+            const variantType = (variant.type.name || variant.type);
+            notationType = TYPES_TO_NOTATION[variantType] || variantType.replace(/\s+/, '-');
         }
 
         const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
