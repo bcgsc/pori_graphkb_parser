@@ -1,14 +1,12 @@
-
-
-/** @module app/variant */
 const { ParsingError, InputValidationError } = require('./error');
 const _position = require('./position');
 const {
-    AA_CODES,
-    AA_PATTERN,
     NOTATION_TO_TYPES,
     TYPES_TO_NOTATION,
+    NONSENSE,
+    TRUNCATING_FS,
 } = require('./constants');
+const { parseContinuous, getPrefix } = require('./continuous');
 
 
 const ontologyTermRepr = (term) => {
@@ -16,30 +14,6 @@ const ontologyTermRepr = (term) => {
         return term.displayName || term.sourceId || term.name || term;
     }
     return term;
-};
-
-/**
- * Covert some sequence of 3-letter amino acids to single letter version
- *
- * @example
- * convert3to1('ArgLysLeu')
- * 'RKL'
- */
-const convert3to1 = (notation) => {
-    if (notation === '=') {
-        // = does not have a 3-letter AA equivalent
-        return '=';
-    }
-    if (notation.length % 3 !== 0) {
-        throw new ParsingError(`Cannot convert to single letter AA notation. The input (${notation}) is not in 3-letter form`);
-    }
-    const result = [];
-
-    for (let i = 0; i < notation.length; i += 3) {
-        const code = notation.slice(i, i + 3).toLowerCase();
-        result.push(AA_CODES[code]);
-    }
-    return result.join('');
 };
 
 
@@ -71,6 +45,7 @@ class VariantNotation {
      * @param {?Number} opt.truncation the new position of the next closest terminating AA
      * @param {string} opt.type the event type
      * @param {boolean} opt.requireFeatures flag to allow variant notation with features (reference1/2)
+     * @param {string} opt.notationType
      */
     constructor(opt) {
         const {
@@ -84,12 +59,15 @@ class VariantNotation {
             prefix,
             multiFeature,
             truncation,
+            notationType,
         } = opt;
+        this.notationType = notationType;
         this.noFeatures = Boolean(
             !requireFeatures
             && !reference1
             && !reference2,
         );
+        this.prefix = prefix;
         this.reference1 = ontologyTermRepr(reference1);
         this.reference2 = ontologyTermRepr(reference2);
         this.multiFeature = Boolean(multiFeature || reference2);
@@ -105,34 +83,9 @@ class VariantNotation {
 
         this.truncation = truncation;
 
-        if (truncation !== undefined) {
-            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
-                throw new InputValidationError({
-                    message: `truncation cannot be specified with this event type (${this.type})`,
-                    violatedAttr: 'type',
-                });
-            }
-            if (truncation !== null) {
-                if (Number.isNaN(Number(truncation))) {
-                    throw new InputValidationError({
-                        message: 'truncation must be a number',
-                        violatedAttr: 'truncation',
-                    });
-                }
-                this.truncation = Number(truncation);
-            }
-        }
-
         // default to the same length as the input seq size if not otherwise specified
         if (untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = untemplatedSeqSize;
-
-            if (Number.isNaN(Number(this.untemplatedSeqSize))) {
-                throw new InputValidationError({
-                    message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
-                    violatedAttr: 'untemplatedSeqSize',
-                });
-            }
         } else if (!isNullOrUndefined(this.untemplatedSeq)) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
@@ -146,19 +99,8 @@ class VariantNotation {
         }
 
         // cast positions
-        let defaultPosClass;
+        const defaultPosClass = _position[_position.PREFIX_CLASS[this.prefix]];
 
-        if (prefix) {
-            this.prefix = prefix;
-
-            if (this.prefix && _position.PREFIX_CLASS[this.prefix] === undefined) {
-                throw new InputValidationError({
-                    message: `unrecognized prefix: ${this.prefix}`,
-                    violatedAttr: 'prefix',
-                });
-            }
-            defaultPosClass = _position[_position.PREFIX_CLASS[this.prefix]];
-        }
         this.break1Start = opt.break1Start;
 
         for (const breakAttr of ['break1Start', 'break1End', 'break2Start', 'break2End']) {
@@ -169,12 +111,6 @@ class VariantNotation {
                     PosCls = _position[opt[breakAttr]['@class']];
                 } else if (opt[breakAttr].prefix) {
                     PosCls = _position[_position.PREFIX_CLASS[opt[breakAttr].prefix]];
-                }
-                if (!PosCls) {
-                    throw new InputValidationError({
-                        message: 'Could not determine the type of position',
-                        violatedAttr: breakAttr,
-                    });
                 }
                 this[breakAttr] = new PosCls(opt[breakAttr]);
             } else {
@@ -194,6 +130,8 @@ class VariantNotation {
         if (this.break2Start) {
             if ([
                 NOTATION_TO_TYPES['>'],
+                NONSENSE,
+                TRUNCATING_FS,
                 NOTATION_TO_TYPES.ext,
                 NOTATION_TO_TYPES.fs,
                 NOTATION_TO_TYPES.spl,
@@ -218,7 +156,7 @@ class VariantNotation {
 
     toJSON() {
         const json = {};
-        const IGNORE = ['prefix', 'multiFeature', 'noFeatures'];
+        const IGNORE = ['prefix', 'multiFeature', 'noFeatures', 'notationType'];
 
         for (const [attr, value] of Object.entries(this)) {
             if (value !== undefined && !IGNORE.includes(attr)) {
@@ -249,21 +187,18 @@ class VariantNotation {
             truncation,
             refSeq,
         } = variant;
-        let type = variant.type.name || variant.type;
+        let { notationType } = variant;
 
-        if (NOTATION_TO_TYPES[type] && !TYPES_TO_NOTATION[type]) {
-            type = NOTATION_TO_TYPES[type];
+        if (notationType === undefined) {
+            notationType = TYPES_TO_NOTATION[variant.type] || (variant.type.name || variant.type).replace(/\s+/, '-');
         }
 
-        let notationType = TYPES_TO_NOTATION[type];
+        const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
 
-        if (!notationType) {
-            notationType = type.replace(/\s+/, '-'); // default to type without whitespace
-        }
 
-        if (multiFeature || (reference2 && (reference1 !== reference2))) {
+        if (isMultiRef) {
             // multi-feature notation
-            let result = noFeatures || noFeatures
+            let result = noFeatures
                 ? ''
                 : `(${reference1},${reference2}):`;
             result = `${result}${notationType}(${stripParentheses(break1Repr)},${stripParentheses(break2Repr)})`;
@@ -286,16 +221,16 @@ class VariantNotation {
         if (break2Repr) {
             result.push(`_${break2Repr.slice(2)}`);
         }
-        if (type === NOTATION_TO_TYPES.ext
-                || type === NOTATION_TO_TYPES.fs
-                || (type === NOTATION_TO_TYPES['>'] && break1Repr.startsWith('p.'))
+        if (
+            ['ext', 'fs'].includes(notationType)
+            || (notationType === '>' && break1Repr.startsWith('p.'))
         ) {
             if (untemplatedSeq) {
                 result.push(untemplatedSeq);
             }
         }
-        if (type !== NOTATION_TO_TYPES['>']) {
-            if (type === NOTATION_TO_TYPES.delins) {
+        if (notationType !== '>') {
+            if (notationType === 'delins') {
                 result.push(`del${refSeq || ''}ins`);
             } else {
                 result.push(notationType);
@@ -308,14 +243,10 @@ class VariantNotation {
                 }
             }
 
-            if (refSeq
-                && [NOTATION_TO_TYPES.dup, NOTATION_TO_TYPES.del, NOTATION_TO_TYPES.inv].includes(type)
-            ) {
+            if (refSeq && ['dup', 'del', 'inv'].includes(notationType)) {
                 result.push(refSeq);
             }
-            if ((untemplatedSeq || untemplatedSeqSize)
-                    && [NOTATION_TO_TYPES.ins, NOTATION_TO_TYPES.delins].includes(type)
-            ) {
+            if ((untemplatedSeq || untemplatedSeqSize) && ['ins', 'delins'].includes(notationType)) {
                 result.push(untemplatedSeq || untemplatedSeqSize);
             }
         } else if (!break1Repr.startsWith('p.')) {
@@ -325,128 +256,6 @@ class VariantNotation {
     }
 }
 
-
-/**
- * Given a string, check that it contains a valid prefix
- *
- * @param {string} string
- *
- * @returns {string} the prefix
- *
- * @example
- * > getPrefix('p.1234')
- * 'p'
- */
-const getPrefix = (string) => {
-    const [prefix] = string;
-    const expectedPrefix = Object.keys(_position.PREFIX_CLASS);
-
-    if (!expectedPrefix.includes(prefix)) {
-        throw new ParsingError({
-            message: `'${prefix}' is not an accepted prefix`,
-            expected: expectedPrefix,
-            input: string,
-            violatedAttr: 'prefix',
-        });
-    }
-    if (string.length < 2 || string[1] !== '.') {
-        throw new ParsingError({
-            message: 'Missing \'.\' separator after prefix',
-            input: string,
-            violatedAttr: 'punctuation',
-        });
-    }
-    return prefix;
-};
-
-/**
- * Parse variant shorthand. Checks and validates notation
- *
- * @param {string} string the variant to be parsed
- *
- * @returns {object} the parsed content
- */
-const parse = (string, requireFeatures = true) => {
-    if (!string || string.length < 4) {
-        throw new ParsingError({
-            message: 'Too short. Must be a minimum of four characters',
-            input: string,
-        });
-    }
-    const split = string.split(':');
-
-    if (split.length > 2) {
-        throw new ParsingError({ message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation' });
-    } else if (split.length === 1) {
-        if (!requireFeatures) {
-            split.unshift(null);
-        } else {
-            throw new ParsingError({ message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1' });
-        }
-    }
-    let result = {};
-    const [featureString, variantString] = split;
-
-    if (variantString.includes(',') || (featureString && (featureString.startsWith('(') || featureString.endsWith(')') || featureString.includes(',')))) {
-        // multi-feature notation
-        if (featureString) {
-            if (featureString && !featureString.includes(',')) {
-                throw new ParsingError({
-                    message: 'Multi-feature notation must contain two reference features separated by a comma',
-                    parsed: { featureString, variantString },
-                    input: string,
-                    violatedAttr: 'reference2',
-                });
-            } else if (!featureString.startsWith('(')) {
-                throw new ParsingError({
-                    message: 'Missing opening parentheses surrounding the reference features',
-                    parsed: { featureString, variantString },
-                    input: string,
-                    violatedAttr: 'punctuation',
-                });
-            } else if (!featureString.endsWith(')')) {
-                throw new ParsingError({
-                    message: 'Missing closing parentheses surrounding the reference features',
-                    parsed: { featureString, variantString },
-                    input: string,
-                    violatedAttr: 'punctuation',
-                });
-            }
-            const features = featureString.slice(1, featureString.length - 1).split(',');
-
-            if (features.length > 2) {
-                throw new ParsingError({
-                    message: 'May only specify two features. Found more than a single comma',
-                    parsed: { featureString, variantString },
-                    input: string,
-                });
-            }
-            [result.reference1, result.reference2] = features;
-        }
-
-        try {
-            const variant = parseMultiFeature(variantString);
-            result = Object.assign(result, variant);
-        } catch (err) {
-            err.content.parsed = Object.assign({ variantString }, result);
-            throw err;
-        }
-    } else {
-        // continuous notation
-        if (featureString) {
-            result.reference1 = featureString;
-        }
-
-        try {
-            const variant = parseContinuous(variantString);
-            Object.assign(result, variant);
-        } catch (err) {
-            err.content.parsed = Object.assign({ variantString }, result);
-            throw err;
-        }
-    }
-    return new VariantNotation({ ...result, requireFeatures });
-};
 
 /**
  * Given a string representing a multi-feature variant. Parse and checks the format returning
@@ -571,292 +380,101 @@ const parseMultiFeature = (string) => {
     return parsed;
 };
 
-
 /**
- * Given an input string, assume it starts with a position range.
- * Extract and return the position range
- * @param {string} string
- */
-const extractPositions = (prefix, string) => {
-    const result = {};
-
-    if (string.startsWith('(')) {
-        // expect the first breakpoint to be a range of two positions
-        if (string.indexOf(')') < 0) {
-            throw new ParsingError('Expected a range of positions. Missing the closing parenthesis');
-        }
-        if (string.indexOf('_') < 0) {
-            throw new ParsingError('Positions within a range must be separated by an underscore. Missing underscore');
-        }
-        result.input = string.slice(0, string.indexOf(')') + 1);
-        result.start = string.slice(1, string.indexOf('_'));
-        result.end = string.slice(string.indexOf('_') + 1, string.indexOf(')'));
-    } else {
-        let pattern;
-
-        switch (prefix) {
-            case _position.CytobandPosition.prefix: {
-                pattern = _position.CYTOBAND_PATT;
-                break;
-            }
-
-            case _position.RnaPosition.prefix:
-            case _position.NonCdsPosition.prefix:
-
-            case _position.CdsPosition.prefix: { // eslint-disable-line no-fallthrough
-                pattern = _position.CDS_PATT;
-                break;
-            }
-
-            case _position.ProteinPosition.prefix: {
-                pattern = _position.PROTEIN_PATT;
-                break;
-            }
-
-            default: { pattern = /\d+/; }
-        }
-        const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
-
-        if (!match) {
-            throw new ParsingError('Failed to parse the initial position');
-        }
-        [result.input] = match;
-        result.start = result.input.slice(0);
-    }
-    result.start = _position.parsePosition(prefix, result.start);
-
-    if (result.end) {
-        result.end = _position.parsePosition(prefix, result.end);
-    }
-    return result;
-};
-
-
-/**
- * Given a string representing a continuous variant, parses and checks the content
+ * Parse variant shorthand. Checks and validates notation
  *
  * @param {string} string the variant to be parsed
  *
  * @returns {object} the parsed content
- *
- * @example
- * > parseContinuous('p.G12D')
- * {type: 'substitution', prefix: 'p', break1Start: {'@class': 'ProteinPosition', pos: 12, refAA: 'G'}, untemplatedSeq: 'D'}
  */
-const parseContinuous = (inputString) => {
-    let string = inputString.slice(0);
-
-    if (string.length < 3) {
-        throw new ParsingError(`Too short. Must be a minimum of three characters: ${string}`);
-    }
-
-    const prefix = getPrefix(string);
-    const result = { prefix };
-    string = string.slice(prefix.length + 1);
-    // get the first position
-    let break1;
-
-    try {
-        break1 = extractPositions(prefix, string);
-    } catch (err) {
-        err.content.violatedAttr = 'break1';
-        throw err;
-    }
-    string = string.slice(break1.input.length);
-    result.break1Start = break1.start;
-
-    if (break1.end) {
-        result.break1End = break1.end;
-    }
-    let break2;
-
-    if (string.startsWith('_')) {
-        // expect a range. Extract more positions
-        string = string.slice(1);
-
-        try {
-            break2 = extractPositions(prefix, string);
-        } catch (err) {
-            err.content.violatedAttr = 'break2';
-            throw err;
-        }
-        result.break2Start = break2.start;
-
-        if (break2.end) {
-            result.break2End = break2.end;
-        }
-        string = string.slice(break2.input.length);
-    }
-
-    const tail = string;
-    let match;
-
-    if (match = /^del([A-Z?*]+)?ins([A-Z?*]+|\d+)?$/i.exec(tail)) { // indel
-        result.type = 'delins';
-        const [, refSeq, altSeq] = match;
-
-        if (refSeq) {
-            result.refSeq = refSeq;
-        }
-        if (parseInt(altSeq, 10)) {
-            result.untemplatedSeqSize = parseInt(altSeq, 10);
-        } else if (altSeq && altSeq !== '?') {
-            result.untemplatedSeq = altSeq;
-        }
-    } else if (match = /^(del|inv|ins|dup)([A-Z?*]+|\d+)?$/i.exec(tail)) { // deletion
-        let altSeq;
-        [, result.type, altSeq] = match;
-
-        if (parseInt(altSeq, 10)) {
-            if (result.type === 'ins' || result.type === 'dup') {
-                result.untemplatedSeqSize = parseInt(altSeq, 10);
-            }
-        } else if (altSeq && altSeq !== '?') {
-            if (result.type === 'dup') {
-                result.untemplatedSeq = altSeq;
-                result.refSeq = altSeq;
-            } else if (result.type === 'ins') {
-                result.untemplatedSeq = altSeq;
-            } else {
-                result.refSeq = altSeq;
-            }
-        }
-    } else if (match = new RegExp(`^(${AA_PATTERN}|=)$`, 'i').exec(tail) || tail.length === 0) {
-        if (prefix !== _position.ProteinPosition.prefix) {
-            throw new ParsingError({
-                message: 'only protein notation does not use ">" for a substitution',
-                violatedAttr: 'break1',
-            });
-        }
-        result.type = '>';
-
-        if (tail.length > 0 && tail !== '?') {
-            result.untemplatedSeq = tail;
-        }
-    } else if (match = /^([A-Z?])>([A-Z?](\^[A-Z?])*)$/i.exec(tail)) {
-        if (prefix === _position.ProteinPosition.prefix) {
-            throw new ParsingError({
-                message: 'protein notation does not use ">" for a substitution',
-                violatedAttr: 'type',
-            });
-        } else if (prefix === _position.ExonicPosition.prefix) {
-            throw new ParsingError({
-                message: 'Cannot define substitutions at the exon coordinate level',
-                violatedAttr: 'type',
-            });
-        }
-        result.type = '>';
-        [, result.refSeq, result.untemplatedSeq] = match;
-    } else if (match = new RegExp(`^(${AA_PATTERN})?(fs|ext)((\\*|-|Ter)(\\d+|\\?)?)?$`, 'i').exec(tail)) {
-        const [, alt, type,, stop, truncation] = match;
-
-        if (prefix !== _position.ProteinPosition.prefix) {
-            throw new ParsingError({
-                message: 'only protein notation can notate frameshift variants',
-                violatedAttr: 'type',
-            });
-        }
-        result.type = type.toLowerCase();
-
-        if (alt !== undefined && alt !== '?') {
-            result.untemplatedSeq = alt;
-        }
-        if (truncation === '?') {
-            result.truncation = null;
-        } else if (truncation !== undefined) {
-            result.truncation = parseInt(truncation, 10);
-
-            if (stop === '-') {
-                result.truncation *= -1;
-            }
-
-            if (alt === '*' && result.truncation !== 1) {
-                throw new ParsingError({
-                    message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
-                    violatedAttr: 'truncation',
-                });
-            }
-        } else if (alt === '*') {
-            result.truncation = 1;
-        } else if (stop) {
-            // specified trunction at some unknown position
-            result.truncation = null;
-        }
-        if (result.break2Start !== undefined) {
-            throw new ParsingError({
-                message: 'frameshifts cannot span a range',
-                violatedAttr: 'break2',
-            });
-        }
-    } else if (tail.toLowerCase() === 'spl') {
-        result.type = 'spl';
-    } else {
-        result.type = tail;
-    }
-    if (!NOTATION_TO_TYPES[result.type]) {
+const parse = (string, requireFeatures = true) => {
+    if (!string || string.length < 4) {
         throw new ParsingError({
-            message: `unsupported event type: '${result.type}'`,
-            violatedAttr: 'type',
+            message: 'Too short. Must be a minimum of four characters',
+            input: string,
         });
     }
-    result.type = NOTATION_TO_TYPES[result.type];
+    const split = string.split(':');
 
-    if (result.untemplatedSeq && result.untemplatedSeqSize === undefined && result.untemplatedSeq !== '') {
-        const altSeqs = result.untemplatedSeq.split('^');
-        result.untemplatedSeqSize = altSeqs[0].length;
-
-        for (const alt of altSeqs) {
-            if (alt.length !== result.untemplatedSeqSize) {
-                delete result.untemplatedSeqSize;
-                break;
-            }
+    if (split.length > 2) {
+        throw new ParsingError({ message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation' });
+    } else if (split.length === 1) {
+        if (!requireFeatures) {
+            split.unshift(null);
+        } else {
+            throw new ParsingError({ message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1' });
         }
     }
-    // check for innapropriate types
-    if (prefix === _position.CytobandPosition.prefix) {
-        if (result.refSeq) {
-            throw new ParsingError({
-                message: 'cannot define sequence elements at the cytoband level',
-                violatedAttr: 'refSeq',
-            });
-        } else if (result.untemplatedSeq) {
-            throw new ParsingError({
-                message: 'cannot define sequence elements at the cytoband level',
-                violatedAttr: 'untemplatedSeq',
-            });
-        } else if (![
-            NOTATION_TO_TYPES.dup,
-            NOTATION_TO_TYPES.del,
-            NOTATION_TO_TYPES.copygain,
-            NOTATION_TO_TYPES.copyloss,
-            NOTATION_TO_TYPES.inv,
-        ].includes(result.type)) {
-            throw new ParsingError({
-                message: `Invalid type (${result.type}) for cytoband level event notation`,
-                parsed: result,
-                violatedAttr: 'type',
-            });
+    let result = {};
+    const [featureString, variantString] = split;
+
+    if (variantString.includes(',') || (
+        featureString && (
+            featureString.startsWith('(')
+            || featureString.endsWith(')')
+            || featureString.includes(',')
+        ))
+    ) {
+        // multi-feature notation
+        if (featureString) {
+            if (featureString && !featureString.includes(',')) {
+                throw new ParsingError({
+                    message: 'Multi-feature notation must contain two reference features separated by a comma',
+                    parsed: { featureString, variantString },
+                    input: string,
+                    violatedAttr: 'reference2',
+                });
+            } else if (!featureString.startsWith('(')) {
+                throw new ParsingError({
+                    message: 'Missing opening parentheses surrounding the reference features',
+                    parsed: { featureString, variantString },
+                    input: string,
+                    violatedAttr: 'punctuation',
+                });
+            } else if (!featureString.endsWith(')')) {
+                throw new ParsingError({
+                    message: 'Missing closing parentheses surrounding the reference features',
+                    parsed: { featureString, variantString },
+                    input: string,
+                    violatedAttr: 'punctuation',
+                });
+            }
+            const features = featureString.slice(1, featureString.length - 1).split(',');
+
+            if (features.length > 2) {
+                throw new ParsingError({
+                    message: 'May only specify two features. Found more than a single comma',
+                    parsed: { featureString, variantString },
+                    input: string,
+                });
+            }
+            [result.reference1, result.reference2] = features;
+        }
+
+        try {
+            const variant = parseMultiFeature(variantString);
+            result = Object.assign(result, variant);
+        } catch (err) {
+            err.content.parsed = Object.assign({ variantString }, result);
+            throw err;
+        }
+    } else {
+        // continuous notation
+        if (featureString) {
+            result.reference1 = featureString;
+        }
+
+        try {
+            const variant = parseContinuous(variantString);
+            Object.assign(result, variant);
+        } catch (err) {
+            if (err.content) {
+                err.content.parsed = Object.assign({ variantString }, result);
+            }
+            throw err;
         }
     }
-
-    if (prefix === _position.ProteinPosition.prefix) {
-        // special case refSeq protein substitutions
-        if (!result.break1End && !result.break2Start && !result.break2End && result.break1Start.refAA) {
-            result.refSeq = result.break1Start.longRefAA || result.break1Start.refAA;
-        }
-        // covert to 1AA code? check if any of the positions were converted
-        const convert = [result.break1Start, result.break1End, result.break2Start, result.break2End].some(x => x && x.longRefAA);
-
-        if (convert) {
-            if (result.untemplatedSeq) {
-                result.untemplatedSeq = convert3to1(result.untemplatedSeq);
-            }
-            if (result.refSeq) {
-                result.refSeq = convert3to1(result.refSeq);
-            }
-        }
-    }
-    return result;
+    return new VariantNotation({ ...result, requireFeatures });
 };
 
 
