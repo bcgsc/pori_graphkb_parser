@@ -53,7 +53,14 @@ const NOTATION_TO_TYPES = {
     phos: 'phosphorylation',
 };
 
-const TYPES_TO_NOTATION = {};
+// specific subtypes of types that are not reversible (refined from parent type above)
+const TRUNCATING_FS = 'truncating frameshift';
+const TRUNCATING = 'truncating';
+
+const TYPES_TO_NOTATION = {
+    [TRUNCATING]: '>',
+    [TRUNCATING_FS]: '>',
+};
 
 const addTypeMappings = (mapping) => {
     for (const [notation, type] of Object.entries(mapping)) {
@@ -67,5 +74,11 @@ const addTypeMappings = (mapping) => {
 addTypeMappings(NOTATION_TO_TYPES);
 
 module.exports = {
-    AA_CODES, AA_PATTERN, NOTATION_TO_TYPES, TYPES_TO_NOTATION, addTypeMappings,
+    AA_CODES,
+    AA_PATTERN,
+    NOTATION_TO_TYPES,
+    TYPES_TO_NOTATION,
+    addTypeMappings,
+    TRUNCATING,
+    TRUNCATING_FS,
 };

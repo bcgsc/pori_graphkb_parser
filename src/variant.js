@@ -8,6 +8,7 @@ const {
     AA_PATTERN,
     NOTATION_TO_TYPES,
     TYPES_TO_NOTATION,
+    TRUNCATING, TRUNCATING_FS,
 } = require('./constants');
 
 
@@ -105,34 +106,9 @@ class VariantNotation {
 
         this.truncation = truncation;
 
-        if (truncation !== undefined) {
-            if (![NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl].includes(this.type)) {
-                throw new InputValidationError({
-                    message: `truncation cannot be specified with this event type (${this.type})`,
-                    violatedAttr: 'type',
-                });
-            }
-            if (truncation !== null) {
-                if (Number.isNaN(Number(truncation))) {
-                    throw new InputValidationError({
-                        message: 'truncation must be a number',
-                        violatedAttr: 'truncation',
-                    });
-                }
-                this.truncation = Number(truncation);
-            }
-        }
-
         // default to the same length as the input seq size if not otherwise specified
         if (untemplatedSeqSize !== undefined) {
             this.untemplatedSeqSize = untemplatedSeqSize;
-
-            if (Number.isNaN(Number(this.untemplatedSeqSize))) {
-                throw new InputValidationError({
-                    message: `untemplatedSeqSize must be a number not ${this.untemplatedSeqSize}`,
-                    violatedAttr: 'untemplatedSeqSize',
-                });
-            }
         } else if (!isNullOrUndefined(this.untemplatedSeq)) {
             this.untemplatedSeqSize = this.untemplatedSeq.length;
         }
@@ -194,6 +170,8 @@ class VariantNotation {
         if (this.break2Start) {
             if ([
                 NOTATION_TO_TYPES['>'],
+                TRUNCATING,
+                TRUNCATING_FS,
                 NOTATION_TO_TYPES.ext,
                 NOTATION_TO_TYPES.fs,
                 NOTATION_TO_TYPES.spl,
@@ -250,6 +228,7 @@ class VariantNotation {
             refSeq,
         } = variant;
         let type = variant.type.name || variant.type;
+        const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
 
         if (NOTATION_TO_TYPES[type] && !TYPES_TO_NOTATION[type]) {
             type = NOTATION_TO_TYPES[type];
@@ -257,11 +236,10 @@ class VariantNotation {
 
         let notationType = TYPES_TO_NOTATION[type];
 
-        if (!notationType) {
-            notationType = type.replace(/\s+/, '-'); // default to type without whitespace
-        }
-
-        if (multiFeature || (reference2 && (reference1 !== reference2))) {
+        if (isMultiRef) {
+            if (!notationType) {
+                notationType = type.replace(/\s+/, '-'); // default to type without whitespace
+            }
             // multi-feature notation
             let result = noFeatures || noFeatures
                 ? ''
@@ -274,6 +252,8 @@ class VariantNotation {
                 result = `${result}${untemplatedSeqSize}`;
             }
             return result;
+        } if (!notationType) {
+            throw new ParsingError(`Type not found for continuous notation (${type})`);
         }
         // continuous notation
         const result = [];
@@ -387,7 +367,13 @@ const parse = (string, requireFeatures = true) => {
     let result = {};
     const [featureString, variantString] = split;
 
-    if (variantString.includes(',') || (featureString && (featureString.startsWith('(') || featureString.endsWith(')') || featureString.includes(',')))) {
+    if (variantString.includes(',') || (
+        featureString && (
+            featureString.startsWith('(')
+            || featureString.endsWith(')')
+            || featureString.includes(',')
+        ))
+    ) {
         // multi-feature notation
         if (featureString) {
             if (featureString && !featureString.includes(',')) {
@@ -856,6 +842,36 @@ const parseContinuous = (inputString) => {
             }
         }
     }
+
+    if (result.truncation !== undefined) {
+        if (![
+            NOTATION_TO_TYPES.fs, NOTATION_TO_TYPES.ext, NOTATION_TO_TYPES.spl, TRUNCATING_FS,
+        ].includes(this.type)) {
+            throw new InputValidationError({
+                message: `truncation cannot be specified with this event type (${this.type})`,
+                violatedAttr: 'type',
+            });
+        }
+        if (result.truncation !== null) {
+            if (Number.isNaN(Number(result.truncation))) {
+                throw new InputValidationError({
+                    message: 'truncation must be a number',
+                    violatedAttr: 'truncation',
+                });
+            }
+            result.truncation = Number(result.truncation);
+        }
+    }
+
+    if (result.untemplatedSeqSize !== undefined) {
+        if (Number.isNaN(Number(result.untemplatedSeqSize))) {
+            throw new InputValidationError({
+                message: `untemplatedSeqSize must be a number not ${result.untemplatedSeqSize}`,
+                violatedAttr: 'untemplatedSeqSize',
+            });
+        }
+    }
+    // refine the type name
     return result;
 };
 
