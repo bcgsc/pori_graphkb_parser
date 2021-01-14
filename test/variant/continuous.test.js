@@ -5,7 +5,7 @@ const {
     parse,
 } = require('../../src/variant');
 const {
-    NOTATION_TO_TYPES,
+    NOTATION_TO_TYPES, TRUNCATING_FS,
 } = require('../../src/constants');
 
 
@@ -139,18 +139,7 @@ describe('genomic', () => {
 
     test('substitution with alt seq options', () => {
         const notation = 'FEATURE:g.4A>T^C';
-        const result = parse(notation);
-        const exp = {
-            type: NOTATION_TO_TYPES['>'],
-            break1Start: { '@class': 'GenomicPosition', pos: 4 },
-            break1Repr: 'g.4',
-            untemplatedSeq: 'T^C',
-            refSeq: 'A',
-            untemplatedSeqSize: 1,
-            reference1: 'FEATURE',
-        };
-        expect(result.toJSON()).toEqual(exp);
-        expect(result.toString()).toBe(notation);
+        expect(() => parse(notation)).toThrowError('unsupported alternate sequence notation: T^C');
     });
 
     test('substitution with uncertainty', () => {
@@ -221,6 +210,39 @@ describe('genomic', () => {
 
     test('errors on protein style missense', () => {
         expect(() => { parse('FEATURE:g.15T'); }).toThrowError(ParsingError);
+    });
+
+    test('non-specific insertion', () => {
+        const notation = 'FEATURE:g.3_4ins8';
+        const result = parse(notation);
+        const exp = {
+            type: NOTATION_TO_TYPES.ins,
+            break1Start: { '@class': 'GenomicPosition', pos: 3 },
+            break2Start: { '@class': 'GenomicPosition', pos: 4 },
+            break1Repr: 'g.3',
+            break2Repr: 'g.4',
+            reference1: 'FEATURE',
+            untemplatedSeqSize: 8,
+        };
+        expect(result.toJSON()).toEqual(exp);
+        expect(result.toString()).toBe(notation);
+    });
+
+    test('insertion', () => {
+        const notation = 'FEATURE:g.3_4insATC';
+        const result = parse(notation);
+        const exp = {
+            type: NOTATION_TO_TYPES.ins,
+            break1Start: { '@class': 'GenomicPosition', pos: 3 },
+            break2Start: { '@class': 'GenomicPosition', pos: 4 },
+            break1Repr: 'g.3',
+            break2Repr: 'g.4',
+            reference1: 'FEATURE',
+            untemplatedSeq: 'ATC',
+            untemplatedSeqSize: 3,
+        };
+        expect(result.toJSON()).toEqual(exp);
+        expect(result.toString()).toBe(notation);
     });
 });
 
@@ -564,7 +586,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         expect(result.untemplatedSeq).toBe('N');
-        expect(result.type).toBe('substitution');
+        expect(result.type).toBe('missense mutation');
         expect(result.refSeq).toBe('D');
     });
 
@@ -573,7 +595,12 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         expect(result.refSeq).toBe('D');
-        expect(result.type).toBe('substitution');
+        expect(result.type).toBe('missense mutation');
+    });
+
+    test('protein substitution error on >', () => {
+        const notation = 'FEATURE:p.816D>K';
+        expect(() => parse(notation)).toThrowError('protein notation does not use ">" for a substitution');
     });
 
     test('frameshift alt specified', () => {
@@ -581,7 +608,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         const exp = {
-            type: NOTATION_TO_TYPES.fs,
+            type: 'frameshift',
             break1Start: { '@class': 'ProteinPosition', pos: 10, refAA: 'R' },
             untemplatedSeq: 'K',
             break1Repr: 'p.R10',
@@ -597,7 +624,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         expect(result.toJSON()).toEqual({
-            type: NOTATION_TO_TYPES.fs,
+            type: TRUNCATING_FS,
             break1Start: { '@class': 'ProteinPosition', pos: 10, refAA: 'R' },
             untemplatedSeq: 'K',
             untemplatedSeqSize: 1,
@@ -631,7 +658,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe('FEATURE:p.R10Kfs');
         expect(result.toJSON()).toEqual({
-            type: NOTATION_TO_TYPES.fs,
+            type: 'frameshift',
             break1Start: { '@class': 'ProteinPosition', pos: 10, refAA: 'R' },
             untemplatedSeq: 'K',
             untemplatedSeqSize: 1,
@@ -647,7 +674,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         expect(result.toJSON()).toEqual({
-            type: NOTATION_TO_TYPES.fs,
+            type: TRUNCATING_FS,
             break1Start: { '@class': 'ProteinPosition', pos: 10, refAA: 'R' },
             untemplatedSeq: '*',
             untemplatedSeqSize: 1,
@@ -667,7 +694,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         const exp = {
-            type: NOTATION_TO_TYPES.fs,
+            type: TRUNCATING_FS,
             break1Start: { '@class': 'ProteinPosition', pos: 10, refAA: 'R' },
             break1End: { '@class': 'ProteinPosition', pos: 11, refAA: 'M' },
             break1Repr: 'p.(R10_M11)',
@@ -682,7 +709,7 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         const exp = {
-            type: NOTATION_TO_TYPES.fs,
+            type: TRUNCATING_FS,
             break1Start: { '@class': 'ProteinPosition', pos: 10, refAA: 'R' },
             break1Repr: 'p.R10',
             truncation: 10,
@@ -711,10 +738,26 @@ describe('protein', () => {
         const result = parse(notation);
         expect(result.toString()).toBe(notation);
         const exp = {
-            type: NOTATION_TO_TYPES['>'],
+            type: 'missense mutation',
             break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'F' },
             break1Repr: 'p.F12',
             untemplatedSeq: 'G',
+            untemplatedSeqSize: 1,
+            refSeq: 'F',
+            reference1: 'FEATURE',
+        };
+        expect(result.toJSON()).toEqual(exp);
+    });
+
+    test('truncating mutation', () => {
+        const notation = 'FEATURE:p.F12*';
+        const result = parse(notation);
+        expect(result.toString()).toBe(notation);
+        const exp = {
+            type: 'nonsense',
+            break1Start: { '@class': 'ProteinPosition', pos: 12, refAA: 'F' },
+            break1Repr: 'p.F12',
+            untemplatedSeq: '*',
             untemplatedSeqSize: 1,
             refSeq: 'F',
             reference1: 'FEATURE',
@@ -775,7 +818,7 @@ describe('protein', () => {
     test('frameshift truncation with three letter AA', () => {
         const notation = 'p.E55RfsTer11';
         const result = parse(notation, false);
-        expect(result).toHaveProperty('type', NOTATION_TO_TYPES.fs);
+        expect(result).toHaveProperty('type', TRUNCATING_FS);
         expect(result).toHaveProperty('untemplatedSeq', 'R');
         expect(result).toHaveProperty('truncation', 11);
         expect(result.toString()).toBe('p.E55Rfs*11');
@@ -807,6 +850,11 @@ describe('protein', () => {
         expect(result).toHaveProperty('truncation', null);
         expect(result.toString()).toBe('p.*661Lext');
     });
+
+    test('error on bad truncation format', () => {
+        const notation = 'p.R661Kfs*m';
+        expect(() => parse(notation, false)).toThrowError('truncation must be a number');
+    });
 });
 
 describe('cytoband', () => {
@@ -828,6 +876,16 @@ describe('cytoband', () => {
     test('errors because cytoband variant cannot have fs type', () => {
         expect(() => { parse('FEATURE:y.p12.1fs'); }).toThrowError(ParsingError);
         expect(() => { parse('FEATURE:y.(p12.1_p13)fs'); }).toThrowError(ParsingError);
+    });
+
+    test('cannot have refSeq sequence defined', () => {
+        expect(() => { parse('12:y.q13_q14dupATCG'); })
+            .toThrowError('cannot define sequence elements (refSeq) at the cytoband level');
+    });
+
+    test('cannot have untemplatedSeq sequence defined', () => {
+        expect(() => { parse('12:y.q13_q14insATCG'); })
+            .toThrowError('cannot define sequence elements (untemplatedSeq) at the cytoband level');
     });
 
     test('copy gain', () => {
@@ -1028,4 +1086,8 @@ test('errors on bad prefix', () => {
 
 test('errors on missing . delimiter after prefix', () => {
     expect(() => { parse('FEATURE:pG12D'); }).toThrowError(ParsingError);
+});
+
+test('errors on multiple colons', () => {
+    expect(() => { parse('FEATURE:OTHER:pG12D'); }).toThrowError(ParsingError);
 });
