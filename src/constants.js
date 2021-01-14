@@ -55,10 +55,10 @@ const NOTATION_TO_TYPES = {
 
 // specific subtypes of types that are not reversible (refined from parent type above)
 const TRUNCATING_FS = 'truncating frameshift';
-const TRUNCATING = 'truncating';
+const NONSENSE = 'nonsense';
 
 const TYPES_TO_NOTATION = {
-    [TRUNCATING]: '>',
+    [NONSENSE]: '>',
     [TRUNCATING_FS]: '>',
 };
 
@@ -79,6 +79,6 @@ module.exports = {
     NOTATION_TO_TYPES,
     TYPES_TO_NOTATION,
     addTypeMappings,
-    TRUNCATING,
+    NONSENSE,
     TRUNCATING_FS,
 };

@@ -1,5 +1,3 @@
-
-
 const {
     parse,
 } = require('../../src/variant');
@@ -15,16 +13,40 @@ describe('multi-feature notation', () => {
             }).toThrowError('Too short.');
         });
 
-        test('missing opening bracket', () => {
+        test('missing opening position bracket', () => {
             expect(() => {
                 parse('(FEATURE1,FEATURE2):transe.1,e.2)');
             }).toThrowError('Missing opening');
         });
 
-        test('missing closing bracket', () => {
+        test('missing opening reference bracket', () => {
+            expect(() => {
+                parse('FEATURE1,FEATURE2):trans(e.1,e.2)');
+            }).toThrowError('Missing opening');
+        });
+
+        test('missing closing position bracket', () => {
             expect(() => {
                 parse('(FEATURE1,FEATURE2):trans(e.1,e.2');
             }).toThrowError('Missing closing');
+        });
+
+        test('missing closing reference bracket', () => {
+            expect(() => {
+                parse('(FEATURE1,FEATURE2:trans(e.1,e.2)');
+            }).toThrowError('Missing closing');
+        });
+
+        test('3 features', () => {
+            expect(() => {
+                parse('(FEATURE1,FEATURE2,FEATURE3):trans(e.1,e.2)');
+            }).toThrowError('May only specify two features. Found more than a single comma');
+        });
+
+        test('single feature', () => {
+            expect(() => {
+                parse('(FEATURE1):trans(e.1,e.2)');
+            }).toThrowError('Multi-feature notation must contain two reference features separated by a comma');
         });
 
         test('missing variant type', () => {
