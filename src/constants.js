@@ -54,8 +54,8 @@ const NOTATION_TO_TYPES = {
 };
 
 // specific subtypes of types that are not reversible (refined from parent type above)
-const TRUNCATING_FS = 'truncating frameshift';
-const NONSENSE = 'nonsense';
+const TRUNCATING_FS = 'truncating frameshift mutation';
+const NONSENSE = 'nonsense mutation';
 
 const TYPES_TO_NOTATION = {
     [NONSENSE]: '>',
