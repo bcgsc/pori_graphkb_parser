@@ -1,6 +1,6 @@
 # GraphKB Parser
 
-[![codecov](https://codecov.io/gh/bcgsc/pori_graphkb_parser/branch/master/graph/badge.svg?token=D3IG5YL6JT)](https://codecov.io/gh/bcgsc/pori_graphkb_parser) ![build](https://github.com/bcgsc/pori_graphkb_parser/workflows/build/badge.svg?branch=master) [![npm version](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser.svg)](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser)
+[![codecov](https://codecov.io/gh/bcgsc/pori_graphkb_parser/branch/master/graph/badge.svg?token=D3IG5YL6JT)](https://codecov.io/gh/bcgsc/pori_graphkb_parser) ![build](https://github.com/bcgsc/pori_graphkb_parser/workflows/build/badge.svg?branch=master) [![npm version](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser.svg)](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser) ![node versions](https://img.shields.io/badge/node-10%20%7C%2012%20%7C%2014-blue)
 
 - [About](#about)
 - [Getting Started](#getting-started)
