@@ -5,7 +5,7 @@ const { ParsingError, InputValidationError } = require('./error');
 const { AA_PATTERN, AA_CODES } = require('./constants');
 
 
-const CDS_PATT = /(\d+)?([-+]\d+)?/;
+const CDS_PATT = /(-?\d+)?([-+]\d+)?/;
 const PROTEIN_PATT = new RegExp(`(${AA_PATTERN})?(\\d+|\\?)`);
 const CYTOBAND_PATT = /[pq]((\d+|\?)(\.(\d+|\?))?)?/;
 
@@ -145,15 +145,21 @@ class IntronicPosition extends BasicPosition {
 }
 
 
-class CdsPosition extends BasicPosition {
+class CdsPosition extends Position {
     /**
      * @param {Object} opt options
      * @param {string} opt.prefix the position prefix
      * @param {Number} opt.offset the offset from the nearest cds position
      */
     constructor(opt) {
-        const { offset } = opt;
+        const { offset, pos } = opt;
         super(opt);
+
+        if (pos === '?' || pos === null) {
+            this.pos = null;
+        } else {
+            this.pos = Number(pos);
+        }
 
         if (offset === null) {
             this.offset = null;
@@ -169,6 +175,7 @@ class CdsPosition extends BasicPosition {
         }
     }
 
+
     toString() {
         let offset = '';
 
@@ -180,7 +187,7 @@ class CdsPosition extends BasicPosition {
             }
             offset = `${offset}${this.offset}`;
         }
-        return `${super.toString(this)}${offset}`;
+        return `${this.pos || '?'}${offset}`;
     }
 
     static get prefix() {
