@@ -1,6 +1,8 @@
 # GraphKB Parser
 
-[![codecov](https://codecov.io/gh/bcgsc/pori_graphkb_parser/branch/master/graph/badge.svg?token=D3IG5YL6JT)](https://codecov.io/gh/bcgsc/pori_graphkb_parser) ![build](https://github.com/bcgsc/pori_graphkb_parser/workflows/build/badge.svg?branch=master) [![npm version](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser.svg)](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser)
+[![codecov](https://codecov.io/gh/bcgsc/pori_graphkb_parser/branch/master/graph/badge.svg?token=D3IG5YL6JT)](https://codecov.io/gh/bcgsc/pori_graphkb_parser) ![build](https://github.com/bcgsc/pori_graphkb_parser/workflows/build/badge.svg?branch=master) [![npm version](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser.svg)](https://badge.fury.io/js/%40bcgsc-pori%2Fgraphkb-parser) ![node versions](https://img.shields.io/badge/node-10%20%7C%2012%20%7C%2014-blue)
+
+This repository is part of the [platform for oncogenomic reporting and interpretation](https://github.com/bcgsc/pori).
 
 - [About](#about)
 - [Getting Started](#getting-started)
@@ -12,7 +14,7 @@ parsed notation.
 
 ## Getting Started
 
-Import the package
+Import the package (Or try it out online with [RunKit](https://runkit.com/creisle/6083062ff39ff0001b93ea6f))
 
 ```js
 const kbp = require('@bcgsc-pori/graphkb-parser');

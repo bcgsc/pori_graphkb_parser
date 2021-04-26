@@ -260,6 +260,22 @@ describe('coding sequence like', () => {
         expect(result.toString()).toBe(notation);
     });
 
+    test('five prime UTR intron', () => {
+        const notation = 'FEATURE:c.-23+1A>G';
+        const result = parse(notation);
+        const exp = {
+            type: 'substitution',
+            break1Start: { '@class': 'CdsPosition', pos: -23, offset: 1 },
+            break1Repr: 'c.-23+1',
+            reference1: 'FEATURE',
+            refSeq: 'A',
+            untemplatedSeqSize: 1,
+            untemplatedSeq: 'G',
+        };
+        expect(result.toJSON()).toEqual(exp);
+        expect(result.toString()).toBe(notation);
+    });
+
     test('noncoding deletion single bp', () => {
         const notation = 'FEATURE:n.3+1del';
         const result = parse(notation);
@@ -458,15 +474,15 @@ describe('coding sequence like', () => {
         const result = parse(notation);
         const exp = {
             type: NOTATION_TO_TYPES['>'],
-            break1Start: { '@class': 'CdsPosition', pos: 1, offset: -124 },
-            break1Repr: 'c.1-124',
+            break1Start: { '@class': 'CdsPosition', pos: -124, offset: 0 },
+            break1Repr: 'c.-124',
             untemplatedSeq: 'T',
             untemplatedSeqSize: 1,
             refSeq: 'C',
             reference1: 'FEATURE',
         };
         expect(result.toJSON()).toEqual(exp);
-        expect(result.toString()).toBe('FEATURE:c.1-124C>T');
+        expect(result.toString()).toBe('FEATURE:c.-124C>T');
     });
 });
 

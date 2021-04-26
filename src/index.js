@@ -4,5 +4,5 @@ const error = require('./error');
 const constants = require('./constants');
 
 module.exports = {
-    variant, position, error, constants,
+    variant, position, error, constants, parse: variant.parse,
 };

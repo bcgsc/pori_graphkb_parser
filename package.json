@@ -1,6 +1,6 @@
 {
   "name": "@bcgsc-pori/graphkb-parser",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A package for parsing and recreating HGVS-like variant notation used in GraphKB",
   "main": "./src/index.js",
   "directories": {
