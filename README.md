@@ -14,7 +14,7 @@ parsed notation.
 
 ## Getting Started
 
-Import the package
+Import the package (Or try it out online with [RunKit](https://runkit.com/creisle/6083062ff39ff0001b93ea6f))
 
 ```js
 const kbp = require('@bcgsc-pori/graphkb-parser');
