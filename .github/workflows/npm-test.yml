@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
+      - run: npm audit --production
       - run: npm test
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1.6
