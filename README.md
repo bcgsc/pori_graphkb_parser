@@ -17,34 +17,37 @@ parsed notation.
 Import the package (Or try it out online with [RunKit](https://runkit.com/creisle/6083062ff39ff0001b93ea6f))
 
 ```js
-const kbp = require('@bcgsc-pori/graphkb-parser');
+const {parseVariant, stringifyVariant, jsonifyVariant} = require('@bcgsc-pori/graphkb-parser');
 ```
 
 To use the variant parser methods simply pass a string into
 
 ```js
-> const parsedResult = kbp.variant.parse('FEATURE:p.G12D');
-VariantNotation(....)
+> const parsedResult = parseVariant('FEATURE:p.G12D');
+{
+    'prefix': 'p',
+    ...
+}
 ```
 
 Which returns a variant notation object. This can be turned back into a string
 
 ```js
-> parsedResult.toString();
+> stringifyVariant(parsedResult);
 'FEATURE:p.G12D'
 ```
 
-or a JSON
+or a JSON (removes extra attributes used by parse methods)
 
 ```js
-> parsedResult.toJSON()
+> jsonifyVariant(parsedResult)
 ```
 
 If the notation is improperly formatted, the parse function will raise a parsing error
 
 ```js
 try {
-   const parsedResult = kbp.variant.parse('FEATUREp.G12D');
+   const parsedResult = parseVariant('FEATUREp.G12D');
 } catch (err) {
     if (err instanceof kbp.error.ParsingError) {
         console.log('Error in parsing the notation');

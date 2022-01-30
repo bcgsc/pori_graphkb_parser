@@ -81,7 +81,31 @@ const addTypeMappings = (mapping) => {
 
 addTypeMappings(NOTATION_TO_TYPES);
 
+
+/**
+ * the mapping of positional variant notation prefixes to their corresponging position classes
+ * @namespace
+ *
+ * @property {string} g genomic postions
+ * @property {string} i intronic positions
+ * @property {string} e exonic positions
+ * @property {string} p protein positions (amino acid coordinates)
+ * @property {string} y cytoband positions
+ * @property {string} c coding sequence positions
+ */
+const PREFIX_CLASS = {
+    g: 'GenomicPosition',
+    y: 'CytobandPosition',
+    c: 'CdsPosition',
+    r: 'RnaPosition',
+    i: 'IntronicPosition',
+    e: 'ExonicPosition',
+    p: 'ProteinPosition',
+    n: 'NonCdsPosition',
+};
+
 module.exports = {
+    PREFIX_CLASS,
     AA_CODES,
     AA_PATTERN,
     NOTATION_TO_TYPES,
