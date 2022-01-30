@@ -8,9 +8,9 @@ module.exports = {
     collectCoverage: true,
     coverageDirectory: 'coverage',
     collectCoverageFrom: [
-        'src/**.js',
-        'src/**/*.js',
-        'src/**/**/*.js',
+        'src/*',
+        'src/**/*',
+        'src/**/**/*',
     ],
     coverageReporters: [
         'clover',
@@ -29,7 +29,7 @@ module.exports = {
         ],
     ],
     testRunner: 'jest-circus/runner',
-    testRegex: 'test/.*\\.js',
+    testRegex: 'test/.*',
     testEnvironment: 'node',
     testPathIgnorePatterns: [
         '/node_modules/',
@@ -37,5 +37,6 @@ module.exports = {
     moduleFileExtensions: [
         'js',
         'json',
+        'ts',
     ],
 };

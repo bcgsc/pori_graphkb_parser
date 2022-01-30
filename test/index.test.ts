@@ -1,4 +1,4 @@
-const { parseVariant, stringifyVariant } = require('../src');
+import { parseVariant, stringifyVariant } from '../src';
 
 // acceptable notation
 test.each([

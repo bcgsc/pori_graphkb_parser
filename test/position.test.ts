@@ -1,11 +1,11 @@
 
 
-const { ParsingError } = require('../src/error');
-const {
+import { ParsingError } from '../src/error';
+import {
     parsePosition,
     createPosition,
     convertPositionToString,
-} = require('../src/position');
+} from '../src/position';
 
 
 describe('Position', () => {

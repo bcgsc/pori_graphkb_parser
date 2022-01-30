@@ -1,18 +1,14 @@
 
 
-const {
+import {
     stringifyVariant,
     stripParentheses,
     createVariantNotation,
     jsonifyVariant,
     parseVariant,
-} = require('../src/variant');
-const {
-    createPosition,
-} = require('../src/position');
-const {
-    NOTATION_TO_TYPES,
-} = require('../src/constants');
+}from '../src/variant';
+import {createPosition} from '../src/position';
+import {NOTATION_TO_TYPES} from '../src/constants';
 
 
 describe('VariantNotation', () => {
