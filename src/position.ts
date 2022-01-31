@@ -7,13 +7,13 @@ import {AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix} from './constants';
 const CDSLIKE_PATT = /(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
 
 const CLASS_FIELD = '@class';
-const PATTERNS = {
+const PATTERNS: Partial<Record<Prefix, RegExp>> = {
     y: /(?<arm>[pq])((?<majorBand>\d+|\?)(\.(?<minorBand>\d+|\?))?)?/,
     p: new RegExp(`(?<refAA>${AA_PATTERN})?(?<pos>\\d+|\\?)`),
     c: CDSLIKE_PATT,
     n: CDSLIKE_PATT,
     r: CDSLIKE_PATT,
-} as const;
+};
 
 
 interface Position {
@@ -44,6 +44,14 @@ interface ProteinPosition extends BasicPosition {
 };
 
 type AnyPosition = BasicPosition | CytobandPosition | ProteinPosition;
+
+type PrefixMap<P extends Prefix> = (
+    P extends 'y' ? CytobandPosition :
+    P extends 'p' ? ProteinPosition :
+    P extends 'c' | 'r' | 'n' ? CdsLikePosition :
+    P extends 'g' | 'i' | 'e' ? BasicPosition :
+    AnyPosition
+)
 
 
 const convertPositionToJson = (position: AnyPosition, exclude = ['prefix', 'longRefAA']) => {
@@ -152,23 +160,18 @@ const createProteinPosition = ({ refAA, pos }: {refAA: string; pos: string | num
     return result;
 };
 
-
-function createPosition(prefix: 'y', position: any): CytobandPosition;
-function createPosition(prefix: 'p', position: any): ProteinPosition;
-function createPosition(prefix: 'c' | 'r' | 'n', position: any): CdsLikePosition;
-function createPosition(prefix: 'g' | 'i' | 'e', position: any): BasicPosition;
-function createPosition(prefix: Prefix, position: any): AnyPosition  {
+function createPosition<P extends Prefix>(prefix: P, position: any): PrefixMap<P>  {
     if (prefix === 'p') {
-        return createProteinPosition(position);
+        return createProteinPosition(position) as PrefixMap<P>;
     } if (prefix === 'y') {
-        return createCytoBandPosition(position);
+        return createCytoBandPosition(position) as PrefixMap<P>;
     } if (prefix === 'c' || prefix === 'n' || prefix === 'r') {
-        return createCdsLikePosition(position, prefix);
+        return createCdsLikePosition(position, prefix) as PrefixMap<P>;
     } if (prefix === 'g' || prefix === 'e' || prefix === 'i') {
         // basic pos
-        return createBasicPosition(position.pos, prefix);
+        return createBasicPosition(position.pos, prefix) as PrefixMap<P>;
     }
-    throw new ParsingError(`did not regcognize position prefix: ${prefix}`);
+    throw new ParsingError(`did not recognize position prefix: ${prefix}`);
 }
 
 
@@ -248,11 +251,7 @@ const createBreakRepr = (start: AnyPosition, end: AnyPosition | null = null, mul
  *
  * @returns the parsed position
  */
-function parsePosition(prefix: 'y', string: string): CytobandPosition;
-function parsePosition(prefix: 'p', string: string): ProteinPosition;
-function parsePosition(prefix: 'c' | 'r' | 'n', string: string): CdsLikePosition;
-function parsePosition(prefix: 'g' | 'i' | 'e', string: string): BasicPosition;
-function parsePosition(prefix: Prefix, string: string): AnyPosition {
+function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P> {
     try {
         if (prefix === 'p') {
             const m = new RegExp(`^${PATTERNS.p.source}$`, 'i').exec(string);
@@ -302,7 +301,7 @@ function parsePosition(prefix: Prefix, string: string): AnyPosition {
         }
         throw err;
     }
-    throw new ParsingError(`did not regcognize position prefix: ${prefix}`);
+    throw new ParsingError(`did not recognize position prefix: ${prefix}`);
 };
 
 
