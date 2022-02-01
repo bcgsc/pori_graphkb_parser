@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "NODE_ENV=test jest --config config/jest.config.js --detectOpenHandles --forceExit",
-    "build": "tsc"
+    "build": "tsc",
+    "clean": "rm -rf dist"
   },
   "repository": {
     "type": "git",
