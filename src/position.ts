@@ -6,7 +6,7 @@ import {AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix} from './constants';
 
 const CDSLIKE_PATT = /(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
 const CLASS_FIELD = '@class';
-const PATTERNS  = {
+const PATTERNS = {
     y: /(?<arm>[pq])((?<majorBand>\d+|\?)(\.(?<minorBand>\d+|\?))?)?/,
     p: new RegExp(`(?<refAA>${AA_PATTERN})?(?<pos>\\d+|\\?)`),
     c: CDSLIKE_PATT,
