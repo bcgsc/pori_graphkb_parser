@@ -14,22 +14,11 @@ import { parseContinuous, getPrefix } from './continuous';
 const POSITION_ATTRS = ['break1Start', 'break1End', 'break2Start', 'break2End'];
 
 type OntologyTerm = {
-    name: string;
-    sourceId?: string;
-    sourceIdVersion?: string;
-    displayName?: string;
-} | {
-    name?: string;
-    sourceId: string;
-    sourceIdVersion?: string;
-    displayName?: string;
-} | {
     name?: string;
     sourceId?: string;
     sourceIdVersion?: string;
-    displayName: string;
+    displayName?: string;
 };
-
 
 const ontologyTermRepr = (term: OntologyTerm | string): string => {
     if (typeof term != 'string') {
