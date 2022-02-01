@@ -25,7 +25,7 @@ const AA_CODES: Readonly<{[key: string]: string}> = {
 };
 
 const AA_PATTERN = `${
-    Object.values(AA_CODES).filter(x => x !== '*').join('|')
+    Object.values(AA_CODES).filter((x) => x !== '*').join('|')
 }|\\?|X|x|\\*|${
     Object.keys(AA_CODES).join('|')
 }`;
@@ -91,6 +91,8 @@ type Prefix = 'g' | 'y' | 'i' | 'c' | 'r' | 'e' | 'n' | 'p';
  * @property {string} p protein positions (amino acid coordinates)
  * @property {string} y cytoband positions
  * @property {string} c coding sequence positions
+ * @property {string} r rna sequence positions
+ * @property {string} n non-coding sequence positions
  */
 const PREFIX_CLASS = {
     g: 'GenomicPosition',
