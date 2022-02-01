@@ -25,7 +25,7 @@ const AA_CODES = {
 };
 
 const AA_PATTERN = `${
-    Object.values(AA_CODES).filter(x => x !== '*').join('|')
+    Object.values(AA_CODES).filter((x) => x !== '*').join('|')
 }|\\?|X|x|\\*|${
     Object.keys(AA_CODES).join('|')
 }`;
@@ -81,7 +81,6 @@ const addTypeMappings = (mapping) => {
 
 addTypeMappings(NOTATION_TO_TYPES);
 
-
 /**
  * the mapping of positional variant notation prefixes to their corresponging position classes
  * @namespace
@@ -92,6 +91,8 @@ addTypeMappings(NOTATION_TO_TYPES);
  * @property {string} p protein positions (amino acid coordinates)
  * @property {string} y cytoband positions
  * @property {string} c coding sequence positions
+ * @property {string} r rna sequence positions
+ * @property {string} n non-coding sequence positions
  */
 const PREFIX_CLASS = {
     g: 'GenomicPosition',
