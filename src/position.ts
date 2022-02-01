@@ -5,16 +5,14 @@ import { ParsingError, InputValidationError } from './error';
 import {AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix} from './constants';
 
 const CDSLIKE_PATT = /(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
-
 const CLASS_FIELD = '@class';
-const PATTERNS: Partial<Record<Prefix, RegExp>> = {
+const PATTERNS  = {
     y: /(?<arm>[pq])((?<majorBand>\d+|\?)(\.(?<minorBand>\d+|\?))?)?/,
     p: new RegExp(`(?<refAA>${AA_PATTERN})?(?<pos>\\d+|\\?)`),
     c: CDSLIKE_PATT,
     n: CDSLIKE_PATT,
     r: CDSLIKE_PATT,
-};
-
+} as const;
 
 interface Position {
     '@class': string;
@@ -278,7 +276,7 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
             }
             return createPosition(prefix, { arm: m.groups.arm, majorBand, minorBand });
         } if (prefix === 'c' || prefix === 'n' || prefix === 'r') {
-            const m = new RegExp(`^${PATTERNS[prefix].source}$`, 'i').exec(string);
+            const m = new RegExp(`^${PATTERNS[prefix as ('c' | 'n' | 'r')].source}$`, 'i').exec(string);
 
             if (!m?.groups) {
                 throw new ParsingError(`input '${string}' did not match the expected pattern for 'c' prefixed positions`);
