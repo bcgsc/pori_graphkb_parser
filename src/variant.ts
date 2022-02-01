@@ -49,9 +49,6 @@ const stripParentheses = (breakRepr: string): string => {
 };
 
 
-const isNullOrUndefined = (thing: any): boolean => thing === undefined || thing === null;
-
-
 interface VariantNotation {
     reference1: OntologyTerm | string;
     reference2: OntologyTerm | string;
@@ -182,8 +179,8 @@ const createVariantNotation = ({
     }
 
     return {
-        reference1: ontologyTermRepr(reference1),
-        reference2: ontologyTermRepr(reference2),
+        reference1: reference1 && ontologyTermRepr(reference1),
+        reference2: reference2 && ontologyTermRepr(reference2),
         refSeq: refSeq !== undefined && refSeq !== null
             ? refSeq.toUpperCase()
             : refSeq,
