@@ -1,6 +1,7 @@
 import { parseVariant, stringifyVariant, jsonifyVariant } from './variant';
 import { ParsingError, ErrorMixin, InputValidationError } from './error';
 import * as constants from './constants';
+import * as position from './position';
 
 export {
     ParsingError,
@@ -10,4 +11,5 @@ export {
     parseVariant,
     stringifyVariant,
     jsonifyVariant,
+    position,
 };
