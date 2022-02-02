@@ -1,27 +1,33 @@
-const { ParsingError, InputValidationError } = require('./error');
-const {
-    createPosition, createBreakRepr, convertPositionToJson, parsePosition,
-} = require('./position');
-const {
+import { ParsingError, InputValidationError } from './error';
+import {
+    createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
+} from './position';
+import {
     NOTATION_TO_TYPES,
     TYPES_TO_NOTATION,
     NONSENSE,
     TRUNCATING_FS,
-} = require('./constants');
-const { parseContinuous, getPrefix } = require('./continuous');
+    Prefix,
+} from './constants';
+import { parseContinuous, getPrefix } from './continuous';
 
 const POSITION_ATTRS = ['break1Start', 'break1End', 'break2Start', 'break2End'];
 
+type OntologyTerm = {
+    name?: string;
+    sourceId?: string;
+    sourceIdVersion?: string;
+    displayName?: string;
+};
 
-const ontologyTermRepr = (term) => {
-    if (term) {
-        return term.displayName || term.sourceId || term.name || term;
+const ontologyTermRepr = (term: OntologyTerm | string): string => {
+    if (typeof term !== 'string') {
+        return term.displayName || term.sourceId || term.name || '';
     }
     return term;
 };
 
-
-const stripParentheses = (breakRepr) => {
+const stripParentheses = (breakRepr: string): string => {
     const match = /^([a-z])\.\((.+)\)$/.exec(breakRepr);
 
     if (match) {
@@ -30,9 +36,25 @@ const stripParentheses = (breakRepr) => {
     return breakRepr;
 };
 
-
-const isNullOrUndefined = thing => thing === undefined || thing === null;
-
+interface VariantNotation {
+    reference1: OntologyTerm | string;
+    reference2: OntologyTerm | string;
+    untemplatedSeq?: string | null;
+    untemplatedSeqSize?: number;
+    type: OntologyTerm | string;
+    refSeq?: string | null;
+    prefix: Prefix;
+    multiFeature: boolean;
+    truncation?: number | null;
+    notationType?: string;
+    break1Start: AnyPosition;
+    break1End?: AnyPosition;
+    break2Start?: AnyPosition;
+    break2End?: AnyPosition;
+    break1Repr: string;
+    break2Repr?: string;
+    noFeatures?: boolean;
+}
 
 const createVariantNotation = ({
     requireFeatures = false,
@@ -50,7 +72,23 @@ const createVariantNotation = ({
     break1End: break1EndIn,
     break2Start: break2StartIn,
     break2End: break2EndIn,
-}) => {
+}: {
+    requireFeatures?: boolean;
+    reference1: string | OntologyTerm;
+    reference2: string | OntologyTerm;
+    untemplatedSeq?: string | null;
+    untemplatedSeqSize?: number | null;
+    type: string;
+    refSeq?: string | null;
+    prefix: Prefix;
+    multiFeature?: boolean;
+    truncation?: number;
+    notationType?: string;
+    break1Start: AnyPosition;
+    break1End?: AnyPosition;
+    break2Start?: AnyPosition;
+    break2End?: AnyPosition;
+}): VariantNotation => {
     if (!break1StartIn) {
         throw new InputValidationError({
             message: 'break1Start is a required attribute',
@@ -65,7 +103,7 @@ const createVariantNotation = ({
     const multiFeature = Boolean(multiFeatureIn || reference2);
 
     const type = ontologyTermRepr(typeIn);
-    const untemplatedSeq = !isNullOrUndefined(untemplatedSeqIn)
+    const untemplatedSeq = untemplatedSeqIn !== undefined && untemplatedSeqIn !== null
         ? untemplatedSeqIn.toUpperCase()
         : untemplatedSeqIn;
     let untemplatedSeqSize;
@@ -73,7 +111,7 @@ const createVariantNotation = ({
     // default to the same length as the input seq size if not otherwise specified
     if (untemplatedSeqSizeIn !== undefined) {
         untemplatedSeqSize = untemplatedSeqSizeIn;
-    } else if (!isNullOrUndefined(untemplatedSeq)) {
+    } else if (untemplatedSeq !== undefined && untemplatedSeq !== null) {
         untemplatedSeqSize = untemplatedSeq.length;
     }
 
@@ -127,9 +165,9 @@ const createVariantNotation = ({
     }
 
     return {
-        reference1: ontologyTermRepr(reference1),
-        reference2: ontologyTermRepr(reference2),
-        refSeq: !isNullOrUndefined(refSeq)
+        reference1: reference1 && ontologyTermRepr(reference1),
+        reference2: reference2 && ontologyTermRepr(reference2),
+        refSeq: refSeq !== undefined && refSeq !== null
             ? refSeq.toUpperCase()
             : refSeq,
         truncation,
@@ -145,11 +183,11 @@ const createVariantNotation = ({
         untemplatedSeqSize,
         noFeatures,
         notationType,
+        prefix,
     };
 };
 
-
-const jsonifyVariant = (variant) => {
+const jsonifyVariant = (variant: VariantNotation): { [key: string]: string } => {
     const json = {};
     const IGNORE = ['prefix', 'multiFeature', 'noFeatures', 'notationType'];
 
@@ -165,7 +203,7 @@ const jsonifyVariant = (variant) => {
     return json;
 };
 
-const stringifyVariant = (variant) => {
+const stringifyVariant = (variant: VariantNotation): string => {
     const {
         multiFeature,
         noFeatures,
@@ -177,18 +215,21 @@ const stringifyVariant = (variant) => {
         untemplatedSeqSize,
         truncation,
         refSeq,
+        type,
     } = variant;
     let { notationType } = variant;
 
     if (notationType === undefined) {
-        const variantType = (variant.type.name || variant.type);
+        const variantType = ontologyTermRepr(type);
         notationType = TYPES_TO_NOTATION[variantType] || variantType.replace(/\s+/, '-');
     }
 
     const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
 
-
     if (isMultiRef) {
+        if (!break2Repr) {
+            throw new InputValidationError('Multi-feature notation requires break2Repr');
+        }
         // multi-feature notation
         let result = noFeatures
             ? ''
@@ -203,7 +244,7 @@ const stringifyVariant = (variant) => {
         return result;
     }
     // continuous notation
-    const result = [];
+    const result: string[] = [];
 
     if (!noFeatures && !noFeatures) {
         result.push(`${reference1}:`);
@@ -232,7 +273,7 @@ const stringifyVariant = (variant) => {
         }
         if (truncation && truncation !== 1) {
             if (truncation < 0) {
-                result.push(truncation);
+                result.push(`${truncation}`);
             } else {
                 result.push(`*${truncation}`);
             }
@@ -242,14 +283,13 @@ const stringifyVariant = (variant) => {
             result.push(refSeq);
         }
         if ((untemplatedSeq || untemplatedSeqSize) && ['ins', 'delins'].includes(notationType)) {
-            result.push(untemplatedSeq || untemplatedSeqSize);
+            result.push(`${untemplatedSeq || untemplatedSeqSize}`);
         }
     } else if (!break1Repr.startsWith('p.')) {
         result.push(`${refSeq || '?'}${notationType}${untemplatedSeq || '?'}`);
     }
     return result.join('');
 };
-
 
 /**
  * Given a string representing a multi-feature variant. Parse and checks the format returning
@@ -263,7 +303,16 @@ const stringifyVariant = (variant) => {
  * > parseMultiFeature('e.fusion(1,10)');
  * {type: 'fusion', prefix: 'e', break1Start: {'@class': 'ExonicPosition', pos: 1}, break1Repr: 'e.1', break2Start: {'@class': 'ExonicPosition', pos: 10}, break2Repr: 'e.10}
  */
-const parseMultiFeature = (string) => {
+const parseMultiFeature = (string: string): {
+    type: string,
+    break1Start: AnyPosition,
+    break1End?: AnyPosition,
+    break2Start?: AnyPosition,
+    break2End?: AnyPosition,
+    untemplatedSeqSize?: number | null,
+    untemplatedSeq?: string | null,
+    prefix: Prefix,
+} => {
     if (string.length < 6) {
         throw new ParsingError(`Too short. Multi-feature notation must be a minimum of six characters: ${string}`);
     }
@@ -411,7 +460,8 @@ const parseVariant = (string, requireFeatures = true) => {
             throw new ParsingError({ message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1' });
         }
     }
-    let result = {};
+    let reference1,
+        reference2;
     const [featureString, variantString] = split;
 
     if (variantString.includes(',') || (
@@ -454,36 +504,44 @@ const parseVariant = (string, requireFeatures = true) => {
                     input: string,
                 });
             }
-            [result.reference1, result.reference2] = features;
+            [reference1, reference2] = features;
         }
 
         try {
-            const variant = parseMultiFeature(variantString);
-            result = Object.assign(result, variant);
-        } catch (err) {
-            err.content.parsed = Object.assign({ variantString }, result);
+            return createVariantNotation({
+                ...parseMultiFeature(variantString),
+                requireFeatures,
+                reference1,
+                reference2,
+            });
+        } catch (err: any) {
+            if (err.content) {
+                err.content.parsed = { variantString, reference1, reference2 };
+            }
             throw err;
         }
     } else {
         // continuous notation
         if (featureString) {
-            result.reference1 = featureString;
+            reference1 = featureString;
         }
 
         try {
-            const variant = parseContinuous(variantString);
-            Object.assign(result, variant);
-        } catch (err) {
+            return createVariantNotation({
+                ...parseContinuous(variantString),
+                requireFeatures,
+                reference1,
+                reference2,
+            });
+        } catch (err: any) {
             if (err.content) {
-                err.content.parsed = Object.assign({ variantString }, result);
+                err.content.parsed = { variantString, reference1, reference2 };
             }
             throw err;
         }
     }
-    return createVariantNotation({ ...result, requireFeatures });
 };
 
-
-module.exports = {
+export {
     parseVariant, jsonifyVariant, stringifyVariant, stripParentheses, createVariantNotation,
 };

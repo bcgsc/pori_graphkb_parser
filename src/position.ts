@@ -1,13 +1,10 @@
-
-
 /** @module app/position */
-const { ParsingError, InputValidationError } = require('./error');
-const {
-    AA_PATTERN, AA_CODES, PREFIX_CLASS,
-} = require('./constants');
+import { ParsingError, InputValidationError } from './error';
+import {
+    AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix,
+} from './constants';
 
 const CDSLIKE_PATT = /(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
-
 const CLASS_FIELD = '@class';
 const PATTERNS = {
     y: /(?<arm>[pq])((?<majorBand>\d+|\?)(\.(?<minorBand>\d+|\?))?)?/,
@@ -15,10 +12,46 @@ const PATTERNS = {
     c: CDSLIKE_PATT,
     n: CDSLIKE_PATT,
     r: CDSLIKE_PATT,
-};
+} as const;
 
+interface Position {
+    '@class': string;
+    prefix: Prefix;
+}
 
-const convertPositionToJson = (position, exclude = ['prefix', 'longRefAA']) => {
+interface BasicPosition extends Position {
+    pos: number | null;
+}
+
+interface CdsLikePosition extends BasicPosition {
+    prefix: 'c' | 'n' | 'r';
+    offset?: number | null;
+}
+
+interface CytobandPosition extends Position {
+    prefix: 'y';
+    arm: 'p' | 'q';
+    majorBand?: number | null;
+    minorBand?: number | null;
+}
+
+interface ProteinPosition extends BasicPosition {
+    prefix: 'p';
+    refAA: string | null;
+    longRefAA?: string | null;
+}
+
+type AnyPosition = BasicPosition | CytobandPosition | ProteinPosition;
+
+type PrefixMap<P extends Prefix> = (
+    P extends 'y' ? CytobandPosition :
+        P extends 'p' ? ProteinPosition :
+            P extends 'c' | 'r' | 'n' ? CdsLikePosition :
+                P extends 'g' | 'i' | 'e' ? BasicPosition :
+                    AnyPosition
+);
+
+const convertPositionToJson = (position: AnyPosition, exclude = ['prefix', 'longRefAA']) => {
     const json = {};
 
     for (const [attr, val] of Object.entries(position)) {
@@ -29,9 +62,8 @@ const convertPositionToJson = (position, exclude = ['prefix', 'longRefAA']) => {
     return json;
 };
 
-
-const createCytoBandPosition = ({ arm, majorBand, minorBand }) => {
-    const prefix = 'y';
+const createCytoBandPosition = ({ arm, majorBand, minorBand }): CytobandPosition => {
+    const prefix: Prefix = 'y';
     const result = {
         arm, majorBand, minorBand, [CLASS_FIELD]: PREFIX_CLASS[prefix], prefix,
     };
@@ -65,11 +97,11 @@ const createCytoBandPosition = ({ arm, majorBand, minorBand }) => {
     return result;
 };
 
-
-const checkBasicPosition = (pos, allowNegative = false) => {
+const checkBasicPosition = (pos: any, allowNegative = false): number | null => {
     if (pos === '?' || pos === null) {
         return null;
-    } if (Number.isNaN(Number(pos)) || (pos <= 0 && !allowNegative)) {
+    }
+    if (Number.isNaN(Number(pos)) || (Number(pos) <= 0 && !allowNegative)) {
         throw new InputValidationError({
             message: `pos (${pos}) must be a positive integer`,
             violatedAttr: 'pos',
@@ -78,8 +110,7 @@ const checkBasicPosition = (pos, allowNegative = false) => {
     return Number(pos);
 };
 
-
-const createBasicPosition = (pos, prefix, allowNegative = false) => {
+const createBasicPosition = (pos: any, prefix: Prefix, allowNegative = false): BasicPosition => {
     const result = {
         [CLASS_FIELD]: PREFIX_CLASS[prefix],
         pos: checkBasicPosition(pos, allowNegative),
@@ -88,9 +119,8 @@ const createBasicPosition = (pos, prefix, allowNegative = false) => {
     return result;
 };
 
-
-const createCdsLikePosition = ({ offset, pos }, prefix) => {
-    const result = { ...createBasicPosition(pos, prefix, true) };
+const createCdsLikePosition = ({ offset, pos }, prefix: 'c' | 'n' | 'r'): CdsLikePosition => {
+    const result: any = { ...createBasicPosition(pos, prefix, true) };
 
     if (offset !== undefined) {
         result.offset = Number(offset);
@@ -105,10 +135,9 @@ const createCdsLikePosition = ({ offset, pos }, prefix) => {
     return result;
 };
 
-
-const createProteinPosition = ({ refAA, pos }) => {
+const createProteinPosition = ({ refAA, pos }: { refAA: string; pos: string | number | null }): ProteinPosition => {
     const prefix = 'p';
-    const result = { ...createBasicPosition(pos, prefix), longRefAA: null, refAA };
+    const result: any = { ...createBasicPosition(pos, prefix), longRefAA: null, refAA };
 
     if (result.refAA) {
         if (result.refAA === '?') {
@@ -123,21 +152,19 @@ const createProteinPosition = ({ refAA, pos }) => {
     return result;
 };
 
-
-const createPosition = (prefix, position) => {
+function createPosition<P extends Prefix>(prefix: P, position: any): PrefixMap<P> {
     if (prefix === 'p') {
-        return createProteinPosition(position);
+        return createProteinPosition(position) as PrefixMap<P>;
     } if (prefix === 'y') {
-        return createCytoBandPosition(position);
-    } if (['r', 'n', 'c'].includes(prefix)) {
-        return createCdsLikePosition(position, prefix);
-    } if (PREFIX_CLASS[prefix] !== undefined) {
+        return createCytoBandPosition(position) as PrefixMap<P>;
+    } if (prefix === 'c' || prefix === 'n' || prefix === 'r') {
+        return createCdsLikePosition(position, prefix) as PrefixMap<P>;
+    } if (prefix === 'g' || prefix === 'e' || prefix === 'i') {
         // basic pos
-        return createBasicPosition(position.pos, prefix);
+        return createBasicPosition(position.pos, prefix) as PrefixMap<P>;
     }
-    throw new ParsingError(`did not regcognize position prefix: ${prefix}`);
-};
-
+    throw new ParsingError(`did not recognize position prefix: ${prefix}`);
+}
 
 const convertPositionToString = (position) => {
     if (position.prefix === 'y') {
@@ -169,14 +196,13 @@ const convertPositionToString = (position) => {
     return `${position.pos || '?'}`;
 };
 
-
 /**
  * Convert parsed breakpoints into a string representing the breakpoint range
  *
- * @param {string} prefix the prefix denoting the coordinate system being used
- * @param {string} start the start of the breakpoint range
- * @param {string} [end=null] the end of the breakpoint range (if the breakpoint is a range)
- * @param {boolean} [multiFeature=false] flag to indicate this is for multi-feature notation and should not contain brackets
+ * @param prefix the prefix denoting the coordinate system being used
+ * @param start the start of the breakpoint range
+ * @param end the end of the breakpoint range (if the breakpoint is a range)
+ * @param multiFeature flag to indicate this is for multi-feature notation and should not contain brackets
  *
  * @example
  * > break1Repr('g', {pos: 1}, {pos: 10});
@@ -186,9 +212,9 @@ const convertPositionToString = (position) => {
  * > break1Repr('g', {pos: 1})
  * 'g.1'
  *
- * @returns {string} the string representation of a breakpoint or breakpoint range including the prefix
+ * @returns the string representation of a breakpoint or breakpoint range including the prefix
  */
-const createBreakRepr = (start, end = null, multiFeature = false) => {
+const createBreakRepr = (start: AnyPosition, end: AnyPosition | null = null, multiFeature = false): string => {
     if (end) {
         if (start.prefix !== end.prefix) {
             throw new ParsingError('Mismatch prefix in range');
@@ -202,25 +228,24 @@ const createBreakRepr = (start, end = null, multiFeature = false) => {
     return `${start.prefix}.${convertPositionToString(start)}`;
 };
 
-
 /**
  * Given a prefix and string, parse a position
  *
- * @param {string} prefix the prefix type which defines the type of position to be parsed
- * @param {string} string the string the position information is being parsed from
+ * @param prefix the prefix type which defines the type of position to be parsed
+ * @param string the string the position information is being parsed from
  *
  * @example
  * > parsePosition('c', '100+2');
  * {'@class': 'CdsPosition', pos: 100, offset: 2}
  *
- * @returns {object} the parsed position
+ * @returns the parsed position
  */
-const parsePosition = (prefix, string) => {
+function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P> {
     try {
         if (prefix === 'p') {
             const m = new RegExp(`^${PATTERNS.p.source}$`, 'i').exec(string);
 
-            if (m === null) {
+            if (!m?.groups) {
                 throw new ParsingError(`input string '${string}' did not match the expected pattern for 'p' prefixed positions`);
             }
             const { refAA, pos } = m.groups;
@@ -228,7 +253,7 @@ const parsePosition = (prefix, string) => {
         } if (prefix === 'y') {
             const m = new RegExp(`^${PATTERNS.y.source}$`, 'i').exec(string);
 
-            if (m == null) {
+            if (!m?.groups) {
                 throw new ParsingError(`input string '${string}' did not match the expected pattern for 'y' prefixed positions`);
             }
             let majorBand,
@@ -241,10 +266,10 @@ const parsePosition = (prefix, string) => {
                 minorBand = parseInt(m.groups.minorBand, 10);
             }
             return createPosition(prefix, { arm: m.groups.arm, majorBand, minorBand });
-        } if (['r', 'n', 'c'].includes(prefix)) {
-            const m = new RegExp(`^${PATTERNS[prefix].source}$`, 'i').exec(string);
+        } if (prefix === 'c' || prefix === 'n' || prefix === 'r') {
+            const m = new RegExp(`^${PATTERNS[prefix as ('c' | 'n' | 'r')].source}$`, 'i').exec(string);
 
-            if (m === null || (!m[1] && !m[2])) {
+            if (!m?.groups) {
                 throw new ParsingError(`input '${string}' did not match the expected pattern for 'c' prefixed positions`);
             }
             const { pos, offset } = m.groups;
@@ -255,7 +280,7 @@ const parsePosition = (prefix, string) => {
                     ? 0
                     : offset,
             });
-        } if (PREFIX_CLASS[prefix] !== undefined) {
+        } if (prefix === 'g' || prefix === 'e' || prefix === 'i') {
             // basic pos
             return createPosition(prefix, { pos: string });
         }
@@ -265,16 +290,16 @@ const parsePosition = (prefix, string) => {
         }
         throw err;
     }
-    throw new ParsingError(`did not regcognize position prefix: ${prefix}`);
-};
+    throw new ParsingError(`did not recognize position prefix: ${prefix}`);
+}
 
-
-module.exports = {
-    createBreakRepr,
-    parsePosition,
-    PREFIX_CLASS,
+export {
     convertPositionToJson,
     convertPositionToString,
+    createBreakRepr,
     createPosition,
+    parsePosition,
+    AnyPosition,
     PATTERNS,
+    PREFIX_CLASS,
 };

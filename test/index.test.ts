@@ -1,4 +1,4 @@
-const { parseVariant, stringifyVariant } = require('../src');
+import { parseVariant, stringifyVariant } from '../src';
 
 // acceptable notation
 test.each([
@@ -75,7 +75,6 @@ test.each([
     expect(stringifyVariant(parsed)).toBe(notation);
 });
 
-
 // notation without features
 test.each([
     'p.*807ext',
@@ -89,7 +88,6 @@ test.each([
     const parsed = parseVariant(notation, false);
     expect(stringifyVariant(parsed)).toBe(notation);
 });
-
 
 // reformatted notation
 test.each([
@@ -165,7 +163,6 @@ test.each([
         parseVariant(notation, true);
     }).toThrowError(errorMessage);
 });
-
 
 // bad notation without features
 test.each([

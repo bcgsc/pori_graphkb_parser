@@ -1,12 +1,9 @@
-
-
-const { ParsingError } = require('../src/error');
-const {
+import { ParsingError } from '../src/error';
+import {
     parsePosition,
     createPosition,
     convertPositionToString,
-} = require('../src/position');
-
+} from '../src/position';
 
 describe('Position', () => {
     describe('CytobandPosition', () => {
@@ -109,12 +106,10 @@ describe('Position', () => {
     });
 });
 
-
 describe('parsePosition', () => {
     test('errors on invalid prefix', () => {
         expect(() => { parsePosition('k', '1'); }).toThrowError(ParsingError);
     });
-
 
     describe('g prefix', () => {
         test('valid', () => {

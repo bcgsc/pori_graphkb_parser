@@ -1,19 +1,12 @@
-
-
-const {
+import {
     stringifyVariant,
     stripParentheses,
     createVariantNotation,
     jsonifyVariant,
     parseVariant,
-} = require('../src/variant');
-const {
-    createPosition,
-} = require('../src/position');
-const {
-    NOTATION_TO_TYPES,
-} = require('../src/constants');
-
+} from '../src/variant';
+import { createPosition } from '../src/position';
+import { NOTATION_TO_TYPES } from '../src/constants';
 
 describe('VariantNotation', () => {
     test('use object name if no sourceId on reference', () => {
@@ -139,7 +132,6 @@ describe('VariantNotation', () => {
     });
 });
 
-
 describe('stripParentheses', () => {
     test('ignores single positions', () => {
         expect(stripParentheses('e.1')).toBe('e.1');
@@ -153,7 +145,6 @@ describe('stripParentheses', () => {
         expect(stripParentheses('e.(1_2)')).toBe('e.1_2');
     });
 });
-
 
 describe('jsonifyVariant', () => {
     test('continuous notation', () => {

@@ -1,13 +1,15 @@
-const { ParsingError, InputValidationError } = require('./error');
-const { PREFIX_CLASS, PATTERNS, parsePosition } = require('./position');
-const {
+import { ParsingError, InputValidationError } from './error';
+import {
+    PREFIX_CLASS, PATTERNS, parsePosition, AnyPosition,
+} from './position';
+import {
     AA_CODES,
     AA_PATTERN,
     NOTATION_TO_TYPES,
     NONSENSE,
     TRUNCATING_FS,
-} = require('./constants');
-
+    Prefix,
+} from './constants';
 
 /**
  * Given a string, check that it contains a valid prefix
@@ -20,7 +22,7 @@ const {
  * > getPrefix('p.1234')
  * 'p'
  */
-const getPrefix = (string) => {
+const getPrefix = (string: string): Prefix => {
     const [prefix] = string;
     const expectedPrefix = Object.keys(PREFIX_CLASS);
 
@@ -39,7 +41,7 @@ const getPrefix = (string) => {
             violatedAttr: 'punctuation',
         });
     }
-    return prefix;
+    return prefix as Prefix;
 };
 
 /**
@@ -49,7 +51,7 @@ const getPrefix = (string) => {
  * convert3to1('ArgLysLeu')
  * 'RKL'
  */
-const convert3to1 = (notation) => {
+const convert3to1 = (notation: string): string => {
     if (notation === '=') {
         // = does not have a 3-letter AA equivalent
         return '=';
@@ -57,7 +59,7 @@ const convert3to1 = (notation) => {
     if (notation.length % 3 !== 0) {
         throw new ParsingError(`Cannot convert to single letter AA notation. The input (${notation}) is not in 3-letter form`);
     }
-    const result = [];
+    const result: string[] = [];
 
     for (let i = 0; i < notation.length; i += 3) {
         const code = notation.slice(i, i + 3).toLowerCase();
@@ -71,8 +73,8 @@ const convert3to1 = (notation) => {
  * Extract and return the position range
  * @param {string} string
  */
-const extractPositions = (prefix, string) => {
-    const result = {};
+const extractPositions = (prefix: Prefix, string: string): { input: string; start?: AnyPosition; end?: AnyPosition } => {
+    let input: string;
 
     if (string.startsWith('(')) {
         // expect the first breakpoint to be a range of two positions
@@ -82,25 +84,24 @@ const extractPositions = (prefix, string) => {
         if (string.indexOf('_') < 0) {
             throw new ParsingError('Positions within a range must be separated by an underscore. Missing underscore');
         }
-        result.input = string.slice(0, string.indexOf(')') + 1);
-        result.start = string.slice(1, string.indexOf('_'));
-        result.end = string.slice(string.indexOf('_') + 1, string.indexOf(')'));
-    } else {
-        const pattern = PATTERNS[prefix] || /(?<pos>\d+)/;
-        const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
-
-        if (!match) {
-            throw new ParsingError('Failed to parse the initial position');
-        }
-        [result.input] = match;
-        result.start = result.input.slice(0);
+        input = string.slice(0, string.indexOf(')') + 1);
+        return {
+            input,
+            start: parsePosition(prefix, string.slice(1, string.indexOf('_'))),
+            end: parsePosition(prefix, string.slice(string.indexOf('_') + 1, string.indexOf(')'))),
+        };
     }
-    result.start = parsePosition(prefix, result.start);
+    const pattern = PATTERNS[prefix] || /(?<pos>\d+)/;
+    const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
 
-    if (result.end) {
-        result.end = parsePosition(prefix, result.end);
+    if (!match) {
+        throw new ParsingError('Failed to parse the initial position');
     }
-    return result;
+    [input] = match;
+    return {
+        input,
+        start: parsePosition(prefix, input.slice(0)),
+    };
 };
 
 /**
@@ -139,11 +140,10 @@ const parseContinuous = (inputString) => {
         break1Start = parsedPosition.start;
         break1End = parsedPosition.end;
         string = string.slice(parsedPosition.input.length); // remove the consumed positions from the input string
-    } catch (err) {
+    } catch (err: any) {
         err.content.violatedAttr = 'break1';
         throw err;
     }
-
 
     if (string.startsWith('_')) {
         // expect a range. Extract more positions
@@ -154,7 +154,7 @@ const parseContinuous = (inputString) => {
             break2Start = parsedPosition.start;
             break2End = parsedPosition.end;
             string = string.slice(parsedPosition.input.length);
-        } catch (err) {
+        } catch (err: any) {
             err.content.violatedAttr = 'break2';
             throw err;
         }
@@ -167,7 +167,6 @@ const parseContinuous = (inputString) => {
         notationType = 'delins';
         const [, ref, altSeq] = match;
         refSeq = ref;
-
 
         if (parseInt(altSeq, 10)) {
             untemplatedSeqSize = parseInt(altSeq, 10);
@@ -324,7 +323,7 @@ const parseContinuous = (inputString) => {
             refSeq = break1Start.longRefAA || break1Start.refAA;
         }
         // covert to 1AA code? check if any of the positions were converted
-        const convert = [break1Start, break1End, break2Start, break2End].some(x => x && x.longRefAA);
+        const convert = [break1Start, break1End, break2Start, break2End].some((x) => x && x.longRefAA);
 
         if (convert) {
             if (untemplatedSeq) {
@@ -391,4 +390,4 @@ const parseContinuous = (inputString) => {
     };
 };
 
-module.exports = { parseContinuous, getPrefix };
+export { parseContinuous, getPrefix };
