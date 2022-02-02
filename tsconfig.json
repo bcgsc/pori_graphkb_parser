@@ -10,7 +10,8 @@
         "baseUrl": "./",
         "strict": true,
         "noImplicitAny": false,
-        "allowJs": true
+        "allowJs": true,
+        "declaration": true
     },
     "include": [
         "src/",
