@@ -1,8 +1,8 @@
-
-
 /** @module app/position */
 import { ParsingError, InputValidationError } from './error';
-import {AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix} from './constants';
+import {
+    AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix,
+} from './constants';
 
 const CDSLIKE_PATT = /(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
 const CLASS_FIELD = '@class';
@@ -17,40 +17,39 @@ const PATTERNS = {
 interface Position {
     '@class': string;
     prefix: Prefix;
-};
+}
 
 interface BasicPosition extends Position {
     pos: number | null;
-};
+}
 
 interface CdsLikePosition extends BasicPosition {
     prefix: 'c' | 'n' | 'r';
     offset?: number | null;
-};
+}
 
 interface CytobandPosition extends Position {
     prefix: 'y';
     arm: 'p' | 'q';
     majorBand?: number | null;
     minorBand?: number | null;
-};
+}
 
 interface ProteinPosition extends BasicPosition {
     prefix: 'p';
     refAA: string | null;
     longRefAA?: string | null;
-};
+}
 
 type AnyPosition = BasicPosition | CytobandPosition | ProteinPosition;
 
 type PrefixMap<P extends Prefix> = (
     P extends 'y' ? CytobandPosition :
-    P extends 'p' ? ProteinPosition :
-    P extends 'c' | 'r' | 'n' ? CdsLikePosition :
-    P extends 'g' | 'i' | 'e' ? BasicPosition :
-    AnyPosition
-)
-
+        P extends 'p' ? ProteinPosition :
+            P extends 'c' | 'r' | 'n' ? CdsLikePosition :
+                P extends 'g' | 'i' | 'e' ? BasicPosition :
+                    AnyPosition
+);
 
 const convertPositionToJson = (position: AnyPosition, exclude = ['prefix', 'longRefAA']) => {
     const json = {};
@@ -62,7 +61,6 @@ const convertPositionToJson = (position: AnyPosition, exclude = ['prefix', 'long
     }
     return json;
 };
-
 
 const createCytoBandPosition = ({ arm, majorBand, minorBand }): CytobandPosition => {
     const prefix: Prefix = 'y';
@@ -99,7 +97,6 @@ const createCytoBandPosition = ({ arm, majorBand, minorBand }): CytobandPosition
     return result;
 };
 
-
 const checkBasicPosition = (pos: any, allowNegative = false): number | null => {
     if (pos === '?' || pos === null) {
         return null;
@@ -113,8 +110,7 @@ const checkBasicPosition = (pos: any, allowNegative = false): number | null => {
     return Number(pos);
 };
 
-
-const createBasicPosition = (pos: any, prefix: Prefix, allowNegative: boolean = false): BasicPosition => {
+const createBasicPosition = (pos: any, prefix: Prefix, allowNegative = false): BasicPosition => {
     const result = {
         [CLASS_FIELD]: PREFIX_CLASS[prefix],
         pos: checkBasicPosition(pos, allowNegative),
@@ -122,7 +118,6 @@ const createBasicPosition = (pos: any, prefix: Prefix, allowNegative: boolean = 
     };
     return result;
 };
-
 
 const createCdsLikePosition = ({ offset, pos }, prefix: 'c' | 'n' | 'r'): CdsLikePosition => {
     const result: any = { ...createBasicPosition(pos, prefix, true) };
@@ -140,8 +135,7 @@ const createCdsLikePosition = ({ offset, pos }, prefix: 'c' | 'n' | 'r'): CdsLik
     return result;
 };
 
-
-const createProteinPosition = ({ refAA, pos }: {refAA: string; pos: string | number | null}): ProteinPosition => {
+const createProteinPosition = ({ refAA, pos }: { refAA: string; pos: string | number | null }): ProteinPosition => {
     const prefix = 'p';
     const result: any = { ...createBasicPosition(pos, prefix), longRefAA: null, refAA };
 
@@ -158,7 +152,7 @@ const createProteinPosition = ({ refAA, pos }: {refAA: string; pos: string | num
     return result;
 };
 
-function createPosition<P extends Prefix>(prefix: P, position: any): PrefixMap<P>  {
+function createPosition<P extends Prefix>(prefix: P, position: any): PrefixMap<P> {
     if (prefix === 'p') {
         return createProteinPosition(position) as PrefixMap<P>;
     } if (prefix === 'y') {
@@ -171,7 +165,6 @@ function createPosition<P extends Prefix>(prefix: P, position: any): PrefixMap<P
     }
     throw new ParsingError(`did not recognize position prefix: ${prefix}`);
 }
-
 
 const convertPositionToString = (position) => {
     if (position.prefix === 'y') {
@@ -202,7 +195,6 @@ const convertPositionToString = (position) => {
     }
     return `${position.pos || '?'}`;
 };
-
 
 /**
  * Convert parsed breakpoints into a string representing the breakpoint range
@@ -235,7 +227,6 @@ const createBreakRepr = (start: AnyPosition, end: AnyPosition | null = null, mul
     }
     return `${start.prefix}.${convertPositionToString(start)}`;
 };
-
 
 /**
  * Given a prefix and string, parse a position
@@ -300,8 +291,7 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
         throw err;
     }
     throw new ParsingError(`did not recognize position prefix: ${prefix}`);
-};
-
+}
 
 export {
     convertPositionToJson,

@@ -1,14 +1,14 @@
 import { ParsingError, InputValidationError } from './error';
 import {
-    createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition
+    createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
 } from './position';
 import {
     NOTATION_TO_TYPES,
     TYPES_TO_NOTATION,
     NONSENSE,
     TRUNCATING_FS,
-    Prefix
-}  from './constants';
+    Prefix,
+} from './constants';
 import { parseContinuous, getPrefix } from './continuous';
 
 const POSITION_ATTRS = ['break1Start', 'break1End', 'break2Start', 'break2End'];
@@ -21,12 +21,11 @@ type OntologyTerm = {
 };
 
 const ontologyTermRepr = (term: OntologyTerm | string): string => {
-    if (typeof term != 'string') {
+    if (typeof term !== 'string') {
         return term.displayName || term.sourceId || term.name || '';
     }
     return term;
 };
-
 
 const stripParentheses = (breakRepr: string): string => {
     const match = /^([a-z])\.\((.+)\)$/.exec(breakRepr);
@@ -36,7 +35,6 @@ const stripParentheses = (breakRepr: string): string => {
     }
     return breakRepr;
 };
-
 
 interface VariantNotation {
     reference1: OntologyTerm | string;
@@ -57,7 +55,6 @@ interface VariantNotation {
     break2Repr?: string;
     noFeatures?: boolean;
 }
-
 
 const createVariantNotation = ({
     requireFeatures = false,
@@ -106,7 +103,7 @@ const createVariantNotation = ({
     const multiFeature = Boolean(multiFeatureIn || reference2);
 
     const type = ontologyTermRepr(typeIn);
-    const untemplatedSeq = untemplatedSeqIn !== undefined && untemplatedSeqIn!== null
+    const untemplatedSeq = untemplatedSeqIn !== undefined && untemplatedSeqIn !== null
         ? untemplatedSeqIn.toUpperCase()
         : untemplatedSeqIn;
     let untemplatedSeqSize;
@@ -186,12 +183,11 @@ const createVariantNotation = ({
         untemplatedSeqSize,
         noFeatures,
         notationType,
-        prefix
+        prefix,
     };
 };
 
-
-const jsonifyVariant = (variant: VariantNotation): {[key: string]: string} => {
+const jsonifyVariant = (variant: VariantNotation): { [key: string]: string } => {
     const json = {};
     const IGNORE = ['prefix', 'multiFeature', 'noFeatures', 'notationType'];
 
@@ -230,10 +226,9 @@ const stringifyVariant = (variant: VariantNotation): string => {
 
     const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
 
-
     if (isMultiRef) {
         if (!break2Repr) {
-            throw new InputValidationError('Multi-feature notation requires break2Repr')
+            throw new InputValidationError('Multi-feature notation requires break2Repr');
         }
         // multi-feature notation
         let result = noFeatures
@@ -295,7 +290,6 @@ const stringifyVariant = (variant: VariantNotation): string => {
     }
     return result.join('');
 };
-
 
 /**
  * Given a string representing a multi-feature variant. Parse and checks the format returning
@@ -466,7 +460,8 @@ const parseVariant = (string, requireFeatures = true) => {
             throw new ParsingError({ message: 'Feature name not specified. Feature name is required', violatedAttr: 'reference1' });
         }
     }
-    let reference1, reference2;
+    let reference1,
+        reference2;
     const [featureString, variantString] = split;
 
     if (variantString.includes(',') || (
@@ -521,7 +516,7 @@ const parseVariant = (string, requireFeatures = true) => {
             });
         } catch (err: any) {
             if (err.content) {
-                err.content.parsed = { variantString,  reference1, reference2};
+                err.content.parsed = { variantString, reference1, reference2 };
             }
             throw err;
         }
@@ -540,14 +535,13 @@ const parseVariant = (string, requireFeatures = true) => {
             });
         } catch (err: any) {
             if (err.content) {
-                err.content.parsed = { variantString,  reference1, reference2};
+                err.content.parsed = { variantString, reference1, reference2 };
             }
             throw err;
         }
     }
 };
 
-
-export  {
+export {
     parseVariant, jsonifyVariant, stringifyVariant, stripParentheses, createVariantNotation,
 };

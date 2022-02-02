@@ -1,8 +1,5 @@
-
-
 /** @module app/error */
 import jc from 'json-cycle';
-
 
 /**
  * @property {string} message the error message
@@ -12,8 +9,11 @@ import jc from 'json-cycle';
  */
 class ErrorMixin extends Error {
     message: string;
+
     name: string;
+
     content: object;
+
     stack?: string;
 
     /**
@@ -46,14 +46,13 @@ class ErrorMixin extends Error {
         return jc.decycle(Object.assign(this.content, {
             message: this.message,
             name: this.name,
-            stacktrace: Array.from((this.stack || '').split('\n'), line => line.trim()),
+            stacktrace: Array.from((this.stack || '').split('\n'), (line) => line.trim()),
         }));
     }
 }
 
 class ParsingError extends ErrorMixin {}
 
-
 class InputValidationError extends ErrorMixin {}
 
-export  { ParsingError, ErrorMixin, InputValidationError };
+export { ParsingError, ErrorMixin, InputValidationError };

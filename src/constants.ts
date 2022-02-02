@@ -1,4 +1,4 @@
-const AA_CODES: Readonly<{[key: string]: string}> = {
+const AA_CODES: Readonly<{ [key: string]: string }> = {
     ala: 'a',
     arg: 'r',
     asn: 'n',
@@ -30,7 +30,7 @@ const AA_PATTERN = `${
     Object.keys(AA_CODES).join('|')
 }`;
 
-const NOTATION_TO_TYPES: Readonly<{[key: string]: string}> = {
+const NOTATION_TO_TYPES: Readonly<{ [key: string]: string }> = {
     ins: 'insertion',
     del: 'deletion',
     '>': 'substitution',
@@ -57,10 +57,8 @@ const NOTATION_TO_TYPES: Readonly<{[key: string]: string}> = {
 const TRUNCATING_FS = 'truncating frameshift mutation';
 const NONSENSE = 'nonsense mutation';
 
-
-
 const addTypeMappings = () => {
-    const mapping: {[key: string]: string} = {
+    const mapping: { [key: string]: string } = {
         [NONSENSE]: '>',
         [TRUNCATING_FS]: 'fs',
         // deprecated forms and aliases
@@ -72,13 +70,14 @@ const addTypeMappings = () => {
         mutations: 'mut',
         nonsense: '>',
     };
+
     for (const [notation, type] of Object.entries(NOTATION_TO_TYPES)) {
         mapping[type] = notation;
     }
     return mapping;
 };
 
-const TYPES_TO_NOTATION: Readonly<{[key: string]: string}> = addTypeMappings();
+const TYPES_TO_NOTATION: Readonly<{ [key: string]: string }> = addTypeMappings();
 
 type Prefix = 'g' | 'y' | 'i' | 'c' | 'r' | 'e' | 'n' | 'p';
 /**

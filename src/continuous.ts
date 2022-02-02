@@ -1,5 +1,7 @@
-import { ParsingError, InputValidationError }from './error';
-import { PREFIX_CLASS, PATTERNS, parsePosition, AnyPosition } from './position';
+import { ParsingError, InputValidationError } from './error';
+import {
+    PREFIX_CLASS, PATTERNS, parsePosition, AnyPosition,
+} from './position';
 import {
     AA_CODES,
     AA_PATTERN,
@@ -8,7 +10,6 @@ import {
     TRUNCATING_FS,
     Prefix,
 } from './constants';
-
 
 /**
  * Given a string, check that it contains a valid prefix
@@ -72,7 +73,7 @@ const convert3to1 = (notation: string): string => {
  * Extract and return the position range
  * @param {string} string
  */
-const extractPositions = (prefix: Prefix, string: string): {input: string; start?: AnyPosition; end?: AnyPosition} => {
+const extractPositions = (prefix: Prefix, string: string): { input: string; start?: AnyPosition; end?: AnyPosition } => {
     let input: string;
 
     if (string.startsWith('(')) {
@@ -88,7 +89,7 @@ const extractPositions = (prefix: Prefix, string: string): {input: string; start
             input,
             start: parsePosition(prefix, string.slice(1, string.indexOf('_'))),
             end: parsePosition(prefix, string.slice(string.indexOf('_') + 1, string.indexOf(')'))),
-        }
+        };
     }
     const pattern = PATTERNS[prefix] || /(?<pos>\d+)/;
     const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
@@ -100,7 +101,7 @@ const extractPositions = (prefix: Prefix, string: string): {input: string; start
     return {
         input,
         start: parsePosition(prefix, input.slice(0)),
-    }
+    };
 };
 
 /**
@@ -144,7 +145,6 @@ const parseContinuous = (inputString) => {
         throw err;
     }
 
-
     if (string.startsWith('_')) {
         // expect a range. Extract more positions
         string = string.slice(1);
@@ -167,7 +167,6 @@ const parseContinuous = (inputString) => {
         notationType = 'delins';
         const [, ref, altSeq] = match;
         refSeq = ref;
-
 
         if (parseInt(altSeq, 10)) {
             untemplatedSeqSize = parseInt(altSeq, 10);
@@ -324,7 +323,7 @@ const parseContinuous = (inputString) => {
             refSeq = break1Start.longRefAA || break1Start.refAA;
         }
         // covert to 1AA code? check if any of the positions were converted
-        const convert = [break1Start, break1End, break2Start, break2End].some(x => x && x.longRefAA);
+        const convert = [break1Start, break1End, break2Start, break2End].some((x) => x && x.longRefAA);
 
         if (convert) {
             if (untemplatedSeq) {
