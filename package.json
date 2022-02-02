@@ -11,6 +11,7 @@
     "test": "NODE_ENV=test jest --config config/jest.config.js --detectOpenHandles --forceExit",
     "build": "tsc",
     "clean": "rm -rf dist",
+    "prepublishOnly": "npm ci && npm run build",
     "lint": "eslint src test -c .eslintrc.json"
   },
   "repository": {
