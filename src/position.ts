@@ -214,7 +214,11 @@ const convertPositionToString = (position) => {
  *
  * @returns the string representation of a breakpoint or breakpoint range including the prefix
  */
-const createBreakRepr = (start: AnyPosition, end: AnyPosition | null = null, multiFeature = false): string => {
+const createBreakRepr = (
+    start: AnyPosition,
+    end: AnyPosition | null = null,
+    multiFeature = false,
+): string => {
     if (end) {
         if (start.prefix !== end.prefix) {
             throw new ParsingError('Mismatch prefix in range');
