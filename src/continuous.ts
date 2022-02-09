@@ -242,7 +242,7 @@ const parseContinuous = (inputString) => {
 
             if (alt === '*' && truncation !== 1) {
                 throw new ParsingError({
-                    message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
+                    message: 'invalid frameshift specifies a non-immediate truncation which conflicts with the terminating alt sequence',
                     violatedAttr: 'truncation',
                 });
             }
@@ -279,7 +279,7 @@ const parseContinuous = (inputString) => {
             });
         }
     }
-    // check for innapropriate types
+    // check for inappropriate types
     if (prefix === 'y') {
         if (refSeq) {
             throw new ParsingError({
