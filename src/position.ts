@@ -97,7 +97,7 @@ const createCytoBandPosition = ({ arm, majorBand, minorBand }): CytobandPosition
     return result;
 };
 
-const checkBasicPosition = (pos: any, allowNegative = false): number | null => {
+const checkBasicPosition = (pos: unknown, allowNegative = false): number | null => {
     if (pos === '?' || pos === null) {
         return null;
     }
@@ -110,7 +110,11 @@ const checkBasicPosition = (pos: any, allowNegative = false): number | null => {
     return Number(pos);
 };
 
-const createBasicPosition = (pos: any, prefix: Prefix, allowNegative = false): BasicPosition => {
+const createBasicPosition = (
+    pos: unknown,
+    prefix: Prefix,
+    allowNegative = false,
+): BasicPosition => {
     const result = {
         [CLASS_FIELD]: PREFIX_CLASS[prefix],
         pos: checkBasicPosition(pos, allowNegative),
@@ -120,7 +124,9 @@ const createBasicPosition = (pos: any, prefix: Prefix, allowNegative = false): B
 };
 
 const createCdsLikePosition = ({ offset, pos }, prefix: 'c' | 'n' | 'r'): CdsLikePosition => {
-    const result: any = { ...createBasicPosition(pos, prefix, true) };
+    const result: CdsLikePosition = {
+        ...createBasicPosition(pos, prefix, true) as CdsLikePosition,
+    };
 
     if (offset !== undefined) {
         result.offset = Number(offset);
@@ -135,9 +141,13 @@ const createCdsLikePosition = ({ offset, pos }, prefix: 'c' | 'n' | 'r'): CdsLik
     return result;
 };
 
-const createProteinPosition = ({ refAA, pos }: { refAA: string; pos: string | number | null }): ProteinPosition => {
-    const prefix = 'p';
-    const result: any = { ...createBasicPosition(pos, prefix), longRefAA: null, refAA };
+const createProteinPosition = ({
+    refAA,
+    pos,
+}: { refAA: string; pos: string | number | null }): ProteinPosition => {
+    const result: ProteinPosition = {
+        ...createBasicPosition(pos, 'p') as ProteinPosition, longRefAA: null, refAA,
+    };
 
     if (result.refAA) {
         if (result.refAA === '?') {
