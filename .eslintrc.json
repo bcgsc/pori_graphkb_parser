@@ -5,22 +5,23 @@
         "node": true
     },
     "extends": [
-        "eslint:recommended",
-        "airbnb",
+        "plugin:jest-formatting/recommended",
         "plugin:jest/recommended",
-        "plugin:jest-formatting/recommended"
+        "airbnb-base",
+        "airbnb-typescript/base",
+        "plugin:@typescript-eslint/recommended"
     ],
+    "parserOptions": {
+        "project": "./tsconfig.eslint.json"
+    },
     "plugins": [
         "jest",
         "jest-formatting"
     ],
     "rules": {
-        "indent": [
+        "@typescript-eslint/indent": [
             "error",
-            4,
-            {
-                "SwitchCase": 1
-            }
+            4
         ],
         "jest/consistent-test-it": [
             "error",
@@ -32,7 +33,17 @@
             "error",
             "unix"
         ],
-        "max-len": "warn",
+        "max-classes-per-file": "off",
+        "max-len": [
+            "warn",
+            {
+                "code": 100,
+                "ignoreComments": true,
+                "ignoreStrings": true,
+                "ignoreTemplateLiterals": true,
+                "ignoreTrailingComments": true
+            }
+        ],
         "multiline-ternary": [
             "error",
             "always"
