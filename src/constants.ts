@@ -81,10 +81,10 @@ const TYPES_TO_NOTATION: Readonly<{ [key: string]: string }> = addTypeMappings()
 
 type Prefix = 'g' | 'y' | 'i' | 'c' | 'r' | 'e' | 'n' | 'p';
 /**
- * the mapping of positional variant notation prefixes to their corresponging position classes
+ * the mapping of positional variant notation prefixes to their corresponding position classes
  * @namespace
  *
- * @property {string} g genomic postions
+ * @property {string} g genomic positions
  * @property {string} i intronic positions
  * @property {string} e exonic positions
  * @property {string} p protein positions (amino acid coordinates)

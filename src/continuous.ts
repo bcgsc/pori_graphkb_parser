@@ -73,16 +73,23 @@ const convert3to1 = (notation: string): string => {
  * Extract and return the position range
  * @param {string} string
  */
-const extractPositions = (prefix: Prefix, string: string): { input: string; start?: AnyPosition; end?: AnyPosition } => {
+const extractPositions = (
+    prefix: Prefix,
+    string: string,
+): { input: string; start?: AnyPosition; end?: AnyPosition } => {
     let input: string;
 
     if (string.startsWith('(')) {
         // expect the first breakpoint to be a range of two positions
         if (string.indexOf(')') < 0) {
-            throw new ParsingError('Expected a range of positions. Missing the closing parenthesis');
+            throw new ParsingError(
+                'Expected a range of positions. Missing the closing parenthesis',
+            );
         }
         if (string.indexOf('_') < 0) {
-            throw new ParsingError('Positions within a range must be separated by an underscore. Missing underscore');
+            throw new ParsingError(
+                'Positions within a range must be separated by an underscore. Missing underscore',
+            );
         }
         input = string.slice(0, string.indexOf(')') + 1);
         return {
@@ -242,7 +249,7 @@ const parseContinuous = (inputString) => {
 
             if (alt === '*' && truncation !== 1) {
                 throw new ParsingError({
-                    message: 'invalid framshift specifies a non-immeadiate truncation which conflicts with the terminating alt seqeuence',
+                    message: 'invalid frameshift specifies a non-immediate truncation which conflicts with the terminating alt sequence',
                     violatedAttr: 'truncation',
                 });
             }
@@ -279,7 +286,7 @@ const parseContinuous = (inputString) => {
             });
         }
     }
-    // check for innapropriate types
+    // check for inappropriate types
     if (prefix === 'y') {
         if (refSeq) {
             throw new ParsingError({
@@ -323,7 +330,12 @@ const parseContinuous = (inputString) => {
             refSeq = break1Start.longRefAA || break1Start.refAA;
         }
         // covert to 1AA code? check if any of the positions were converted
-        const convert = [break1Start, break1End, break2Start, break2End].some((x) => x && x.longRefAA);
+        const convert = [
+            break1Start,
+            break1End,
+            break2Start,
+            break2End,
+        ].some((x) => x && x.longRefAA);
 
         if (convert) {
             if (untemplatedSeq) {

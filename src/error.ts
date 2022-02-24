@@ -5,7 +5,7 @@ import jc from 'json-cycle';
  * @property {string} message the error message
  * @property {string} name the error name (generally the same as the error class)
  * @property {string} stack the stack trace associated with this error
- * @property {Object} content additional properties assigined to the error to aid in debugging
+ * @property {Object} content additional properties assigned to the error to aid in debugging
  */
 class ErrorMixin extends Error {
     message: string;
@@ -40,7 +40,7 @@ class ErrorMixin extends Error {
     }
 
     /**
-     * @return {Object} the JSON respresenation of this error
+     * @return {Object} the JSON representation of this error
      */
     toJSON() {
         return jc.decycle(Object.assign(this.content, {
