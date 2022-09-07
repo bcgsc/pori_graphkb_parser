@@ -190,16 +190,21 @@ const convertPositionToString = (position) => {
         return result;
     } if (['c', 'r', 'n'].includes(position.prefix)) {
         let offset = '';
+        let pos = position.pos
+            ? String(position.pos)
+            : '?'
 
         if (position.offset === null) {
             offset = '?';
         } else if (position.offset) {
             if (position.offset > 0) {
                 offset = '+';
+            } else if (position.offset < 0 && position.pos === 1) {
+                pos = ''
             }
             offset = `${offset}${position.offset}`;
         }
-        return `${position.pos || '?'}${offset}`;
+        return `${pos}${offset}`;
     } if (position.prefix === 'p') {
         return `${position.refAA || '?'}${position.pos || '?'}`;
     }
