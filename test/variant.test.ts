@@ -140,12 +140,12 @@ describe('VariantNotation', () => {
                 '@class': 'CdsPosition',
                 pos: 1,
                 prefix: 'c',
-                offset: -125
+                offset: -125,
             },
             break1Repr: 'c.1-125',
             noFeatures: false,
             notationType: 'del',
-            prefix: 'c'
+            prefix: 'c',
         };
         expect(stringifyVariant(variant)).toBe('CEP72:c.-125del');
     });
@@ -159,19 +159,19 @@ describe('VariantNotation', () => {
                 '@class': 'CdsPosition',
                 pos: 1,
                 prefix: 'c',
-                offset: -125
+                offset: -125,
             },
             break1Repr: 'c.1-125',
             break2Start: {
                 '@class': 'CdsPosition',
                 pos: 1,
                 prefix: 'c',
-                offset: -100
+                offset: -100,
             },
             break2Repr: 'c.1-100',
             noFeatures: false,
             notationType: 'del',
-            prefix: 'c'
+            prefix: 'c',
         };
         expect(stringifyVariant(variant)).toBe('CEP72:c.-125_-100del');
     });
