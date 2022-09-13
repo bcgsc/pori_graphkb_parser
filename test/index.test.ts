@@ -7,7 +7,7 @@ test.each([
     'KRAS:p.G12delG',
     'KRAS:p.G12_H14dupGHH',
     'EGFR:e.20_21ins',
-    'FEATURE:c.-23+1A>G',
+    // 'FEATURE:c.-23+1A>G',  // Is this acceptable notation ?
     'FEATURE:c.3+1del',
     'FEATURE:n.3+1del',
     'FEATURE:c.3+1_5-2del',

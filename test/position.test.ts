@@ -146,6 +146,13 @@ describe('parsePosition', () => {
             expect(result).toHaveProperty('prefix', 'c');
         });
 
+        test('negative offset without leading position', () => {
+            const result = parsePosition('c', '-3');
+            expect(result.pos).toBe(1);
+            expect(result.offset).toBe(-3);
+            expect(result).toHaveProperty('prefix', 'c');
+        });
+
         test('no offset specified', () => {
             const result = parsePosition('c', '1');
             expect(result.pos).toBe(1);

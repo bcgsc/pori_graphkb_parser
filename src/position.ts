@@ -286,7 +286,12 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
             if (!m?.groups) {
                 throw new ParsingError(`input '${string}' did not match the expected pattern for 'c' prefixed positions`);
             }
-            const { pos, offset } = m.groups;
+            let { pos, offset } = m.groups;
+
+            if (pos[0] === '-') {
+                offset = pos;
+                pos = '1';
+            }
 
             return createPosition(prefix, {
                 pos: pos || 1,
