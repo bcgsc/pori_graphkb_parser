@@ -130,6 +130,51 @@ describe('VariantNotation', () => {
             });
         }).toThrowError('must be specified with a range');
     });
+
+    test('hide leading 1 on negative offset; single position', () => {
+        const variant = {
+            reference1: 'CEP72',
+            multiFeature: false,
+            type: 'deletion',
+            break1Start: {
+                '@class': 'CdsPosition',
+                pos: 1,
+                prefix: 'c',
+                offset: -125
+            },
+            break1Repr: 'c.1-125',
+            noFeatures: false,
+            notationType: 'del',
+            prefix: 'c'
+        };
+        expect(stringifyVariant(variant)).toBe('CEP72:c.-125del');
+    });
+
+    test('hide leading 1 on negative offset; region position', () => {
+        const variant = {
+            reference1: 'CEP72',
+            multiFeature: false,
+            type: 'deletion',
+            break1Start: {
+                '@class': 'CdsPosition',
+                pos: 1,
+                prefix: 'c',
+                offset: -125
+            },
+            break1Repr: 'c.1-125',
+            break2Start: {
+                '@class': 'CdsPosition',
+                pos: 1,
+                prefix: 'c',
+                offset: -100
+            },
+            break2Repr: 'c.1-100',
+            noFeatures: false,
+            notationType: 'del',
+            prefix: 'c'
+        };
+        expect(stringifyVariant(variant)).toBe('CEP72:c.-125_-100del');
+    });
 });
 
 describe('stripParentheses', () => {
