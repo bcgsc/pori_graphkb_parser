@@ -209,20 +209,24 @@ const stringifyVariant = (variant: VariantNotation): string => {
         noFeatures,
         reference1,
         reference2,
-        break1Repr,
-        break2Repr,
         untemplatedSeq,
         untemplatedSeqSize,
         truncation,
         refSeq,
         type,
     } = variant;
-    let { notationType } = variant;
+    let { break1Repr, break2Repr, notationType } = variant;
 
     if (notationType === undefined) {
         const variantType = ontologyTermRepr(type);
         notationType = TYPES_TO_NOTATION[variantType] || variantType.replace(/\s+/, '-');
     }
+
+    // GRAPHKB-990 Hiding leading 1 when negative offset ('c' prefix only)
+    if (break2Repr) {
+        break2Repr = break2Repr.replace('c.1-', 'c.-');
+    }
+    break1Repr = break1Repr.replace('c.1-', 'c.-');
 
     const isMultiRef = multiFeature || (reference2 && (reference1 !== reference2));
 
