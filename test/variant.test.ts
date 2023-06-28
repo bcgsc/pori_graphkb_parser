@@ -9,7 +9,7 @@ import {
 import { createPosition } from '../src/position';
 import { NOTATION_TO_TYPES } from '../src/constants';
 
-describe('VariantNotation', () => {
+describe('createVariantNotation', () => {
     test('use object name if no sourceId on reference', () => {
         const notation = createVariantNotation({
             reference1: { name: 'KRAS' },
