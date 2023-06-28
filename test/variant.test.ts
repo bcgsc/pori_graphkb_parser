@@ -1,3 +1,4 @@
+import data from './data';
 import {
     stringifyVariant,
     stripParentheses,
@@ -159,3 +160,27 @@ describe('jsonifyVariant', () => {
         });
     });
 });
+
+describe('parseVariant & strignifyVariant', () => {
+    const variants = {
+        ...data.standardVariants,
+        ...data.fusionVariants,
+    };
+
+    test.each(Object.keys(variants))('Parsing %s and strignify back', (variantString) => {
+        const variantNotation = parseVariant(variantString);
+
+        // Parse variant string and compare notations
+        expect(variantNotation).toStrictEqual(
+            expect.objectContaining({
+                ...variants[variantString],
+                break1Start: expect.objectContaining(
+                    variants[variantString].break1Start,
+                ),
+            }),
+        );
+        // Strignify notation and compare variant strings
+        expect(stringifyVariant(variants[variantString])).toBe(variantString);
+    });
+});
+
