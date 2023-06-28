@@ -431,8 +431,76 @@ const parseMultiFeature = (string: string): {
         });
     }
     return {
-        type: variantType, break1Start, break1End, break2Start, break2End, untemplatedSeqSize, untemplatedSeq, prefix,
-    };
+/**
+ * Parse a fusion variant using the new HGVS nomenclature (KBDEV-974)
+ *
+ * @param {string} string is a fusion variant using the new nomenclature
+ * @param {boolean} requireFeatures, if set to false, allows string without feature
+ *
+ * @returns {VariantNotation} the parsed content
+ */
+const parseFusion = (string, requireFeatures = true) => {
+    const parts = string.split('::');
+
+    if (parts.length > 3) {
+        throw new ParsingError({
+            message: 'Fusion variant using new nomenclature must contain 1 or 2 double-colon',
+            input: parts.join('::'),
+            violatedAttr: 'punctuation',
+        });
+    }
+    // Special case with a sequence insertion between the 2 fused parts
+    if (parts.length === 3) {
+        const [, insertion] = parts;
+
+        // When implemented, sequence insertion need to be in RNA
+        // if following HGVS standards restricting fusion to 'r' prefix
+        if (/^[acgu]+$/.test(insertion.toLowerCase())) {
+            throw new ParsingError({
+                message: 'Insertion sequence of fusion variant should be given in ribonucleotides',
+                input: parts.join('::'),
+                violatedAttr: 'alphabet',
+            });
+        }
+        // Feature not implemented yet in GraphKB
+        throw new NotImplementedError({
+            message: 'Inserted sequence in fusion not implemented',
+            input: parts.join('::'),
+        });
+    }
+    // Standard 2-parts fusion - Parsing individual parts
+    const [string1, string2] = parts;
+    const t1 = parseFusionPart(string1, requireFeatures);
+    const t2 = parseFusionPart(string2, requireFeatures);
+
+    // Prefix
+    let prefix;
+
+    if (t1.prefix === t2.prefix) {
+        // Since each fusion part have it's own prefix, a prefix at the variant
+        // level is only given if they are the same
+        prefix = t1.prefix;
+    }
+
+    try {
+        return createVariantNotation({
+            ...t1,
+            prefix,
+            requireFeatures,
+            reference2: t2.reference1,
+            break2Start: t2.break1Start,
+            break2End: t2.break1End,
+        });
+    } catch (err: any) {
+        if (err.content) {
+            err.content.parsed = {
+                string,
+                reference1: t1.reference1,
+                reference2: t2.reference1,
+            };
+        }
+        throw err;
+    }
 };
 
 /**
