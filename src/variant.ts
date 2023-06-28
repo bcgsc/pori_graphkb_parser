@@ -430,7 +430,85 @@ const parseMultiFeature = (string: string): {
             violatedAttr: 'break2',
         });
     }
+
+/**
+ * Parse one side of a fusion variant using the new nomenclature (KBDEV-974)
+ *
+ * @param {string} string is one of the fusion part (one side) to be parsed
+ * @param {boolean} requireFeatures
+ *
+ * @returns {VariantNotation} the parsed content
+ */
+const parseFusionPart = (string, requireFeatures) => {
+    // Come from a multi-feature variant
+    const multiFeature = true;
+
+    // Feature vs Variant strings
+    const stringSplit = string.split(':');
+
+    if (stringSplit.length > 2) {
+        throw new ParsingError({
+            message: 'Variant notation must contain a single colon',
+            input: string,
+            violatedAttr: 'punctuation',
+        });
+    } else if (stringSplit.length === 1) {
+        if (!requireFeatures) {
+            stringSplit.unshift('');
+        } else {
+            throw new ParsingError({
+                message: 'Feature name not specified. Feature name is required',
+                violatedAttr: 'reference1',
+            });
+        }
+    }
+    const [featureString, variantString] = stringSplit;
+
+    // References
+    let reference1 = '';
+
+    if (featureString) {
+        reference1 = featureString;
+    }
+
+    // Prefix
+    const prefix = getPrefix(variantString);
+
+    // if (prefix !== 'r') {
+    //     // A double colon is used to describe RNA fusion transcripts
+    //     // (RNA Deletion - insertion) using exclusively the 'r' prefix
+    //     // https://varnomen.hgvs.org/recommendations/RNA/variant/delins/
+    //     throw new ParsingError({
+    //         message: 'Fusion notation must be in rna coordinate system',
+    //         input: string,
+    //     });
+    //     // The other use case of a double colon, not implemented, is to
+    //     // designate break point junctions creating a ring chromosome
+    //     // https://varnomen.hgvs.org/recommendations/DNA/variant/complex/
+    // }
+
+    // Range of positions
+    const positions = variantString.slice(prefix.length + 1).split('_');
+
+    if (positions.length !== 2) {
+        throw new ParsingError({
+            message: 'Fusion notation must be a range of positions',
+            input: string,
+        });
+    }
+
+    // Returns a partial variant notation for that variant's part
     return {
+        reference1,
+        reference2: '',
+        type: NOTATION_TO_TYPES.fusion,
+        multiFeature,
+        prefix,
+        break1Start: parsePosition(prefix, positions[0]),
+        break1End: parsePosition(prefix, positions[1]),
+    };
+};
+
 /**
  * Parse a fusion variant using the new HGVS nomenclature (KBDEV-974)
  *
