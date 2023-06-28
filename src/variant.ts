@@ -1,4 +1,4 @@
-import { ParsingError, InputValidationError } from './error';
+import { InputValidationError, NotImplementedError, ParsingError } from './error';
 import {
     createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
 } from './position';
