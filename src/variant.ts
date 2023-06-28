@@ -453,6 +453,7 @@ const parseVariant = (string, requireFeatures = true) => {
     if (string.split('::').length > 1) {
         return parseFusion(string, requireFeatures);
     }
+    // Feature vs Variant strings
     const split = string.split(':');
 
     if (split.length > 2) {
