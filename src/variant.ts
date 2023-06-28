@@ -449,10 +449,14 @@ const parseVariant = (string, requireFeatures = true) => {
             input: string,
         });
     }
+    // New fusion nomenclature handling (KBDEV-974)
+    if (string.split('::').length > 1) {
+        return parseFusion(string, requireFeatures);
+    }
     const split = string.split(':');
 
     if (split.length > 2) {
-        throw new ParsingError({ message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation' });
+        throw new ParsingError({ message: 'Apart from new fusion nomenclature, variant notation must contain a single colon', input: string, violatedAttr: 'punctuation' });
     } else if (split.length === 1) {
         if (!requireFeatures) {
             split.unshift(null);
