@@ -1,6 +1,6 @@
 import { InputValidationError, ParsingError } from './error';
 import {
-    createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
+    createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
 } from './position';
 import {
     NOTATION_TO_TYPES,
@@ -232,10 +232,10 @@ const stringifyVariant = (variant: VariantNotation, newFusion = false): string =
         }
         // new fusion nomenclature notation
         if (newFusion) {
-
             let insertedSequence = '';
+
             if (untemplatedSeq !== undefined && untemplatedSeq !== null) {
-                insertedSequence = `${untemplatedSeq}::`
+                insertedSequence = `${untemplatedSeq}::`;
             }
 
             if (noFeatures) {
@@ -416,7 +416,13 @@ const parseMultiFeature = (string: string): {
             message: 'Error in parsing the first breakpoint position/range',
             input: string,
             parsed: {
-                type: variantType, break1Start, break1End, break2Start, break2End, untemplatedSeqSize, untemplatedSeq,
+                type: variantType,
+                break1Start,
+                break1End,
+                break2Start,
+                break2End,
+                untemplatedSeqSize,
+                untemplatedSeq,
             },
             subParserError: err,
             violatedAttr: 'break1',
@@ -439,7 +445,13 @@ const parseMultiFeature = (string: string): {
             message: 'Error in parsing the second breakpoint position/range',
             input: string,
             parsed: {
-                type: variantType, break1Start, break1End, break2Start, break2End, untemplatedSeqSize, untemplatedSeq,
+                type: variantType,
+                break1Start,
+                break1End,
+                break2Start,
+                break2End,
+                untemplatedSeqSize,
+                untemplatedSeq,
             },
             subParserError: err,
             violatedAttr: 'break2',
@@ -538,7 +550,7 @@ const parseFusion = (string, requireFeatures = true) => {
     if (parts.length > 3) {
         throw new ParsingError({
             message: 'Fusion variant using new nomenclature must contain 1 or 2 double-colon',
-            input: parts.join('::'),
+            input: string,
             violatedAttr: 'punctuation',
         });
     }
