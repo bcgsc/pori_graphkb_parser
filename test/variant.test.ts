@@ -164,10 +164,11 @@ describe('jsonifyVariant', () => {
 describe('parseVariant & strignifyVariant', () => {
     const variants = {
         ...data.standardVariants,
-        ...data.fusionVariants,
+        ...data.legacyNomenclatureFusionVariants,
+        ...data.newNomenclatureFusionVariants,
     };
 
-    test.each(Object.keys(variants))('Parsing %s and strignify back', (variantString) => {
+    test.each(Object.keys(variants))('Parsing and strignifying back %s', (variantString) => {
         const variantNotation = parseVariant(variantString);
 
         // Parse variant string and compare notations
@@ -180,7 +181,7 @@ describe('parseVariant & strignifyVariant', () => {
             }),
         );
         // Strignify notation and compare variant strings
-        expect(stringifyVariant(variants[variantString])).toBe(variantString);
+        const newFusion = variantString.split('::').length > 1
+        expect(stringifyVariant(variants[variantString], newFusion)).toBe(variantString);
     });
 });
-
