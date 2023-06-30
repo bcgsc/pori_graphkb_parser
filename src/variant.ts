@@ -203,7 +203,7 @@ const jsonifyVariant = (variant: VariantNotation): { [key: string]: string } => 
     return json;
 };
 
-const stringifyVariant = (variant: VariantNotation): string => {
+const stringifyVariant = (variant: VariantNotation, newFusion = false): string => {
     const {
         multiFeature,
         noFeatures,
