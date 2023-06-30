@@ -1,6 +1,10 @@
 import { InputValidationError, ParsingError } from './error';
 import {
-    createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
+    AnyPosition,
+    convertPositionToJson,
+    createBreakRepr,
+    createPosition,
+    parsePosition,
 } from './position';
 import {
     NOTATION_TO_TYPES,
@@ -68,10 +72,10 @@ const createVariantNotation = ({
     multiFeature: multiFeatureIn,
     truncation,
     notationType,
-    break1Start,
-    break1End,
-    break2Start,
-    break2End,
+    break1Start: break1StartIn,
+    break1End: break1EndIn,
+    break2Start: break2StartIn,
+    break2End: break2EndIn,
 }: {
     requireFeatures?: boolean;
     reference1: string | OntologyTerm;
@@ -89,7 +93,7 @@ const createVariantNotation = ({
     break2Start?: AnyPosition;
     break2End?: AnyPosition;
 }): VariantNotation => {
-    if (!break1Start) {
+    if (!break1StartIn) {
         throw new InputValidationError({
             message: 'break1Start is a required attribute',
             violatedAttr: 'break1Start',
@@ -121,6 +125,25 @@ const createVariantNotation = ({
             violatedAttr: 'type',
         });
     }
+
+    // cast positions
+    const formatPosition = (input) => {
+        if (input !== null && input !== undefined) {
+            let breakPrefix;
+            if (typeof input.prefix !== 'undefined') {
+                breakPrefix = input.prefix;
+            } else {
+                breakPrefix = prefix;
+            }
+            return createPosition(breakPrefix, input);
+        }
+        return input;
+    };
+
+    const break1Start = formatPosition(break1StartIn);
+    const break1End = formatPosition(break1EndIn);
+    const break2Start = formatPosition(break2StartIn);
+    const break2End = formatPosition(break2EndIn);
 
     const break1Repr = createBreakRepr(break1Start, break1End, multiFeature);
     let break2Repr;
