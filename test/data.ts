@@ -33,13 +33,13 @@ const standardVariants = {
     },
 };
 
-// Actual fusion variant with legacy notation (from KBDEV-974)
-const fusionVariants = {
+// Actual fusion variant with legacy notation (KBDEV-974)
+const legacyNomenclatureFusionVariants = {
     '(ATP1B1,NRG1):fusion(g.169080736,g.32453346)': {
         reference1: 'ATP1B1',
         reference2: 'NRG1',
         multiFeature: true,
-        type: 'fusion',
+        type: NOTATION_TO_TYPES.fusion,
         break1Start: {
             '@class': 'GenomicPosition',
             pos: 169080736,
@@ -59,7 +59,7 @@ const fusionVariants = {
         reference1: 'ENST00000357447',
         reference2: 'ENST00000371953',
         multiFeature: true,
-        type: 'fusion',
+        type: NOTATION_TO_TYPES.fusion,
         break1Start: {
             '@class': 'CdsPosition',
             pos: 1118,
@@ -81,7 +81,7 @@ const fusionVariants = {
         reference1: 'COL1A1',
         reference2: 'PDGFB',
         multiFeature: true,
-        type: 'fusion',
+        type: NOTATION_TO_TYPES.fusion,
         break1Start: {
             '@class': 'RnaPosition',
             pos: 2354,
@@ -103,7 +103,7 @@ const fusionVariants = {
         reference1: 'CLTC',
         reference2: 'ALK',
         multiFeature: true,
-        type: 'fusion',
+        type: NOTATION_TO_TYPES.fusion,
         break1Start: {
             '@class': 'ExonicPosition',
             pos: 30,
@@ -119,19 +119,19 @@ const fusionVariants = {
         noFeatures: false,
         prefix: 'e',
     },
-    // Cases with mixed prefix
-    // resulting in malformed positions
     '(ZNF532,NUTM1):fusion(p.?4,e.2)': {
         reference1: 'ZNF532',
         reference2: 'NUTM1',
         multiFeature: true,
-        type: 'fusion',
+        type: NOTATION_TO_TYPES.fusion,
         break1Start: {
-            '@class': 'ExonicPosition',
+            '@class': 'ProteinPosition',
             pos: 4,
-            prefix: 'e',
+            prefix: 'p',
+            longRefAA: null,
+            refAA: null,
         },
-        break1Repr: 'e.4',
+        break1Repr: 'p.?4',
         break2Start: {
             '@class': 'ExonicPosition',
             pos: 2,
@@ -139,19 +139,19 @@ const fusionVariants = {
         },
         break2Repr: 'e.2',
         noFeatures: false,
-        prefix: 'e',
+        prefix: null,
     },
     '(CDH1,LARS):fusion(i.2,e.17)': {
         reference1: 'CDH1',
         reference2: 'LARS',
         multiFeature: true,
-        type: 'fusion',
+        type: NOTATION_TO_TYPES.fusion,
         break1Start: {
-            '@class': 'ExonicPosition',
+            '@class': 'IntronicPosition',
             pos: 2,
-            prefix: 'e',
+            prefix: 'i',
         },
-        break1Repr: 'e.2',
+        break1Repr: 'i.2',
         break2Start: {
             '@class': 'ExonicPosition',
             pos: 17,
@@ -159,15 +159,298 @@ const fusionVariants = {
         },
         break2Repr: 'e.17',
         noFeatures: false,
+        prefix: null,
+    },
+    '(chr3,BRAF):fusion(y.p26.3,e.4)' : {
+        reference1: 'chr3',
+        reference2: 'BRAF',
+        multiFeature: true,
+        type: NOTATION_TO_TYPES.fusion,
+        break1Start: {
+            arm: 'p',
+            majorBand: 26,
+            minorBand: 3,
+            '@class': 'CytobandPosition',
+            prefix: 'y',
+        },
+        break1Repr: 'y.p26.3',
+        break2Start: {
+            '@class': 'ExonicPosition',
+            pos: 4,
+            prefix: 'e',
+        },
+        break2Repr: 'e.4',
+        noFeatures: false,
+        prefix: null,
+    },
+};
+
+// New fusion nomenclature (KBDEV-974)
+const newNomenclatureFusionVariants = {
+    'ATP1B1:g.?_169080736::NRG1:g.32453346_?': {
+        reference1: 'ATP1B1',
+        reference2: 'NRG1',
+        multiFeature: true,
+        type: NOTATION_TO_TYPES.fusion,
+        break1Start: {
+            '@class': 'GenomicPosition',
+            pos: null,
+            prefix: 'g',
+        },
+        break1End: {
+            '@class': 'GenomicPosition',
+            pos: 169080736,
+            prefix: 'g',
+        },
+        break1Repr: 'g.?_169080736',
+        break2End: {
+            '@class': 'GenomicPosition',
+            pos: null,
+            prefix: 'g',
+        },
+        break2Start: {
+            '@class': 'GenomicPosition',
+            pos: 32453346,
+            prefix: 'g',
+        },
+        break2Repr: 'g.32453346_?',
+        noFeatures: false,
+        prefix: 'g',
+    },
+    'ENST00000357447:c.?_1118::ENST00000371953:c.165_?': {
+        reference1: 'ENST00000357447',
+        reference2: 'ENST00000371953',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            '@class': 'CdsPosition',
+            pos: null,
+            prefix: 'c',
+            offset: 0,
+        },
+        break1End: {
+            '@class': 'CdsPosition',
+            pos: 1118,
+            prefix: 'c',
+            offset: 0,
+        },
+        break1Repr: 'c.?_1118',
+        break2End: {
+            '@class': 'CdsPosition',
+            pos: null,
+            prefix: 'c',
+            offset: 0,
+        },
+        break2Start: {
+            '@class': 'CdsPosition',
+            pos: 165,
+            prefix: 'c',
+            offset: 0,
+        },
+        break2Repr: 'c.165_?',
+        noFeatures: false,
+        prefix: 'c',
+    },
+    'COL1A1:r.?_2354::PDGFB:r.852_?': {
+        reference1: 'COL1A1',
+        reference2: 'PDGFB',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            '@class': 'RnaPosition',
+            pos: null,
+            prefix: 'r',
+            offset: 0,
+        },
+        break1End: {
+            '@class': 'RnaPosition',
+            pos: 2354,
+            prefix: 'r',
+            offset: 0,
+        },
+        break1Repr: 'r.?_2354',
+        break2End: {
+            '@class': 'RnaPosition',
+            pos: null,
+            prefix: 'r',
+            offset: 0,
+        },
+        break2Start: {
+            '@class': 'RnaPosition',
+            pos: 852,
+            prefix: 'r',
+            offset: 0,
+        },
+        break2Repr: 'r.852_?',
+        noFeatures: false,
+        prefix: 'r',
+    },
+    'CLTC:e.?_30::ALK:e.20_?': {
+        reference1: 'CLTC',
+        reference2: 'ALK',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            '@class': 'ExonicPosition',
+            pos: null,
+            prefix: 'e',
+        },
+        break1End: {
+            '@class': 'ExonicPosition',
+            pos: 30,
+            prefix: 'e',
+        },
+        break1Repr: 'e.?_30',
+        break2End: {
+            '@class': 'ExonicPosition',
+            pos: null,
+            prefix: 'e',
+        },
+        break2Start: {
+            '@class': 'ExonicPosition',
+            pos: 20,
+            prefix: 'e',
+        },
+        break2Repr: 'e.20_?',
+        noFeatures: false,
         prefix: 'e',
     },
-    // Cases with mixed prefix
-    // resulting in error
-    // '(chr3,BRAF):fusion(y.p26.3,e.4)' : {
-    // },
+    'ZNF532:p.??_?4::NUTM1:e.2_?': {
+        reference1: 'ZNF532',
+        reference2: 'NUTM1',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            '@class': 'ProteinPosition',
+            pos: null,
+            prefix: 'p',
+            longRefAA: null,
+            refAA: null,
+        },
+        break1End: {
+            '@class': 'ProteinPosition',
+            pos: 4,
+            prefix: 'p',
+            longRefAA: null,
+            refAA: null,
+        },
+        break1Repr: 'p.??_?4',
+        break2End: {
+            '@class': 'ExonicPosition',
+            pos: null,
+            prefix: 'e',
+        },
+        break2Start: {
+            '@class': 'ExonicPosition',
+            pos: 2,
+            prefix: 'e',
+        },
+        break2Repr: 'e.2_?',
+        noFeatures: false,
+        prefix: null,
+    },
+    'CDH1:i.?_2::LARS:e.17_?': {
+        reference1: 'CDH1',
+        reference2: 'LARS',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            '@class': 'IntronicPosition',
+            pos: null,
+            prefix: 'i',
+        },
+        break1End: {
+            '@class': 'IntronicPosition',
+            pos: 2,
+            prefix: 'i',
+        },
+        break1Repr: 'i.?_2',
+        break2End: {
+            '@class': 'ExonicPosition',
+            pos: null,
+            prefix: 'e',
+        },
+        break2Start: {
+            '@class': 'ExonicPosition',
+            pos: 17,
+            prefix: 'e',
+        },
+        break2Repr: 'e.17_?',
+        noFeatures: false,
+        prefix: null,
+    },
+    'chr3:y.p_p26.3::BRAF:e.4_?': {
+        reference1: 'chr3',
+        reference2: 'BRAF',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            arm: 'p',
+            '@class': 'CytobandPosition',
+            prefix: 'y',
+        },
+        break1End: {
+            arm: 'p',
+            majorBand: 26,
+            minorBand: 3,
+            '@class': 'CytobandPosition',
+            prefix: 'y',
+        },
+        break1Repr: 'y.p_p26.3',
+        break2End: {
+            '@class': 'ExonicPosition',
+            pos: null,
+            prefix: 'e',
+        },
+        break2Start: {
+            '@class': 'ExonicPosition',
+            pos: 4,
+            prefix: 'e',
+        },
+        break2Repr: 'e.4_?',
+        noFeatures: false,
+        prefix: null,
+    },
+    'EPCAM:r.?_555::GUAUGAUUUUUUAAUAA::MSH2:r.212_?': {
+        reference1: 'EPCAM',
+        reference2: 'MSH2',
+        multiFeature: true,
+        type: 'fusion',
+        break1Start: {
+            '@class': 'RnaPosition',
+            pos: null,
+            prefix: 'r',
+            offset: 0,
+        },
+        break1End: {
+            '@class': 'RnaPosition',
+            pos: 555,
+            prefix: 'r',
+            offset: 0,
+        },
+        break1Repr: 'r.?_555',
+        break2End: {
+            '@class': 'RnaPosition',
+            pos: null,
+            prefix: 'r',
+            offset: 0,
+        },
+        break2Start: {
+            '@class': 'RnaPosition',
+            pos: 212,
+            prefix: 'r',
+            offset: 0,
+        },
+        break2Repr: 'r.212_?',
+        untemplatedSeq: 'GUAUGAUUUUUUAAUAA',
+        untemplatedSeqSize: 17,
+        noFeatures: false,
+        prefix: 'r',
+    },
 };
 
 export default {
-    fusionVariants,
+    legacyNomenclatureFusionVariants,
+    newNomenclatureFusionVariants,
     standardVariants,
 };
