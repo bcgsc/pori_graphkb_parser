@@ -130,6 +130,7 @@ const createVariantNotation = ({
     const formatPosition = (input) => {
         if (input !== null && input !== undefined) {
             let breakPrefix;
+
             if (typeof input.prefix !== 'undefined') {
                 breakPrefix = input.prefix;
             } else {
@@ -596,7 +597,7 @@ const parseFusion = (string, requireFeatures = true) => {
 
     // Standard 2-parts fusion - Parsing individual parts
     const t1 = parseFusionPart(parts[0], requireFeatures);
-    const t2 = parseFusionPart(parts[parts.length-1], requireFeatures); // skip middle part if one
+    const t2 = parseFusionPart(parts[parts.length - 1], requireFeatures); // skip middle part if one
 
     // Prefix
     let prefix;

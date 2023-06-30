@@ -161,7 +161,7 @@ const legacyNomenclatureFusionVariants = {
         noFeatures: false,
         prefix: null,
     },
-    '(chr3,BRAF):fusion(y.p26.3,e.4)' : {
+    '(chr3,BRAF):fusion(y.p26.3,e.4)': {
         reference1: 'chr3',
         reference2: 'BRAF',
         multiFeature: true,

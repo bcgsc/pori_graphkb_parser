@@ -181,7 +181,7 @@ describe('parseVariant & strignifyVariant', () => {
             }),
         );
         // Strignify notation and compare variant strings
-        const newFusion = variantString.split('::').length > 1
+        const newFusion = variantString.split('::').length > 1;
         expect(stringifyVariant(variants[variantString], newFusion)).toBe(variantString);
     });
 });
