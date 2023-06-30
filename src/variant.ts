@@ -1,4 +1,4 @@
-import { InputValidationError, NotImplementedError, ParsingError } from './error';
+import { InputValidationError, ParsingError } from './error';
 import {
     createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
 } from './position';
@@ -230,7 +230,22 @@ const stringifyVariant = (variant: VariantNotation): string => {
         if (!break2Repr) {
             throw new InputValidationError('Multi-feature notation requires break2Repr');
         }
-        // multi-feature notation
+        // new fusion nomenclature notation
+        if (newFusion) {
+
+            let insertedSequence = '';
+            if (untemplatedSeq !== undefined && untemplatedSeq !== null) {
+                insertedSequence = `${untemplatedSeq}::`
+            }
+
+            if (noFeatures) {
+                return `${break1Repr}::${insertedSequence}${break2Repr}`;
+            }
+
+            return `${reference1}:${break1Repr}::${insertedSequence}${reference2}:${break2Repr}`;
+        }
+
+        // multi-feature notation (incl. legacy fusion notation)
         let result = noFeatures
             ? ''
             : `(${reference1},${reference2}):`;
@@ -527,29 +542,30 @@ const parseFusion = (string, requireFeatures = true) => {
             violatedAttr: 'punctuation',
         });
     }
-    // Special case with a sequence insertion between the 2 fused parts
+
+    let untemplatedSeq,
+        untemplatedSeqSize;
+
+    // Special case with a sequence insertion between the 2 fusion parts
     if (parts.length === 3) {
         const [, insertion] = parts;
 
         // When implemented, sequence insertion need to be in RNA
         // if following HGVS standards restricting fusion to 'r' prefix
-        if (/^[acgu]+$/.test(insertion.toLowerCase())) {
+        if (!/^[ACGU]+$/.test(insertion.toUpperCase())) {
             throw new ParsingError({
                 message: 'Insertion sequence of fusion variant should be given in ribonucleotides',
-                input: parts.join('::'),
+                input: string,
                 violatedAttr: 'alphabet',
             });
         }
-        // Feature not implemented yet in GraphKB
-        throw new NotImplementedError({
-            message: 'Inserted sequence in fusion not implemented',
-            input: parts.join('::'),
-        });
+        untemplatedSeq = insertion.toUpperCase();
+        untemplatedSeqSize = insertion.length;
     }
+
     // Standard 2-parts fusion - Parsing individual parts
-    const [string1, string2] = parts;
-    const t1 = parseFusionPart(string1, requireFeatures);
-    const t2 = parseFusionPart(string2, requireFeatures);
+    const t1 = parseFusionPart(parts[0], requireFeatures);
+    const t2 = parseFusionPart(parts[parts.length-1], requireFeatures); // skip middle part if one
 
     // Prefix
     let prefix;
@@ -568,6 +584,8 @@ const parseFusion = (string, requireFeatures = true) => {
             reference2: t2.reference1,
             break2Start: t2.break1Start,
             break2End: t2.break1End,
+            untemplatedSeq,
+            untemplatedSeqSize,
         });
     } catch (err: any) {
         if (err.content) {
