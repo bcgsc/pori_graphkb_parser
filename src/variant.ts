@@ -43,7 +43,7 @@ interface VariantNotation {
     untemplatedSeqSize?: number;
     type: OntologyTerm | string;
     refSeq?: string | null;
-    prefix: Prefix;
+    prefix: Prefix | null;
     multiFeature: boolean;
     truncation?: number | null;
     notationType?: string;
@@ -68,10 +68,10 @@ const createVariantNotation = ({
     multiFeature: multiFeatureIn,
     truncation,
     notationType,
-    break1Start: break1StartIn,
-    break1End: break1EndIn,
-    break2Start: break2StartIn,
-    break2End: break2EndIn,
+    break1Start,
+    break1End,
+    break2Start,
+    break2End,
 }: {
     requireFeatures?: boolean;
     reference1: string | OntologyTerm;
@@ -80,7 +80,7 @@ const createVariantNotation = ({
     untemplatedSeqSize?: number | null;
     type: string;
     refSeq?: string | null;
-    prefix: Prefix;
+    prefix: Prefix | null;
     multiFeature?: boolean;
     truncation?: number;
     notationType?: string;
@@ -89,7 +89,7 @@ const createVariantNotation = ({
     break2Start?: AnyPosition;
     break2End?: AnyPosition;
 }): VariantNotation => {
-    if (!break1StartIn) {
+    if (!break1Start) {
         throw new InputValidationError({
             message: 'break1Start is a required attribute',
             violatedAttr: 'break1Start',
@@ -121,19 +121,6 @@ const createVariantNotation = ({
             violatedAttr: 'type',
         });
     }
-
-    // cast positions
-    const formatPosition = (input) => {
-        if (input !== null && input !== undefined) {
-            return createPosition(prefix, input);
-        }
-        return input;
-    };
-
-    const break1Start = formatPosition(break1StartIn);
-    const break1End = formatPosition(break1EndIn);
-    const break2Start = formatPosition(break2StartIn);
-    const break2End = formatPosition(break2EndIn);
 
     const break1Repr = createBreakRepr(break1Start, break1End, multiFeature);
     let break2Repr;
@@ -326,7 +313,7 @@ const parseMultiFeature = (string: string): {
     break2End?: AnyPosition,
     untemplatedSeqSize?: number | null,
     untemplatedSeq?: string | null,
-    prefix: Prefix,
+    prefix: Prefix | null,
 } => {
     if (string.length < 6) {
         throw new ParsingError(`Too short. Multi-feature notation must be a minimum of six characters: ${string}`);
@@ -394,22 +381,23 @@ const parseMultiFeature = (string: string): {
             violatedAttr: 'punctuation',
         });
     }
-    let prefix,
+    let break1Prefix,
+        break2Prefix,
         break1Start,
         break1End,
         break2Start,
         break2End;
 
     try {
-        prefix = getPrefix(positions[0]);
+        break1Prefix = getPrefix(positions[0]);
         positions[0] = positions[0].slice(2);
 
         if (positions[0].includes('_')) {
             const splitPos = positions[0].indexOf('_');
-            break1Start = parsePosition(prefix, positions[0].slice(0, splitPos));
-            break1End = parsePosition(prefix, positions[0].slice(splitPos + 1));
+            break1Start = parsePosition(break1Prefix, positions[0].slice(0, splitPos));
+            break1End = parsePosition(break1Prefix, positions[0].slice(splitPos + 1));
         } else {
-            break1Start = parsePosition(prefix, positions[0]);
+            break1Start = parsePosition(break1Prefix, positions[0]);
         }
     } catch (err) {
         throw new ParsingError({
@@ -430,15 +418,15 @@ const parseMultiFeature = (string: string): {
     }
 
     try {
-        prefix = getPrefix(positions[1]);
+        break2Prefix = getPrefix(positions[1]);
         positions[1] = positions[1].slice(2);
 
         if (positions[1].includes('_')) {
             const splitPos = positions[1].indexOf('_');
-            break2Start = parsePosition(prefix, positions[1].slice(0, splitPos));
-            break2End = parsePosition(prefix, positions[1].slice(splitPos + 1));
+            break2Start = parsePosition(break2Prefix, positions[1].slice(0, splitPos));
+            break2End = parsePosition(break2Prefix, positions[1].slice(splitPos + 1));
         } else {
-            break2Start = parsePosition(prefix, positions[1]);
+            break2Start = parsePosition(break2Prefix, positions[1]);
         }
     } catch (err) {
         throw new ParsingError({
@@ -457,6 +445,27 @@ const parseMultiFeature = (string: string): {
             violatedAttr: 'break2',
         });
     }
+
+    // prefix
+    let prefix;
+
+    if (break1Prefix === break2Prefix) {
+        // Since each fusion part have it's own prefix, a prefix at the variant
+        // level is only given if they are the same
+        prefix = break1Prefix;
+    }
+
+    return {
+        type: variantType,
+        break1Start,
+        break1End,
+        break2Start,
+        break2End,
+        untemplatedSeqSize,
+        untemplatedSeq,
+        prefix: prefix || null,
+    };
+};
 
 /**
  * Parse one side of a fusion variant using the new nomenclature (KBDEV-974)
@@ -500,19 +509,6 @@ const parseFusionPart = (string, requireFeatures) => {
 
     // Prefix
     const prefix = getPrefix(variantString);
-
-    // if (prefix !== 'r') {
-    //     // A double colon is used to describe RNA fusion transcripts
-    //     // (RNA Deletion - insertion) using exclusively the 'r' prefix
-    //     // https://varnomen.hgvs.org/recommendations/RNA/variant/delins/
-    //     throw new ParsingError({
-    //         message: 'Fusion notation must be in rna coordinate system',
-    //         input: string,
-    //     });
-    //     // The other use case of a double colon, not implemented, is to
-    //     // designate break point junctions creating a ring chromosome
-    //     // https://varnomen.hgvs.org/recommendations/DNA/variant/complex/
-    // }
 
     // Range of positions
     const positions = variantString.slice(prefix.length + 1).split('_');
@@ -591,7 +587,7 @@ const parseFusion = (string, requireFeatures = true) => {
     try {
         return createVariantNotation({
             ...t1,
-            prefix,
+            prefix: prefix || null,
             requireFeatures,
             reference2: t2.reference1,
             break2Start: t2.break1Start,
