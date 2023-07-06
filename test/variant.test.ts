@@ -161,14 +161,14 @@ describe('jsonifyVariant', () => {
     });
 });
 
-describe('parseVariant & strignifyVariant', () => {
+describe('parseVariant & stringifyVariant', () => {
     const variants = {
         ...data.standardVariants,
         ...data.legacyNomenclatureFusionVariants,
         ...data.newNomenclatureFusionVariants,
     };
 
-    test.each(Object.keys(variants))('Parsing and strignifying back %s', (variantString) => {
+    test.each(Object.keys(variants))('Parsing and stringifying back %s', (variantString) => {
         const variantNotation = parseVariant(variantString);
 
         // Parse variant string and compare notations
