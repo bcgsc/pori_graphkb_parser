@@ -1,6 +1,10 @@
-import { ParsingError, InputValidationError } from './error';
+import { InputValidationError, ParsingError } from './error';
 import {
-    createPosition, createBreakRepr, convertPositionToJson, parsePosition, AnyPosition,
+    AnyPosition,
+    convertPositionToJson,
+    createBreakRepr,
+    createPosition,
+    parsePosition,
 } from './position';
 import {
     NOTATION_TO_TYPES,
@@ -43,7 +47,7 @@ interface VariantNotation {
     untemplatedSeqSize?: number;
     type: OntologyTerm | string;
     refSeq?: string | null;
-    prefix: Prefix;
+    prefix: Prefix | null;
     multiFeature: boolean;
     truncation?: number | null;
     notationType?: string;
@@ -80,7 +84,7 @@ const createVariantNotation = ({
     untemplatedSeqSize?: number | null;
     type: string;
     refSeq?: string | null;
-    prefix: Prefix;
+    prefix: Prefix | null;
     multiFeature?: boolean;
     truncation?: number;
     notationType?: string;
@@ -125,7 +129,14 @@ const createVariantNotation = ({
     // cast positions
     const formatPosition = (input) => {
         if (input !== null && input !== undefined) {
-            return createPosition(prefix, input);
+            let breakPrefix;
+
+            if (typeof input.prefix !== 'undefined') {
+                breakPrefix = input.prefix;
+            } else {
+                breakPrefix = prefix;
+            }
+            return createPosition(breakPrefix, input);
         }
         return input;
     };
@@ -203,7 +214,7 @@ const jsonifyVariant = (variant: VariantNotation): { [key: string]: string } => 
     return json;
 };
 
-const stringifyVariant = (variant: VariantNotation): string => {
+const stringifyVariant = (variant: VariantNotation, newFusion = false): string => {
     const {
         multiFeature,
         noFeatures,
@@ -230,7 +241,22 @@ const stringifyVariant = (variant: VariantNotation): string => {
         if (!break2Repr) {
             throw new InputValidationError('Multi-feature notation requires break2Repr');
         }
-        // multi-feature notation
+        // new fusion nomenclature notation
+        if (newFusion) {
+            let insertedSequence = '';
+
+            if (untemplatedSeq !== undefined && untemplatedSeq !== null) {
+                insertedSequence = `${untemplatedSeq}::`;
+            }
+
+            if (noFeatures) {
+                return `${break1Repr}::${insertedSequence}${break2Repr}`;
+            }
+
+            return `${reference1}:${break1Repr}::${insertedSequence}${reference2}:${break2Repr}`;
+        }
+
+        // multi-feature notation (incl. legacy fusion notation)
         let result = noFeatures
             ? ''
             : `(${reference1},${reference2}):`;
@@ -311,7 +337,7 @@ const parseMultiFeature = (string: string): {
     break2End?: AnyPosition,
     untemplatedSeqSize?: number | null,
     untemplatedSeq?: string | null,
-    prefix: Prefix,
+    prefix: Prefix | null,
 } => {
     if (string.length < 6) {
         throw new ParsingError(`Too short. Multi-feature notation must be a minimum of six characters: ${string}`);
@@ -379,29 +405,36 @@ const parseMultiFeature = (string: string): {
             violatedAttr: 'punctuation',
         });
     }
-    let prefix,
+    let break1Prefix,
+        break2Prefix,
         break1Start,
         break1End,
         break2Start,
         break2End;
 
     try {
-        prefix = getPrefix(positions[0]);
+        break1Prefix = getPrefix(positions[0]);
         positions[0] = positions[0].slice(2);
 
         if (positions[0].includes('_')) {
             const splitPos = positions[0].indexOf('_');
-            break1Start = parsePosition(prefix, positions[0].slice(0, splitPos));
-            break1End = parsePosition(prefix, positions[0].slice(splitPos + 1));
+            break1Start = parsePosition(break1Prefix, positions[0].slice(0, splitPos));
+            break1End = parsePosition(break1Prefix, positions[0].slice(splitPos + 1));
         } else {
-            break1Start = parsePosition(prefix, positions[0]);
+            break1Start = parsePosition(break1Prefix, positions[0]);
         }
     } catch (err) {
         throw new ParsingError({
             message: 'Error in parsing the first breakpoint position/range',
             input: string,
             parsed: {
-                type: variantType, break1Start, break1End, break2Start, break2End, untemplatedSeqSize, untemplatedSeq,
+                type: variantType,
+                break1Start,
+                break1End,
+                break2Start,
+                break2End,
+                untemplatedSeqSize,
+                untemplatedSeq,
             },
             subParserError: err,
             violatedAttr: 'break1',
@@ -409,30 +442,193 @@ const parseMultiFeature = (string: string): {
     }
 
     try {
-        prefix = getPrefix(positions[1]);
+        break2Prefix = getPrefix(positions[1]);
         positions[1] = positions[1].slice(2);
 
         if (positions[1].includes('_')) {
             const splitPos = positions[1].indexOf('_');
-            break2Start = parsePosition(prefix, positions[1].slice(0, splitPos));
-            break2End = parsePosition(prefix, positions[1].slice(splitPos + 1));
+            break2Start = parsePosition(break2Prefix, positions[1].slice(0, splitPos));
+            break2End = parsePosition(break2Prefix, positions[1].slice(splitPos + 1));
         } else {
-            break2Start = parsePosition(prefix, positions[1]);
+            break2Start = parsePosition(break2Prefix, positions[1]);
         }
     } catch (err) {
         throw new ParsingError({
             message: 'Error in parsing the second breakpoint position/range',
             input: string,
             parsed: {
-                type: variantType, break1Start, break1End, break2Start, break2End, untemplatedSeqSize, untemplatedSeq,
+                type: variantType,
+                break1Start,
+                break1End,
+                break2Start,
+                break2End,
+                untemplatedSeqSize,
+                untemplatedSeq,
             },
             subParserError: err,
             violatedAttr: 'break2',
         });
     }
+
+    // prefix
+    let prefix;
+
+    if (break1Prefix === break2Prefix) {
+        // Since each fusion part have it's own prefix, a prefix at the variant
+        // level is only given if they are the same
+        prefix = break1Prefix;
+    }
+
     return {
-        type: variantType, break1Start, break1End, break2Start, break2End, untemplatedSeqSize, untemplatedSeq, prefix,
+        type: variantType,
+        break1Start,
+        break1End,
+        break2Start,
+        break2End,
+        untemplatedSeqSize,
+        untemplatedSeq,
+        prefix: prefix || null,
     };
+};
+
+/**
+ * Parse one side of a fusion variant using the new nomenclature (KBDEV-974)
+ *
+ * @param {string} string is one of the fusion part (one side) to be parsed
+ * @param {boolean} requireFeatures
+ *
+ * @returns {VariantNotation} the parsed content
+ */
+const parseFusionPart = (string, requireFeatures) => {
+    // Come from a multi-feature variant
+    const multiFeature = true;
+
+    // Feature vs Variant strings
+    const stringSplit = string.split(':');
+
+    if (stringSplit.length > 2) {
+        throw new ParsingError({
+            message: 'Variant notation must contain a single colon',
+            input: string,
+            violatedAttr: 'punctuation',
+        });
+    } else if (stringSplit.length === 1) {
+        if (!requireFeatures) {
+            stringSplit.unshift('');
+        } else {
+            throw new ParsingError({
+                message: 'Feature name not specified. Feature name is required',
+                violatedAttr: 'reference1',
+            });
+        }
+    }
+    const [featureString, variantString] = stringSplit;
+
+    // References
+    let reference1 = '';
+
+    if (featureString) {
+        reference1 = featureString;
+    }
+
+    // Prefix
+    const prefix = getPrefix(variantString);
+
+    // Range of positions
+    const positions = variantString.slice(prefix.length + 1).split('_');
+
+    if (positions.length !== 2) {
+        throw new ParsingError({
+            message: 'Fusion notation must be a range of positions',
+            input: string,
+        });
+    }
+
+    // Returns a partial variant notation for that variant's part
+    return {
+        reference1,
+        reference2: '',
+        type: NOTATION_TO_TYPES.fusion,
+        multiFeature,
+        prefix,
+        break1Start: parsePosition(prefix, positions[0]),
+        break1End: parsePosition(prefix, positions[1]),
+    };
+};
+
+/**
+ * Parse a fusion variant using the new HGVS nomenclature (KBDEV-974)
+ *
+ * @param {string} string is a fusion variant using the new nomenclature
+ * @param {boolean} requireFeatures, if set to false, allows string without feature
+ *
+ * @returns {VariantNotation} the parsed content
+ */
+const parseFusion = (string, requireFeatures = true) => {
+    const parts = string.split('::');
+
+    if (parts.length > 3) {
+        throw new ParsingError({
+            message: 'Fusion variant using new nomenclature must contain 1 or 2 double-colon',
+            input: string,
+            violatedAttr: 'punctuation',
+        });
+    }
+
+    let untemplatedSeq,
+        untemplatedSeqSize;
+
+    // Special case with a sequence insertion between the 2 fusion parts
+    if (parts.length === 3) {
+        const [, insertion] = parts;
+
+        // When implemented, sequence insertion need to be in RNA
+        // if following HGVS standards restricting fusion to 'r' prefix
+        if (!/^[ACGU]+$/.test(insertion.toUpperCase())) {
+            throw new ParsingError({
+                message: 'Insertion sequence of fusion variant should be given in ribonucleotides',
+                input: string,
+                violatedAttr: 'alphabet',
+            });
+        }
+        untemplatedSeq = insertion.toUpperCase();
+        untemplatedSeqSize = insertion.length;
+    }
+
+    // Standard 2-parts fusion - Parsing individual parts
+    const t1 = parseFusionPart(parts[0], requireFeatures);
+    const t2 = parseFusionPart(parts[parts.length - 1], requireFeatures); // skip middle part if one
+
+    // Prefix
+    let prefix;
+
+    if (t1.prefix === t2.prefix) {
+        // Since each fusion part have it's own prefix, a prefix at the variant
+        // level is only given if they are the same
+        prefix = t1.prefix;
+    }
+
+    try {
+        return createVariantNotation({
+            ...t1,
+            prefix: prefix || null,
+            requireFeatures,
+            reference2: t2.reference1,
+            break2Start: t2.break1Start,
+            break2End: t2.break1End,
+            untemplatedSeq,
+            untemplatedSeqSize,
+        });
+    } catch (err: any) {
+        if (err.content) {
+            err.content.parsed = {
+                string,
+                reference1: t1.reference1,
+                reference2: t2.reference1,
+            };
+        }
+        throw err;
+    }
 };
 
 /**
@@ -449,10 +645,15 @@ const parseVariant = (string, requireFeatures = true) => {
             input: string,
         });
     }
+    // New fusion nomenclature handling (KBDEV-974)
+    if (string.split('::').length > 1) {
+        return parseFusion(string, requireFeatures);
+    }
+    // Feature vs Variant strings
     const split = string.split(':');
 
     if (split.length > 2) {
-        throw new ParsingError({ message: 'Variant notation must contain a single colon', input: string, violatedAttr: 'punctuation' });
+        throw new ParsingError({ message: 'Apart from new fusion nomenclature, variant notation must contain a single colon', input: string, violatedAttr: 'punctuation' });
     } else if (split.length === 1) {
         if (!requireFeatures) {
             split.unshift(null);

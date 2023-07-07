@@ -153,7 +153,7 @@ test.each([
     ['12:y.q13_q14insATCG', 'cannot define sequence elements (untemplatedSeq) at the cytoband level'],
     ['FEATURE:f.G12D', 'not an accepted prefix'],
     ['FEATURE:pG12D', 'Missing \'.\' separator after prefix'],
-    ['FEATURE:OTHER:pG12D', 'Variant notation must contain a single colon'],
+    ['FEATURE:OTHER:pG12D', 'Apart from new fusion nomenclature, variant notation must contain a single colon'],
     ['FEATURE:p.G12_HH13insH', 'Failed to parse the initial position'],
     ['p.G12K', 'Feature name not specified'],
     ['(,):()', 'Multi-feature notation must be a minimum of six characters'],
