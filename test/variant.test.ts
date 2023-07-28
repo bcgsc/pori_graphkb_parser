@@ -1,3 +1,4 @@
+import data from '../data/variants';
 import {
     stringifyVariant,
     stripParentheses,
@@ -8,7 +9,7 @@ import {
 import { createPosition } from '../src/position';
 import { NOTATION_TO_TYPES } from '../src/constants';
 
-describe('VariantNotation', () => {
+describe('createVariantNotation', () => {
     test('use object name if no sourceId on reference', () => {
         const notation = createVariantNotation({
             reference1: { name: 'KRAS' },
@@ -157,5 +158,30 @@ describe('jsonifyVariant', () => {
             refSeq: 'G',
             type: 'missense mutation',
         });
+    });
+});
+
+describe('parseVariant & stringifyVariant', () => {
+    const variants = {
+        ...data.standardVariants,
+        ...data.legacyNomenclatureFusionVariants,
+        ...data.newNomenclatureFusionVariants,
+    };
+
+    test.each(Object.keys(variants))('Parsing and stringifying back %s', (variantString) => {
+        const variantNotation = parseVariant(variantString);
+
+        // Parse variant string and compare notations
+        expect(variantNotation).toStrictEqual(
+            expect.objectContaining({
+                ...variants[variantString],
+                break1Start: expect.objectContaining(
+                    variants[variantString].break1Start,
+                ),
+            }),
+        );
+        // Strignify notation and compare variant strings
+        const newFusion = variantString.split('::').length > 1;
+        expect(stringifyVariant(variants[variantString], newFusion)).toBe(variantString);
     });
 });

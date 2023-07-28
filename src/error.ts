@@ -55,4 +55,11 @@ class ParsingError extends ErrorMixin {}
 
 class InputValidationError extends ErrorMixin {}
 
-export { ParsingError, ErrorMixin, InputValidationError };
+class NotImplementedError extends ErrorMixin {}
+
+export {
+    ErrorMixin,
+    InputValidationError,
+    NotImplementedError,
+    ParsingError,
+};
