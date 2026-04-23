@@ -105,7 +105,7 @@ const extractPositions = (
 
     const pattern = PATTERNS[prefix] || /(?<pos>\d+)/;
     const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
-    
+
     if (!match) {
         throw new ParsingError('Failed to parse the initial position');
     }

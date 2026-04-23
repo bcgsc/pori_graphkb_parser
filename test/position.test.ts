@@ -8,13 +8,16 @@ import {
 
 describe('PATTERNS', () => {
     describe('PATTERNS.c', () => {
-        const pattern = PATTERNS['c'];
+        const pattern = PATTERNS.c;
+
         test.each([
             ['123G>A', '123'],
             ['*123G>A', '*123'],
         ])('match %s get %s', (string, expected) => {
             const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
-            const input = match ? match[0] : [];
+            const input = match
+                ? match[0]
+                : [];
             expect(input).toBe(expected);
         });
     });
