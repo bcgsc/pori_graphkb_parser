@@ -56,6 +56,10 @@ const convert3to1 = (notation: string): string => {
         // = does not have a 3-letter AA equivalent
         return '=';
     }
+    if (notation === AA_CODES.ter) {
+        // * as termination codon
+        return AA_CODES.ter;
+    }
     if (notation.length % 3 !== 0) {
         throw new ParsingError(`Cannot convert to single letter AA notation. The input (${notation}) is not in 3-letter form`);
     }
@@ -98,9 +102,10 @@ const extractPositions = (
             end: parsePosition(prefix, string.slice(string.indexOf('_') + 1, string.indexOf(')'))),
         };
     }
+
     const pattern = PATTERNS[prefix] || /(?<pos>\d+)/;
     const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
-
+    
     if (!match) {
         throw new ParsingError('Failed to parse the initial position');
     }
