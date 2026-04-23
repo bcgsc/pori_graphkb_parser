@@ -7,6 +7,7 @@ test.each([
     'KRAS:p.G12delG',
     'KRAS:p.G12_H14dupGHH',
     'EGFR:e.20_21ins',
+    'FEATURE:c.*123del',
     'FEATURE:c.-23+1A>G',
     'FEATURE:c.3+1del',
     'FEATURE:n.3+1del',
@@ -77,6 +78,7 @@ test.each([
 
 // notation without features
 test.each([
+    'c.*123del',
     'p.*807ext',
     'p.M1ext-85',
     'p.*807ext*101',
@@ -91,6 +93,7 @@ test.each([
 
 // reformatted notation
 test.each([
+    ['FEATURE:p.Trp123*', 'FEATURE:p.W123*'], // * termination codon mixed with 3-letters AA
     ['FEATURE:p.W288FS', 'FEATURE:p.W288fs'],
     ['FEATURE:p.R10Kfs*', 'FEATURE:p.R10Kfs'],
     ['FEATURE:p.Arg10Lysfs*10', 'FEATURE:p.R10Kfs*10'],
@@ -103,6 +106,7 @@ test.each([
 
 // reformatted notation without features
 test.each([
+    ['p.Trp123*', 'p.W123*'], // * termination codon mixed with 3-letters AA
     ['p.E55RfsTer11', 'p.E55Rfs*11'],
     ['p.*661Lext*?', 'p.*661Lext'],
     ['p.Arg80=', 'p.R80='],
