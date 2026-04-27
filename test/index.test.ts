@@ -105,6 +105,10 @@ test.each([
     ['NP_001138648.1:p.(A216_R218del)', 'NP_001138648.1:p.A216_R218del'],
     ['KRTAP4-7:p.(T68_C69delinsS)', 'KRTAP4-7:p.T68_C69delinsS'],
     ['NP_149050.3:p.(T68_C69delinsS)', 'NP_149050.3:p.T68_C69delinsS'],
+    // KBDEV-1336; 1-xxx assumed to mean -xxx
+    ['FEATURE:c.-234del', 'FEATURE:c.-234del'],
+    ['FEATURE:c.1-234del', 'FEATURE:c.-234del'],
+    ['FEATURE:r.1-234del', 'FEATURE:r.-234del'],
 ])('transforms from %s to %s', (notationIn, notationOut) => {
     const parsed = parseVariant(notationIn, true);
     expect(stringifyVariant(parsed)).toBe(notationOut);

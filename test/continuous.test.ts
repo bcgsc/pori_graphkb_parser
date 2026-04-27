@@ -50,12 +50,6 @@ describe('getPrefix', () => {
 
 describe('extractPosition', () => {
     test.each([
-        ['c', '1-2384C>T', { // TODO: needs to be fixed to '-2384C>T'
-            input: '1-2384',
-            start: {
-                '@class': 'CdsPosition', offset: -2384, pos: 1, prefix: 'c',
-            },
-        }],
         ['p', 'G12D', {
             input: 'G12',
             start: {
@@ -77,6 +71,19 @@ describe('extractPosition', () => {
             },
             end: {
                 '@class': 'CdsPosition', offset: 0, pos: 456, prefix: 'c',
+            },
+        }],
+        // KBDEV-1346
+        ['c', '1-2384C>T', {
+            input: '1-2384',
+            start: {
+                '@class': 'CdsPosition', offset: 0, pos: -2384, prefix: 'c',
+            },
+        }],
+        ['c', '-2384C>T', {
+            input: '-2384',
+            start: {
+                '@class': 'CdsPosition', offset: 0, pos: -2384, prefix: 'c',
             },
         }],
     ])('extracting positions for %s.%s', (prefix, string, expected) => {

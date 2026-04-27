@@ -293,6 +293,11 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
             }
             let { ter, pos, offset } = m.groups;
 
+            // KBDEV-1346; assuming c.1-123... means c.-123... for backward compatibility
+            if (parseInt(pos, 10) === 1 && parseInt(offset, 10) < 0) {
+                pos = offset;
+                offset = '0';
+            }
             // KBDEV-1346; allow pos === 0 as an alias for termination codon position
             if (ter) {
                 offset = pos;
