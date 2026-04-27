@@ -94,12 +94,17 @@ test.each([
 // reformatted notation
 test.each([
     ['FEATURE:p.Trp123*', 'FEATURE:p.W123*'], // * termination codon mixed with 3-letters AA
-    ['FEATURE:p.(L797P)', 'FEATURE:p.L797P'], // predicted protein consequence
     ['FEATURE:p.W288FS', 'FEATURE:p.W288fs'],
     ['FEATURE:p.R10Kfs*', 'FEATURE:p.R10Kfs'],
     ['FEATURE:p.Arg10Lysfs*10', 'FEATURE:p.R10Kfs*10'],
     ['FEATURE:p.Arg10_Lys12delArgGluLysinsLeu', 'FEATURE:p.R10_K12delREKinsL'],
     ['FEATURE:g.(1234_1237)_(1234_1237)dup2', 'FEATURE:g.(1234_1237)_(1234_1237)dup'], // useq size is irrelevant to dups
+    // KBDEV-1336/SDEV-5340; reformat predicted protein consequence
+    ['NBPF10:p.(L797P)', 'NBPF10:p.L797P'],
+    ['SHISA7:p.(A216_R218del)', 'SHISA7:p.A216_R218del'],
+    ['NP_001138648.1:p.(A216_R218del)', 'NP_001138648.1:p.A216_R218del'],
+    ['KRTAP4-7:p.(T68_C69delinsS)', 'KRTAP4-7:p.T68_C69delinsS'],
+    ['NP_149050.3:p.(T68_C69delinsS)', 'NP_149050.3:p.T68_C69delinsS'],
 ])('transforms from %s to %s', (notationIn, notationOut) => {
     const parsed = parseVariant(notationIn, true);
     expect(stringifyVariant(parsed)).toBe(notationOut);
