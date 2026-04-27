@@ -58,17 +58,26 @@ describe('extractPosition', () => {
         }],
         ['p', 'G12D', {
             input: 'G12',
-            start: {'@class': 'ProteinPosition', longRefAA: null, pos: 12, prefix: 'p', refAA: 'G'},
+            start: {
+                '@class': 'ProteinPosition', longRefAA: null, pos: 12, prefix: 'p', refAA: 'G',
+            },
+
         }],
         // extract 1st position only
         ['c', '123_456del', {
             input: '123',
-            start: {'@class': 'CdsPosition', offset: 0, pos: 123, prefix: 'c'},
+            start: {
+                '@class': 'CdsPosition', offset: 0, pos: 123, prefix: 'c',
+            },
         }],
         ['c', '(123_456)_(567_890)del', {
             input: '(123_456)',
-            start: {'@class': 'CdsPosition', offset: 0, pos: 123, prefix: 'c'},
-            end: {'@class': 'CdsPosition', offset: 0, pos: 456, prefix: 'c'},
+            start: {
+                '@class': 'CdsPosition', offset: 0, pos: 123, prefix: 'c',
+            },
+            end: {
+                '@class': 'CdsPosition', offset: 0, pos: 456, prefix: 'c',
+            },
         }],
     ])('extracting positions for %s.%s', (prefix, string, expected) => {
         expect(extractPositions(prefix, string)).toEqual(expected);
@@ -117,7 +126,7 @@ describe('parseContinuous', () => {
         }],
         ['c.123_456del', {
             break1Start: {
-                '@class': 'CdsPosition', offset: 0, pos: 123, prefix: 'c', 
+                '@class': 'CdsPosition', offset: 0, pos: 123, prefix: 'c',
             },
             break1End: undefined,
             break2Start: {
