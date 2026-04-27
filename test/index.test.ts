@@ -94,6 +94,7 @@ test.each([
 // reformatted notation
 test.each([
     ['FEATURE:p.Trp123*', 'FEATURE:p.W123*'], // * termination codon mixed with 3-letters AA
+    ['FEATURE:p.(L797P)', 'FEATURE:p.L797P'], // predicted protein consequence
     ['FEATURE:p.W288FS', 'FEATURE:p.W288fs'],
     ['FEATURE:p.R10Kfs*', 'FEATURE:p.R10Kfs'],
     ['FEATURE:p.Arg10Lysfs*10', 'FEATURE:p.R10Kfs*10'],
