@@ -300,7 +300,9 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
             }
 
             return createPosition(prefix, {
-                pos: pos || 1,
+                pos: pos === undefined || pos === '' // pos 0 is allowed for 3'UTR variants
+                    ? 1 // undefined pos means 1, e.g. c.-2384C>T,
+                    : pos,
                 offset: offset === undefined
                     ? 0
                     : offset,
