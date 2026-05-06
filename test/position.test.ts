@@ -169,10 +169,10 @@ describe('parsePosition', () => {
             expect(result).toHaveProperty('prefix', 'c');
         });
 
-        test('negative position preceded by 1', () => {
+        test('negative offset preceded by 1', () => {
             const result = parsePosition('c', '1-3');
-            expect(result.pos).toBe(-3);
-            expect(result.offset).toBe(0);
+            expect(result.pos).toBe(1);
+            expect(result.offset).toBe(-3);
             expect(result).toHaveProperty('prefix', 'c');
         });
 

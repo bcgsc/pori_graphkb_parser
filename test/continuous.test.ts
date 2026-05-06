@@ -77,7 +77,7 @@ describe('extractPosition', () => {
         ['c', '1-2384C>T', {
             input: '1-2384',
             start: {
-                '@class': 'CdsPosition', offset: 0, pos: -2384, prefix: 'c',
+                '@class': 'CdsPosition', offset: -2384, pos: 1, prefix: 'c',
             },
         }],
         ['c', '-2384C>T', {

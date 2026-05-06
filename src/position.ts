@@ -293,25 +293,22 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
             }
             let { ter, pos, offset } = m.groups;
 
-            // KBDEV-1346; assuming c.1-123... means c.-123... for backward compatibility
-            if (parseInt(pos, 10) === 1 && parseInt(offset, 10) < 0) {
-                pos = offset;
-                offset = '0';
-            }
             // KBDEV-1346; allow pos === 0 as an alias for termination codon position
             if (ter) {
                 offset = pos;
                 pos = '0';
             }
 
-            return createPosition(prefix, {
-                pos: pos === undefined || pos === '' // pos 0 is allowed for 3'UTR variants
-                    ? 1 // undefined pos means 1, e.g. c.-2384C>T,
-                    : pos,
-                offset: offset === undefined
-                    ? 0
-                    : offset,
-            });
+            // Fixing pos vs offset parsing
+            if (pos === undefined || pos === '') { // pos 0 is allowed for 3'UTR variants
+                pos = offset || '1'; // e.g. c.-2384C>T
+                offset = '0';
+            }
+            if (offset === undefined) {
+                offset = '0';
+            }
+
+            return createPosition(prefix, { pos, offset });
         } if (prefix === 'g' || prefix === 'e' || prefix === 'i') {
             // basic pos
             return createPosition(prefix, { pos: string });

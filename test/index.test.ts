@@ -9,6 +9,9 @@ test.each([
     'EGFR:e.20_21ins',
     'FEATURE:c.*123del',
     'FEATURE:c.-23+1A>G',
+    'FEATURE:c.-234del',
+    'FEATURE:c.1-234del',
+    'FEATURE:r.1-234del',
     'FEATURE:c.3+1del',
     'FEATURE:n.3+1del',
     'FEATURE:c.3+1_5-2del',
@@ -99,16 +102,12 @@ test.each([
     ['FEATURE:p.Arg10Lysfs*10', 'FEATURE:p.R10Kfs*10'],
     ['FEATURE:p.Arg10_Lys12delArgGluLysinsLeu', 'FEATURE:p.R10_K12delREKinsL'],
     ['FEATURE:g.(1234_1237)_(1234_1237)dup2', 'FEATURE:g.(1234_1237)_(1234_1237)dup'], // useq size is irrelevant to dups
-    // KBDEV-1336/SDEV-5340; reformat predicted protein consequence
+    // KBDEV-1346/SDEV-5340; reformat predicted protein consequence
     ['NBPF10:p.(L797P)', 'NBPF10:p.L797P'],
     ['SHISA7:p.(A216_R218del)', 'SHISA7:p.A216_R218del'],
     ['NP_001138648.1:p.(A216_R218del)', 'NP_001138648.1:p.A216_R218del'],
     ['KRTAP4-7:p.(T68_C69delinsS)', 'KRTAP4-7:p.T68_C69delinsS'],
     ['NP_149050.3:p.(T68_C69delinsS)', 'NP_149050.3:p.T68_C69delinsS'],
-    // KBDEV-1336; 1-xxx assumed to mean -xxx
-    ['FEATURE:c.-234del', 'FEATURE:c.-234del'],
-    ['FEATURE:c.1-234del', 'FEATURE:c.-234del'],
-    ['FEATURE:r.1-234del', 'FEATURE:r.-234del'],
 ])('transforms from %s to %s', (notationIn, notationOut) => {
     const parsed = parseVariant(notationIn, true);
     expect(stringifyVariant(parsed)).toBe(notationOut);
