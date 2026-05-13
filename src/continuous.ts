@@ -56,6 +56,10 @@ const convert3to1 = (notation: string): string => {
         // = does not have a 3-letter AA equivalent
         return '=';
     }
+    if (notation === AA_CODES.ter) {
+        // * as termination codon
+        return AA_CODES.ter;
+    }
     if (notation.length % 3 !== 0) {
         throw new ParsingError(`Cannot convert to single letter AA notation. The input (${notation}) is not in 3-letter form`);
     }
@@ -98,9 +102,11 @@ const extractPositions = (
             end: parsePosition(prefix, string.slice(string.indexOf('_') + 1, string.indexOf(')'))),
         };
     }
+
     const pattern = PATTERNS[prefix] || /(?<pos>\d+)/;
     const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
 
+    // TODO: Inspect pattern above since it seems this will never throw.
     if (!match) {
         throw new ParsingError('Failed to parse the initial position');
     }
@@ -120,7 +126,21 @@ const extractPositions = (
  *
  * @example
  * > parseContinuous('p.G12D')
- * {type: 'substitution', prefix: 'p', break1Start: {'@class': 'ProteinPosition', pos: 12, refAA: 'G'}, untemplatedSeq: 'D'}
+ * {
+ *      "break1End": undefined,
+ *      "break1Start": {
+ *          "@class": "ProteinPosition", "longRefAA": null, "pos": 12, "prefix": "p", "refAA": "G",
+ *      },
+ *      "break2End": undefined,
+ *      "break2Start": undefined,
+ *      "notationType": ">",
+ *      "prefix": "p",
+ *      "refSeq": "G",
+ *      "truncation": undefined,
+ *      "type": "missense mutation",
+ *      "untemplatedSeq": "D",
+ *      "untemplatedSeqSize": undefined,
+ * }
  */
 const parseContinuous = (inputString) => {
     let string = inputString.slice(0);
@@ -131,7 +151,6 @@ const parseContinuous = (inputString) => {
 
     const prefix = getPrefix(string);
     string = string.slice(prefix.length + 1);
-    // get the first position
     let break1Start,
         break1End,
         break2Start,
@@ -142,6 +161,12 @@ const parseContinuous = (inputString) => {
         truncation,
         notationType; // type parsed
 
+    // Remove pattern for protein's predicted consequence
+    if (prefix === 'p' && string.startsWith('(') && string.endsWith(')')) {
+        string = string.slice(1, -1);
+    }
+
+    // extract the first position
     try {
         const parsedPosition = extractPositions(prefix, string);
         break1Start = parsedPosition.start;
@@ -152,8 +177,8 @@ const parseContinuous = (inputString) => {
         throw err;
     }
 
+    // if expect a range, then extract more positions
     if (string.startsWith('_')) {
-        // expect a range. Extract more positions
         string = string.slice(1);
 
         try {
@@ -402,4 +427,9 @@ const parseContinuous = (inputString) => {
     };
 };
 
-export { parseContinuous, getPrefix };
+export {
+    convert3to1,
+    extractPositions,
+    getPrefix,
+    parseContinuous,
+};

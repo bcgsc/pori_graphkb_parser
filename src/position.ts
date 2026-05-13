@@ -4,7 +4,7 @@ import {
     AA_PATTERN, AA_CODES, PREFIX_CLASS, Prefix,
 } from './constants';
 
-const CDSLIKE_PATT = /(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
+const CDSLIKE_PATT = /(?<ter>\*)?(?<pos>-?(\d+|\?))?(?<offset>[-+](\d+|\?))?/;
 const CLASS_FIELD = '@class';
 const PATTERNS = {
     y: /(?<arm>[pq])((?<majorBand>\d+|\?)(\.(?<minorBand>\d+|\?))?)?/,
@@ -177,6 +177,11 @@ function createPosition<P extends Prefix>(prefix: P, position: any): PrefixMap<P
 }
 
 const convertPositionToString = (position) => {
+    // KBDEV-1346; pos === 0 as an alias for termination codon position
+    const pos = position.pos === 0
+        ? AA_CODES.ter
+        : position.pos;
+
     if (position.prefix === 'y') {
         let result = `${position.arm}`;
 
@@ -194,16 +199,16 @@ const convertPositionToString = (position) => {
         if (position.offset === null) {
             offset = '?';
         } else if (position.offset) {
-            if (position.offset > 0) {
+            if (position.offset > 0 && pos !== AA_CODES.ter) {
                 offset = '+';
             }
             offset = `${offset}${position.offset}`;
         }
-        return `${position.pos || '?'}${offset}`;
+        return `${pos || '?'}${offset}`;
     } if (position.prefix === 'p') {
-        return `${position.refAA || '?'}${position.pos || '?'}`;
+        return `${position.refAA || '?'}${pos || '?'}`;
     }
-    return `${position.pos || '?'}`;
+    return `${pos || '?'}`;
 };
 
 /**
@@ -286,14 +291,24 @@ function parsePosition<P extends Prefix>(prefix: P, string: string): PrefixMap<P
             if (!m?.groups) {
                 throw new ParsingError(`input '${string}' did not match the expected pattern for 'c' prefixed positions`);
             }
-            const { pos, offset } = m.groups;
+            let { ter, pos, offset } = m.groups;
 
-            return createPosition(prefix, {
-                pos: pos || 1,
-                offset: offset === undefined
-                    ? 0
-                    : offset,
-            });
+            // KBDEV-1346; allow pos === 0 as an alias for termination codon position
+            if (ter) {
+                offset = pos;
+                pos = '0';
+            }
+
+            // Fixing pos vs offset parsing
+            if (pos === undefined || pos === '') { // pos 0 is allowed for 3'UTR variants
+                pos = offset || '1'; // e.g. c.-2384C>T
+                offset = '0';
+            }
+            if (offset === undefined) {
+                offset = '0';
+            }
+
+            return createPosition(prefix, { pos, offset });
         } if (prefix === 'g' || prefix === 'e' || prefix === 'i') {
             // basic pos
             return createPosition(prefix, { pos: string });

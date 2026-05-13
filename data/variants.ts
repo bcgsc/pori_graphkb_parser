@@ -31,6 +31,18 @@ const standardVariants = {
         type: NOTATION_TO_TYPES.mis,
         untemplatedSeq: 'D',
     },
+    'TP53:c.*123del': {
+        break1Start: {
+            '@class': 'CdsPosition',
+            pos: 0,
+            offset: 123,
+            prefix: 'c',
+        },
+        break1Repr: 'c.*123',
+        prefix: 'c',
+        reference1: 'TP53',
+        type: NOTATION_TO_TYPES.del,
+    },
 };
 
 // Actual fusion variant with legacy notation (KBDEV-974)

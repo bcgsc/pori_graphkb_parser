@@ -1,9 +1,27 @@
 import { ParsingError } from '../src/error';
 import {
+    PATTERNS,
     parsePosition,
     createPosition,
     convertPositionToString,
 } from '../src/position';
+
+describe('PATTERNS', () => {
+    describe('PATTERNS.c', () => {
+        const pattern = PATTERNS.c;
+
+        test.each([
+            ['123G>A', '123'],
+            ['*123G>A', '*123'],
+        ])('match %s get %s', (string, expected) => {
+            const match = new RegExp(`^(${pattern.source})`, 'i').exec(string);
+            const input = match
+                ? match[0]
+                : [];
+            expect(input).toBe(expected);
+        });
+    });
+});
 
 describe('Position', () => {
     describe('CytobandPosition', () => {
@@ -79,6 +97,11 @@ describe('Position', () => {
             const pos = createPosition('c', { pos: null, offset: -10 });
             expect(convertPositionToString(pos)).toBe('?-10');
         });
+
+        test('3\' UTR offset', () => {
+            const pos = createPosition('c', { pos: 0, offset: 123 });
+            expect(convertPositionToString(pos)).toBe('*123');
+        });
     });
 
     describe('RnaPosition', () => {
@@ -140,6 +163,13 @@ describe('parsePosition', () => {
         });
 
         test('negative offset', () => {
+            const result = parsePosition('c', '2-3');
+            expect(result.pos).toBe(2);
+            expect(result.offset).toBe(-3);
+            expect(result).toHaveProperty('prefix', 'c');
+        });
+
+        test('negative offset preceded by 1', () => {
             const result = parsePosition('c', '1-3');
             expect(result.pos).toBe(1);
             expect(result.offset).toBe(-3);
@@ -151,6 +181,12 @@ describe('parsePosition', () => {
             expect(result.pos).toBe(1);
             expect(result.offset).toBe(0);
             expect(result).toHaveProperty('prefix', 'c');
+        });
+
+        test('3\' UTR offset', () => {
+            const result = parsePosition('c', '*123');
+            expect(result.pos).toBe(0);
+            expect(result.offset).toBe(123);
         });
 
         test('errors on spaces', () => {

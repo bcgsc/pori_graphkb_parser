@@ -131,6 +131,16 @@ describe('createVariantNotation', () => {
             });
         }).toThrowError('must be specified with a range');
     });
+
+    test('3\' UTR offset', () => {
+        const notation = createVariantNotation({
+            break1Start: createPosition('c', { pos: 0, offset: 123 }),
+            prefix: 'c',
+            reference1: { displayName: 'KRAS' },
+            type: NOTATION_TO_TYPES.del,
+        });
+        expect(stringifyVariant(notation)).toBe('KRAS:c.*123del');
+    });
 });
 
 describe('stripParentheses', () => {
