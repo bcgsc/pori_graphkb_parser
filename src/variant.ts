@@ -744,5 +744,9 @@ const parseVariant = (string, requireFeatures = true) => {
 };
 
 export {
-    parseVariant, jsonifyVariant, stringifyVariant, stripParentheses, createVariantNotation,
+    createVariantNotation,
+    jsonifyVariant,
+    parseVariant,
+    stringifyVariant,
+    stripParentheses,
 };

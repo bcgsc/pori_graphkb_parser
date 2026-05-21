@@ -7,7 +7,11 @@ test.each([
     'KRAS:p.G12delG',
     'KRAS:p.G12_H14dupGHH',
     'EGFR:e.20_21ins',
+    'FEATURE:c.*123del',
     'FEATURE:c.-23+1A>G',
+    'FEATURE:c.-234del',
+    'FEATURE:c.1-234del',
+    'FEATURE:r.1-234del',
     'FEATURE:c.3+1del',
     'FEATURE:n.3+1del',
     'FEATURE:c.3+1_5-2del',
@@ -77,6 +81,7 @@ test.each([
 
 // notation without features
 test.each([
+    'c.*123del',
     'p.*807ext',
     'p.M1ext-85',
     'p.*807ext*101',
@@ -91,11 +96,18 @@ test.each([
 
 // reformatted notation
 test.each([
+    ['FEATURE:p.Trp123*', 'FEATURE:p.W123*'], // * termination codon mixed with 3-letters AA
     ['FEATURE:p.W288FS', 'FEATURE:p.W288fs'],
     ['FEATURE:p.R10Kfs*', 'FEATURE:p.R10Kfs'],
     ['FEATURE:p.Arg10Lysfs*10', 'FEATURE:p.R10Kfs*10'],
     ['FEATURE:p.Arg10_Lys12delArgGluLysinsLeu', 'FEATURE:p.R10_K12delREKinsL'],
     ['FEATURE:g.(1234_1237)_(1234_1237)dup2', 'FEATURE:g.(1234_1237)_(1234_1237)dup'], // useq size is irrelevant to dups
+    // KBDEV-1346/SDEV-5340; reformat predicted protein consequence
+    ['NBPF10:p.(L797P)', 'NBPF10:p.L797P'],
+    ['SHISA7:p.(A216_R218del)', 'SHISA7:p.A216_R218del'],
+    ['NP_001138648.1:p.(A216_R218del)', 'NP_001138648.1:p.A216_R218del'],
+    ['KRTAP4-7:p.(T68_C69delinsS)', 'KRTAP4-7:p.T68_C69delinsS'],
+    ['NP_149050.3:p.(T68_C69delinsS)', 'NP_149050.3:p.T68_C69delinsS'],
 ])('transforms from %s to %s', (notationIn, notationOut) => {
     const parsed = parseVariant(notationIn, true);
     expect(stringifyVariant(parsed)).toBe(notationOut);
@@ -103,6 +115,7 @@ test.each([
 
 // reformatted notation without features
 test.each([
+    ['p.Trp123*', 'p.W123*'], // * termination codon mixed with 3-letters AA
     ['p.E55RfsTer11', 'p.E55Rfs*11'],
     ['p.*661Lext*?', 'p.*661Lext'],
     ['p.Arg80=', 'p.R80='],
