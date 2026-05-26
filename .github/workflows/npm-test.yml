@@ -1,33 +1,38 @@
 name: build
 
-on: [push]
+on:
+  - push
+  - workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [12, 14, 16]
+        node: ['16', '18.18.2', '20'] # Forcing v18.18.2 to stay consistent with the API
     name: node-${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
       - run: npm ci
-      - run: npm audit --production
+      - run: npm audit --omit=dev
       - run: npm run lint
       - name: test build
         run: npm run build
       - run: npm test
+
       - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1.6
-        if: matrix.node == 12
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: matrix.node == '16'
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           files: coverage/junit.xml
-      - uses: codecov/codecov-action@v1
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        if: matrix.node == '16'
         with:
           yml: codecov.yml
           token: ${{ secrets.CODECOV_TOKEN }}
-        if: matrix.node == 12
